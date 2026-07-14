@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "187587171163",
+    "project_id": "horizon-dbba0",
+    "storage_bucket": "horizon-dbba0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:187587171163:android:331d6a3f3c93c7d4c4c07e",
+        "android_client_info": {
+          "package_name": "com.vibecodingmind.horizon"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABskrNPPpkz74DYKFPMkohKyyrPrk-x80"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
