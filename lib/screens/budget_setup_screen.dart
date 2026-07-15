@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../theme/app_colors.dart';
 import '../utils/budget_calculator.dart';
+import '../utils/formatters.dart';
 
 class BudgetSetupScreen extends StatefulWidget {
   const BudgetSetupScreen({super.key});
@@ -44,10 +46,10 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
     'D',
   ];
 
-  double get _totalExpenses =>
-      _fixedExpenses.fold(0.0, (sum, item) => sum + (item['amount'] as double));
-  double get _totalDeductions =>
-      _deductions.fold(0.0, (sum, item) => sum + (item['amount'] as double));
+  double get _totalExpenses => _fixedExpenses.fold(
+      0.0, (sum, item) => sum + ((item['amount'] as num?)?.toDouble() ?? 0.0));
+  double get _totalDeductions => _deductions.fold(
+      0.0, (sum, item) => sum + ((item['amount'] as num?)?.toDouble() ?? 0.0));
   double get _netCommunalExpenses => _totalExpenses - _totalDeductions;
 
   double get _contributionA => _netCommunalExpenses * (_splitRatioA / 100);
@@ -102,7 +104,9 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                                     .toString() +
                                 e['name'].toString(),
                             'name': e['name'],
-                            'amount': e['amount'],
+                            // Firestore renvoie les entiers en int : cast sûr.
+                            'amount':
+                                (e['amount'] as num?)?.toDouble() ?? 0.0,
                           },
                         )
                         .toList();
@@ -118,7 +122,8 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                                     .toString() +
                                 e['name'].toString(),
                             'name': e['name'],
-                            'amount': e['amount'],
+                            'amount':
+                                (e['amount'] as num?)?.toDouble() ?? 0.0,
                           },
                         )
                         .toList();
@@ -130,7 +135,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
         }
       }
     } catch (e) {
-      print("Erreur de chargement du budget: $e");
+      debugPrint('Erreur de chargement du budget: $e');
     } finally {
       if (mounted) setState(() => _isInitializing = false);
     }
@@ -170,7 +175,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
     );
-    if (picked != null && picked != _nextPayDate) {
+    if (mounted && picked != null && picked != _nextPayDate) {
       setState(() {
         _nextPayDate = picked;
       });
@@ -201,8 +206,8 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
           .map((e) => {'name': e['name'], 'amount': e['amount']})
           .toList();
 
-      final incA = double.tryParse(_incomeAController.text) ?? 0;
-      final incB = double.tryParse(_incomeBController.text) ?? 0;
+      final incA = parseAmount(_incomeAController.text);
+      final incB = parseAmount(_incomeBController.text);
 
       await FirebaseFirestore.instance
           .collection('households')
@@ -232,6 +237,9 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
             'safe_to_spend_common': _netCommunalExpenses,
             'safe_to_spend_solo_A': safeSoloA,
             'safe_to_spend_solo_B': safeSoloB,
+            // Ratio utilisé par la Cloud Function pour la dette interne.
+            'split_ratio_user_A': _splitRatioA.round(),
+            'split_ratio_user_B': (100 - _splitRatioA).round(),
           });
 
       if (mounted) {
@@ -241,9 +249,12 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+      debugPrint('Erreur de sauvegarde du budget: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erreur lors de la sauvegarde.')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -261,7 +272,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white12),
       ),
@@ -321,7 +332,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             IconButton(
-              icon: const Icon(Icons.add_circle, color: Color(0xFF6C63FF)),
+              icon: const Icon(Icons.add_circle, color: AppColors.primary),
               onPressed: onAdd,
             ),
           ],
@@ -351,13 +362,13 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   flex: 1,
                   child: TextFormField(
                     initialValue: item['amount'].toString(),
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       labelText: 'Montant',
                       border: OutlineInputBorder(),
                     ),
                     onChanged: (val) {
-                      items[idx]['amount'] = double.tryParse(val) ?? 0.0;
+                      items[idx]['amount'] = parseAmount(val);
                       setState(() {}); // Minimal setState to update totals
                     },
                   ),
@@ -396,7 +407,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                       Expanded(
                         child: TextField(
                           controller: _incomeAController,
-                          keyboardType: TextInputType.number,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           decoration: const InputDecoration(
                             labelText: 'Revenu A',
                             border: OutlineInputBorder(),
@@ -407,7 +418,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                       Expanded(
                         child: TextField(
                           controller: _incomeBController,
-                          keyboardType: TextInputType.number,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           decoration: const InputDecoration(
                             labelText: 'Revenu B',
                             border: OutlineInputBorder(),
@@ -482,7 +493,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                     value: _splitRatioA,
                     min: 0,
                     max: 100,
-                    activeColor: const Color(0xFF6C63FF),
+                    activeColor: AppColors.primary,
                     onChanged: (val) => setState(() => _splitRatioA = val),
                   ),
                   const SizedBox(height: 140), // Espace pour la bottom bar
@@ -492,7 +503,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
       bottomSheet: Container(
         padding: const EdgeInsets.all(20),
         decoration: const BoxDecoration(
-          color: Color(0xFF1E1E1E),
+          color: AppColors.surface,
           border: Border(top: BorderSide(color: Colors.white12)),
         ),
         child: Column(
@@ -506,7 +517,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   style: TextStyle(color: Colors.grey),
                 ),
                 Text(
-                  '\$${_netCommunalExpenses.toStringAsFixed(2)}',
+                  formatCurrency(_netCommunalExpenses),
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
@@ -516,14 +527,14 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'A paie : \$${_contributionA.toStringAsFixed(2)}',
+                  'A paie : ${formatCurrency(_contributionA)}',
                   style: const TextStyle(
-                    color: Color(0xFF6C63FF),
+                    color: AppColors.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  'B paie : \$${_contributionB.toStringAsFixed(2)}',
+                  'B paie : ${formatCurrency(_contributionB)}',
                   style: const TextStyle(
                     color: Colors.orange,
                     fontWeight: FontWeight.bold,
@@ -537,7 +548,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
               child: ElevatedButton(
                 onPressed: _saveBudget,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6C63FF),
+                  backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: const Text(

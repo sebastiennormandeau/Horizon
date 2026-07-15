@@ -2,11 +2,21 @@ class BudgetCalculator {
   /// Calcule les mois "magiques" (ceux ayant plus de 2 ou 4 paies selon la fréquence)
   /// Retourne une liste des index de mois (1 = Janvier, 12 = Décembre)
   static List<int> calculateMagicMonths(String payFrequency, DateTime nextPayDate) {
-    if (payFrequency == 'Mensuel') return [];
+    // Seules les fréquences à période fixe produisent des mois magiques.
+    // Le garde-fou évite aussi une boucle infinie sur une fréquence inconnue.
+    if (payFrequency != 'Hebdomadaire' && payFrequency != 'Bi-hebdomadaire') {
+      return [];
+    }
 
     List<int> magicMonths = [];
-    DateTime currentDate = nextPayDate;
-    
+    // Normalisation en UTC : l'arithmétique en heure locale peut décaler
+    // la date d'un jour lors des changements d'heure (DST).
+    DateTime currentDate = DateTime.utc(
+      nextPayDate.year,
+      nextPayDate.month,
+      nextPayDate.day,
+    );
+
     int currentYear = nextPayDate.year;
     
     // Remonter à la première paie de l'année courante

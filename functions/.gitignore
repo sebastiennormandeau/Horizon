@@ -1,0 +1,10 @@
+# Sortie compilée TypeScript
+lib/
+
+# Dépendances
+node_modules/
+
+# Logs et fichiers locaux Firebase
+firebase-debug.log
+firebase-debug.*.log
+*.local

@@ -1,6 +1,6 @@
 # Conditions d'Utilisation (Terms of Service)
 
-Dernière mise à jour : [Date du jour]
+Dernière mise à jour : 15 juillet 2026
 
 Bienvenue sur **Horizon**. En créant un compte ou en utilisant notre application, vous acceptez d'être lié par les présentes Conditions d'utilisation. Si vous n'acceptez pas ces termes, vous ne devez pas utiliser notre application.
 

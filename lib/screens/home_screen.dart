@@ -1,10 +1,15 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:plaid_flutter/plaid_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../models/app_transaction.dart';
+import '../models/household.dart';
+import '../theme/app_colors.dart';
+import '../utils/formatters.dart';
 import 'budget_setup_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -24,8 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
 
     _successSubscription = PlaidLink.onSuccess.listen((event) async {
-      print("Plaid Success! Public Token: ${event.publicToken}");
-
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Synchronisation des transactions en cours...'),
@@ -33,16 +37,18 @@ class _HomeScreenState extends State<HomeScreen> {
       );
 
       try {
-        HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
+        final callable = FirebaseFunctions.instance.httpsCallable(
           'exchangePublicToken',
         );
         await callable.call({'public_token': event.publicToken});
 
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Banque connectée et synchronisée !')),
         );
       } catch (e) {
-        print("Erreur d'échange de token: $e");
+        debugPrint("Erreur d'échange de token: $e");
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Erreur lors de la synchronisation.')),
         );
@@ -50,11 +56,11 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     _eventSubscription = PlaidLink.onEvent.listen((event) {
-      print("Plaid Event: ${event.name}");
+      debugPrint('Plaid Event: ${event.name}');
     });
 
     _exitSubscription = PlaidLink.onExit.listen((event) {
-      print("Plaid Exit: ${event.error?.message ?? 'User cancelled'}");
+      debugPrint('Plaid Exit: ${event.error?.message ?? 'User cancelled'}');
     });
   }
 
@@ -68,28 +74,63 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _openPlaid() async {
     try {
-      HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
+      final callable = FirebaseFunctions.instance.httpsCallable(
         'generatePlaidLinkToken',
       );
       final result = await callable();
       final linkToken = result.data['link_token'];
 
-      LinkTokenConfiguration linkTokenConfiguration = LinkTokenConfiguration(
-        token: linkToken,
-      );
+      final linkTokenConfiguration = LinkTokenConfiguration(token: linkToken);
 
       PlaidLink.create(configuration: linkTokenConfiguration);
       PlaidLink.open();
     } catch (e) {
-      print("Erreur Plaid: $e");
+      debugPrint('Erreur Plaid: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Erreur lors de la connexion à Plaid.')),
       );
     }
   }
 
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+  }
+
+  void _assignTransaction(AppTransaction transaction, String bucket) {
+    final docRef = FirebaseFirestore.instance
+        .collection('transactions')
+        .doc(transaction.id);
+
+    docRef.update({'assigned_to_bucket': bucket}).catchError((e) {
+      debugPrint("Erreur d'assignation: $e");
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Assigné à ${bucket == 'Common' ? 'Commun' : 'Solo'}'),
+        action: SnackBarAction(
+          label: 'ANNULER',
+          onPressed: () {
+            // La Cloud Function annule l'effet sur les cagnottes.
+            docRef.update({'assigned_to_bucket': ''}).catchError((e) {
+              debugPrint("Erreur d'annulation: $e");
+            });
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: Text('Veuillez vous reconnecter')),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -99,7 +140,13 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: true,
         actions: [
           IconButton(
+            icon: const Icon(Icons.account_balance),
+            tooltip: 'Connecter ma banque',
+            onPressed: _openPlaid,
+          ),
+          IconButton(
             icon: const Icon(Icons.settings),
+            tooltip: 'Configuration du budget',
             onPressed: () {
               Navigator.push(
                 context,
@@ -107,108 +154,173 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Se déconnecter',
+            onPressed: _logout,
+          ),
         ],
       ),
-      body: Column(
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .snapshots(),
+        builder: (context, userSnapshot) {
+          if (!userSnapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final userData =
+              userSnapshot.data!.data() as Map<String, dynamic>? ?? {};
+          final householdId = userData['household_id'] as String?;
+
+          if (householdId == null) {
+            return const Center(child: Text('Foyer introuvable'));
+          }
+
+          return StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('households')
+                .doc(householdId)
+                .snapshots(),
+            builder: (context, householdSnapshot) {
+              if (!householdSnapshot.hasData ||
+                  !householdSnapshot.data!.exists) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final household = Household.fromSnapshot(
+                householdSnapshot.data!,
+              );
+
+              return Column(
+                children: [
+                  _buildBucketsOverview(household, user.uid),
+                  if (household.awaitingPartner && household.joinCode != null)
+                    _buildInviteCard(household.joinCode!),
+                  _buildDebtBanner(household),
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Transactions à neutraliser',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildTransactionSwipeList(household, user.uid),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildBucketsOverview(Household household, String uid) {
+    final isA = household.isUserA(uid);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Row(
         children: [
-          _buildBucketsOverview(),
-          const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Transactions à neutraliser',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
+          Expanded(
+            child: _buildBucketCard(
+              isA ? 'Solo A (moi)' : 'Solo A',
+              household.safeToSpendSoloA,
             ),
           ),
-          Expanded(child: _buildTransactionSwipeList()),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildBucketCard(
+              'Commun',
+              household.safeToSpendCommon,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildBucketCard(
+              !isA ? 'Solo B (moi)' : 'Solo B',
+              household.safeToSpendSoloB,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildBucketsOverview() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return const SizedBox(
-        height: 120,
-        child: Center(child: Text('Veuillez vous reconnecter')),
-      );
+  Widget _buildInviteCard(String joinCode) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.primary),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.group_add, color: AppColors.primary),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Invitez votre conjoint(e) avec ce code :',
+                style: TextStyle(fontSize: 13),
+              ),
+            ),
+            SelectableText(
+              joinCode,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDebtBanner(Household household) {
+    final debt = household.internalDebtBalance;
+    final String text;
+    if (debt.abs() < 0.01) {
+      text = 'Balance interne : équilibrée';
+    } else if (debt > 0) {
+      text = 'Balance interne : B doit ${formatCurrency(debt)} à A';
+    } else {
+      text = 'Balance interne : A doit ${formatCurrency(-debt)} à B';
     }
 
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .snapshots(),
-      builder: (context, userSnapshot) {
-        if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-          return const SizedBox(
-            height: 120,
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        final userData = userSnapshot.data!.data() as Map<String, dynamic>;
-        final householdId = userData['household_id'];
-
-        if (householdId == null) {
-          return const SizedBox(
-            height: 120,
-            child: Center(child: Text("Foyer introuvable")),
-          );
-        }
-
-        return StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('households')
-              .doc(householdId)
-              .snapshots(),
-          builder: (context, householdSnapshot) {
-            if (!householdSnapshot.hasData || !householdSnapshot.data!.exists) {
-              return const SizedBox(
-                height: 120,
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
-
-            final data = householdSnapshot.data!.data() as Map<String, dynamic>;
-
-            return Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildBucketCard(
-                      'Solo A',
-                      data['safe_to_spend_solo_A'] ?? 0,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildBucketCard(
-                      'Commun',
-                      data['safe_to_spend_common'] ?? 0,
-                      color: const Color(0xFF6C63FF),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildBucketCard(
-                      'Solo B',
-                      data['safe_to_spend_solo_B'] ?? 0,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white12),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.swap_horiz, color: Colors.grey, size: 20),
+            const SizedBox(width: 8),
+            Text(text, style: const TextStyle(color: Colors.grey)),
+          ],
+        ),
+      ),
     );
   }
 
@@ -216,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
       decoration: BoxDecoration(
-        color: color?.withValues(alpha: 0.2) ?? const Color(0xFF1E1E1E),
+        color: color?.withValues(alpha: 0.2) ?? AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: color ?? Colors.white12,
@@ -228,7 +340,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
           const SizedBox(height: 8),
           Text(
-            '\$${amount.toStringAsFixed(2)}',
+            formatCurrency(amount),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -240,18 +352,23 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTransactionSwipeList() {
+  Widget _buildTransactionSwipeList(Household household, String uid) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('transactions')
+          .where('household_id', isEqualTo: household.id)
           .where('assigned_to_bucket', isEqualTo: '')
           .orderBy('created_at', descending: true)
+          .limit(50)
           .snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.hasError)
+        if (snapshot.hasError) {
+          debugPrint('Erreur transactions: ${snapshot.error}');
           return const Center(child: Text('Erreur de chargement'));
-        if (!snapshot.hasData)
+        }
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
 
         final docs = snapshot.data!.docs;
 
@@ -270,7 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: const Icon(Icons.account_balance),
                   label: const Text('Connecter ma banque'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6C63FF),
+                    backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
                       vertical: 12,
@@ -282,46 +399,40 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
+        final soloBucket = household.soloBucketFor(uid);
+        final soloLabel = soloBucket == 'Solo_A' ? 'Solo A' : 'Solo B';
+
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: docs.length,
           itemBuilder: (context, index) {
-            final doc = docs[index];
-            final data = doc.data() as Map<String, dynamic>;
+            final transaction = AppTransaction.fromSnapshot(docs[index]);
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
               child: Dismissible(
-                key: Key(doc.id),
+                key: Key(transaction.id),
                 background: _buildSwipeBackground(
-                  Colors.orange,
+                  AppColors.solo,
                   Icons.person,
-                  'Solo',
+                  soloLabel,
                   Alignment.centerLeft,
                 ),
                 secondaryBackground: _buildSwipeBackground(
-                  const Color(0xFF6C63FF),
+                  AppColors.primary,
                   Icons.people,
                   'Commun',
                   Alignment.centerRight,
                 ),
                 onDismissed: (direction) {
-                  String bucket = direction == DismissDirection.startToEnd
-                      ? 'Solo_A'
+                  final bucket = direction == DismissDirection.startToEnd
+                      ? soloBucket
                       : 'Common';
-
-                  FirebaseFirestore.instance
-                      .collection('transactions')
-                      .doc(doc.id)
-                      .update({'assigned_to_bucket': bucket});
-
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('Assigné à $bucket')));
+                  _assignTransaction(transaction, bucket);
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E1E1E),
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.white12),
                   ),
@@ -331,7 +442,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       vertical: 12,
                     ),
                     title: Text(
-                      data['merchant_name'] ?? 'Inconnu',
+                      transaction.merchantName,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -339,7 +450,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     subtitle: const Text('Glissez gauche/droite'),
                     trailing: Text(
-                      '-\$${data['amount']}',
+                      '-${formatCurrency(transaction.amount)}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 20,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_markdown/flutter_markdown.dart';
+import '../theme/app_colors.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -30,7 +31,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -84,9 +85,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       if (mounted) Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Erreur d\'inscription')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Erreur d\'inscription')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -125,7 +128,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   Checkbox(
                     value: _acceptedTerms,
-                    activeColor: const Color(0xFF6C63FF),
+                    activeColor: AppColors.primary,
                     onChanged: (val) =>
                         setState(() => _acceptedTerms = val ?? false),
                   ),
@@ -141,7 +144,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: const Text(
                             "Conditions d'utilisation",
                             style: TextStyle(
-                              color: Color(0xFF6C63FF),
+                              color: AppColors.primary,
                               decoration: TextDecoration.underline,
                             ),
                           ),
@@ -155,7 +158,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: const Text(
                             "Politique de confidentialité",
                             style: TextStyle(
-                              color: Color(0xFF6C63FF),
+                              color: AppColors.primary,
                               decoration: TextDecoration.underline,
                             ),
                           ),
@@ -172,7 +175,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   : ElevatedButton(
                       onPressed: _register,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6C63FF),
+                        backgroundColor: AppColors.primary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: const Text(

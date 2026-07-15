@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+import '../theme/app_colors.dart';
 
 class HouseholdSetupScreen extends StatefulWidget {
   const HouseholdSetupScreen({super.key});
@@ -26,16 +29,37 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
         'createHousehold',
       );
       final result = await callable.call();
+      final joinCode = result.data['join_code'] as String? ?? '';
 
       if (mounted) {
         showDialog(
           context: context,
           barrierDismissible: false,
           builder: (context) => AlertDialog(
-            backgroundColor: const Color(0xFF1E1E1E),
+            backgroundColor: AppColors.surface,
             title: const Text("Foyer créé !"),
-            content: Text(
-              "Voici votre code pour inviter votre conjoint(e) :\n\n\${result.data['join_code']}\n\nNotez-le précieusement.",
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Voici votre code pour inviter votre conjoint(e) :",
+                ),
+                const SizedBox(height: 16),
+                SelectableText(
+                  joinCode,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 4,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Il restera visible sur votre tableau de bord tant que votre partenaire n'a pas rejoint le foyer.",
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
             ),
             actions: [
               TextButton(
@@ -46,7 +70,7 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
                 },
                 child: const Text(
                   "Continuer",
-                  style: TextStyle(color: Color(0xFF6C63FF)),
+                  style: TextStyle(color: AppColors.primary),
                 ),
               ),
             ],
@@ -54,10 +78,14 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
         );
       }
     } catch (e) {
-      if (mounted)
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Erreur: \$e')));
+      debugPrint('Erreur createHousehold: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erreur lors de la création du foyer.'),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -79,11 +107,19 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
       );
       await callable.call({'join_code': code});
       // Navigation is automatic via AuthRouter
+    } on FirebaseFunctionsException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Code invalide ou erreur.')),
+        );
+      }
     } catch (e) {
-      if (mounted)
+      debugPrint('Erreur joinHousehold: $e');
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Code invalide ou erreur.')),
         );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -110,7 +146,7 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(Icons.home, size: 64, color: Color(0xFF6C63FF)),
+                  const Icon(Icons.home, size: 64, color: AppColors.primary),
                   const SizedBox(height: 16),
                   const Text(
                     "Bienvenue sur Horizon",
@@ -127,7 +163,7 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
                   ElevatedButton(
                     onPressed: _createHousehold,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6C63FF),
+                      backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: const Text(
@@ -164,11 +200,11 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
                     onPressed: _joinHousehold,
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: const BorderSide(color: Color(0xFF6C63FF)),
+                      side: const BorderSide(color: AppColors.primary),
                     ),
                     child: const Text(
                       'Rejoindre',
-                      style: TextStyle(fontSize: 16, color: Color(0xFF6C63FF)),
+                      style: TextStyle(fontSize: 16, color: AppColors.primary),
                     ),
                   ),
                 ],

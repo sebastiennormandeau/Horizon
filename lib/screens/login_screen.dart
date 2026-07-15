@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'register_screen.dart';
+import '../theme/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,11 +31,42 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       // Navigation is handled by AuthRouter in main.dart
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Erreur de connexion')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Erreur de connexion')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _resetPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Entrez votre email pour réinitialiser le mot de passe.'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Email de réinitialisation envoyé. Vérifiez votre boîte de réception.'),
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? "Erreur lors de l'envoi.")),
+        );
+      }
     }
   }
 
@@ -87,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   : ElevatedButton(
                       onPressed: _login,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6C63FF),
+                        backgroundColor: AppColors.primary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: const Text(
@@ -98,7 +130,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: _resetPassword,
+                child: const Text(
+                  'Mot de passe oublié ?',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+              const SizedBox(height: 8),
               TextButton(
                 onPressed: () {
                   Navigator.push(

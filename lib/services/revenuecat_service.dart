@@ -2,14 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 class RevenueCatService {
+  // TODO: remplacer par les vraies clés RevenueCat avant le lancement.
   static const String _appleApiKey = 'appl_YOUR_API_KEY_HERE';
   static const String _googleApiKey = 'goog_YOUR_API_KEY_HERE';
 
   static Future<void> initialize() async {
     // RevenueCat n'est généralement pas initialisé sur le Web de cette manière.
-    if (kIsWeb) return; 
+    if (kIsWeb) return;
 
-    await Purchases.setLogLevel(LogLevel.debug);
+    await Purchases.setLogLevel(kDebugMode ? LogLevel.debug : LogLevel.info);
 
     PurchasesConfiguration? configuration;
     if (defaultTargetPlatform == TargetPlatform.android) {
@@ -35,7 +36,7 @@ class RevenueCatService {
       }
       return false;
     } catch (e) {
-      print("Erreur RevenueCat (isPremium): $e");
+      debugPrint("Erreur RevenueCat (isPremium): $e");
       return false;
     }
   }
@@ -49,7 +50,7 @@ class RevenueCatService {
         await Purchases.purchasePackage(offerings.current!.availablePackages.first);
       }
     } catch (e) {
-      print("Erreur d'achat RevenueCat: $e");
+      debugPrint("Erreur d'achat RevenueCat: $e");
     }
   }
 }

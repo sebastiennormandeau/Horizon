@@ -1,6 +1,6 @@
 # Politique de Confidentialité
 
-Dernière mise à jour : [Date du jour]
+Dernière mise à jour : 15 juillet 2026
 
 **Vibe Coding Mind** (le "Studio", "Nous") accorde une grande importance à la vie privée de ses utilisateurs. Cette Politique de confidentialité décrit la manière dont l'application **Horizon** collecte, utilise et protège vos données personnelles, en stricte conformité avec les normes nord-américaines, incluant la **Loi 25 du Québec**.
 

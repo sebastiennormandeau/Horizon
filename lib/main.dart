@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -10,19 +12,30 @@ import 'services/revenuecat_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/household_setup_screen.dart';
+import 'theme/app_colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await FirebaseAppCheck.instance.activate(
-    androidProvider: AndroidProvider.debug,
-    appleProvider: AppleProvider.debug,
+    // Les providers de production exigent la configuration Play Integrity /
+    // App Attest dans la console Firebase avant le lancement.
+    androidProvider: kDebugMode
+        ? AndroidProvider.debug
+        : AndroidProvider.playIntegrity,
+    appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+    // TODO: remplacer par une vraie clé reCAPTCHA v3 avant le lancement web.
     webProvider: ReCaptchaV3Provider('dummy-key-for-now'),
   );
 
   if (!kIsWeb) {
     FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    // Capture aussi les erreurs asynchrones hors du framework Flutter.
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
   }
 
   await RevenueCatService.initialize();
@@ -39,10 +52,14 @@ class HorizonApp extends StatelessWidget {
       title: 'Horizon',
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        primaryColor: const Color(0xFF6C63FF),
+        scaffoldBackgroundColor: AppColors.background,
+        primaryColor: AppColors.primary,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          brightness: Brightness.dark,
+        ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF1E1E1E),
+          backgroundColor: AppColors.surface,
           elevation: 0,
         ),
         fontFamily: 'Inter',
@@ -83,6 +100,14 @@ class AuthRouter extends StatelessWidget {
             if (userSnapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                 body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            if (userSnapshot.hasError) {
+              return const Scaffold(
+                body: Center(
+                  child: Text('Erreur de chargement du profil.'),
+                ),
               );
             }
 
