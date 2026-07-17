@@ -47,9 +47,9 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
   ];
 
   double get _totalExpenses => _fixedExpenses.fold(
-      0.0, (sum, item) => sum + ((item['amount'] as num?)?.toDouble() ?? 0.0));
+      0.0, (acc, item) => acc + ((item['amount'] as num?)?.toDouble() ?? 0.0));
   double get _totalDeductions => _deductions.fold(
-      0.0, (sum, item) => sum + ((item['amount'] as num?)?.toDouble() ?? 0.0));
+      0.0, (acc, item) => acc + ((item['amount'] as num?)?.toDouble() ?? 0.0));
   double get _netCommunalExpenses => _totalExpenses - _totalDeductions;
 
   double get _contributionA => _netCommunalExpenses * (_splitRatioA / 100);

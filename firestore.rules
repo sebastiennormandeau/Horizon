@@ -6,35 +6,53 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Application « bancaire » : le courriel doit être vérifié pour accéder
+    // aux données financières.
+    function isVerified() {
+      return isAuthenticated() && request.auth.token.email_verified == true;
+    }
+
     function userHouseholdId() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.household_id;
     }
 
     function isUserInHousehold(householdId) {
-      return isAuthenticated() && userHouseholdId() == householdId;
+      return isVerified() && userHouseholdId() == householdId;
     }
 
     match /users/{userId} {
+      // Lecture/écriture de son propre profil (autorisée avant la
+      // vérification du courriel : nécessaire à l'inscription).
+      // household_id, role et subscription_tier sont gérés exclusivement
+      // par les Cloud Functions.
       allow read: if isAuthenticated() && request.auth.uid == userId;
-      // household_id et role sont gérés exclusivement par les Cloud Functions.
       allow create: if isAuthenticated() && request.auth.uid == userId
-        && !request.resource.data.keys().hasAny(['household_id', 'role']);
+        && !request.resource.data.keys().hasAny(['household_id', 'role', 'subscription_tier']);
       allow update: if isAuthenticated() && request.auth.uid == userId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['household_id', 'role']);
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(['household_id', 'role', 'subscription_tier']);
       allow delete: if false;
     }
 
     match /households/{householdId} {
       allow read: if isUserInHousehold(householdId);
-      // La création et l'adhésion passent par les Cloud Functions (createHousehold / joinHousehold).
-      // Les membres peuvent ajuster les cagnottes/budget, mais pas l'identité du foyer.
+      // La création, l'adhésion et l'abonnement passent par les Cloud
+      // Functions. Les membres peuvent ajuster les cagnottes/budget et leur
+      // prénom affiché, mais pas l'identité ni le statut du foyer.
       allow update: if isUserInHousehold(householdId)
         && !request.resource.data.diff(resource.data).affectedKeys()
-             .hasAny(['join_code', 'user_A_id', 'user_B_id', 'created_by', 'created_at']);
+             .hasAny(['join_code', 'user_A_id', 'user_B_id', 'created_by',
+                      'created_at', 'subscription_tier']);
       allow create, delete: if false;
 
       match /monthly_budgets/{budgetId} {
         allow read, write: if isUserInHousehold(householdId);
+      }
+
+      // Règlements de dette : écrits uniquement par la fonction settleDebt.
+      match /settlements/{settlementId} {
+        allow read: if isUserInHousehold(householdId);
+        allow write: if false;
       }
     }
 
@@ -43,11 +61,16 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Compteurs du rate limiting : serveur uniquement.
+    match /rate_limits/{limitId} {
+      allow read, write: if false;
+    }
+
     match /transactions/{transactionId} {
-      allow read: if isAuthenticated()
+      allow read: if isVerified()
         && resource.data.household_id == userHouseholdId();
       // Seule l'assignation de bucket est modifiable côté client.
-      allow update: if isAuthenticated()
+      allow update: if isVerified()
         && resource.data.household_id == userHouseholdId()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assigned_to_bucket'])
         && request.resource.data.assigned_to_bucket in ['', 'Solo_A', 'Solo_B', 'Common'];

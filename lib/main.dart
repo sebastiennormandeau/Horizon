@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -7,26 +5,36 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'config/app_env.dart';
 import 'firebase_options.dart';
+import 'firebase_options_prod.dart' as prod_options;
 import 'services/revenuecat_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/household_setup_screen.dart';
+import 'screens/verify_email_screen.dart';
 import 'theme/app_colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Séparation des environnements : `--dart-define=APP_ENV=prod` pointe vers
+  // le projet Firebase de production (voir PRODUCTION_CHECKLIST.md).
+  final firebaseOptions = AppEnv.isProd
+      ? prod_options.DefaultFirebaseOptions.currentPlatform
+      : DefaultFirebaseOptions.currentPlatform;
+  await Firebase.initializeApp(options: firebaseOptions);
 
   await FirebaseAppCheck.instance.activate(
     // Les providers de production exigent la configuration Play Integrity /
     // App Attest dans la console Firebase avant le lancement.
-    androidProvider: kDebugMode
-        ? AndroidProvider.debug
-        : AndroidProvider.playIntegrity,
-    appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
-    // TODO: remplacer par une vraie clé reCAPTCHA v3 avant le lancement web.
-    webProvider: ReCaptchaV3Provider('dummy-key-for-now'),
+    providerAndroid: kDebugMode
+        ? const AndroidDebugProvider()
+        : const AndroidPlayIntegrityProvider(),
+    providerApple: kDebugMode
+        ? const AppleDebugProvider()
+        : const AppleAppAttestProvider(),
+    providerWeb: ReCaptchaV3Provider(AppEnv.recaptchaSiteKey),
   );
 
   if (!kIsWeb) {
@@ -39,6 +47,16 @@ void main() async {
   }
 
   await RevenueCatService.initialize();
+
+  // Garde l'identité RevenueCat alignée sur l'utilisateur Firebase : le
+  // webhook serveur retrouve l'abonné via app_user_id == uid.
+  FirebaseAuth.instance.authStateChanges().listen((user) {
+    if (user != null) {
+      RevenueCatService.logIn(user.uid);
+    } else {
+      RevenueCatService.logOut();
+    }
+  });
 
   runApp(const HorizonApp());
 }
@@ -77,8 +95,11 @@ class AuthRouter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // userChanges() (et non authStateChanges) : émet aussi lors du
+    // rafraîchissement du jeton, ce qui permet de sortir de l'écran de
+    // vérification dès que le courriel est confirmé.
     return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
+      stream: FirebaseAuth.instance.userChanges(),
       builder: (context, authSnapshot) {
         if (authSnapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -89,6 +110,12 @@ class AuthRouter extends StatelessWidget {
         final user = authSnapshot.data;
         if (user == null) {
           return const LoginScreen();
+        }
+
+        // Porte de sécurité : courriel vérifié obligatoire (les règles
+        // Firestore l'exigent aussi côté serveur).
+        if (user.email != null && !user.emailVerified) {
+          return const VerifyEmailScreen();
         }
 
         return StreamBuilder<DocumentSnapshot>(

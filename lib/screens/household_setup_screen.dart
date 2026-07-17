@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../theme/app_colors.dart';
+import '../utils/validators.dart';
 
 class HouseholdSetupScreen extends StatefulWidget {
   const HouseholdSetupScreen({super.key});
@@ -93,9 +93,10 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
 
   Future<void> _joinHousehold() async {
     final code = _codeController.text.trim().toUpperCase();
-    if (code.length != 6) {
+    final codeError = validateJoinCode(code);
+    if (codeError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Le code doit contenir 6 caractères.')),
+        SnackBar(content: Text(codeError)),
       );
       return;
     }

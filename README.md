@@ -23,15 +23,38 @@ deux partenaires, calculée au pro-rata configuré (ex. 60/40 selon les revenus)
 
 ### Flux principal
 
-1. Inscription → création ou adhésion à un **Foyer** via un code à 6 caractères
+1. Inscription (prénom + courriel **vérifié obligatoirement**) → création ou
+   adhésion à un **Foyer** via un code à 6 caractères
    (Cloud Functions `createHousehold` / `joinHousehold`).
 2. Connexion bancaire Plaid (`generatePlaidLinkToken` → `exchangePublicToken`) ;
    les `access_token` restent côté serveur (`bank_connections`, interdit aux clients).
-3. Les transactions arrivent par `/transactions/sync` (webhook Plaid) et sont
-   rangées par swipe ; le trigger `onTransactionAssigned` met à jour les
-   cagnottes et la dette interne (avec support de l'annulation).
+3. Les transactions arrivent par `/transactions/sync` (webhook Plaid **signé
+   JWT**) et sont rangées par swipe ; le trigger `onTransactionAssigned` met à
+   jour les cagnottes et la dette interne (avec support de l'annulation et de
+   la re-catégorisation depuis l'Historique).
 4. L'écran Budget configure revenus, dépenses fixes, ratio de partage et le
-   calendrier des **Mois Magiques** (mois à paie supplémentaire).
+   calendrier des **Mois Magiques** ; le rollover mensuel (`monthlyRollover`)
+   reconduit le budget le 1ᵉʳ de chaque mois.
+5. La dette interne se règle d'un bouton (« RÉGLER ») ; les règlements sont
+   archivés dans `households/{id}/settlements`.
+6. Monétisation : plan gratuit (1 compte bancaire, 30 jours d'historique) vs
+   **Premium** via RevenueCat ; le webhook `revenueCatWebhook` synchronise le
+   statut serveur.
+
+### Sécurité
+
+- Courriel vérifié exigé par l'app, les Cloud Functions **et** les règles Firestore
+- Rate limiting par utilisateur sur toutes les fonctions appelables
+- Validation des entrées client et serveur
+- App Check (anti-bot) — enforcement activable via `ENFORCE_APP_CHECK`
+- Webhooks Plaid signés (JWT ES256) et RevenueCat authentifiés
+- Suppression de compte et export de données (Loi 25) dans les Réglages
+
+### Environnements
+
+- **Dev** : projet `horizon-dbba0`, Plaid sandbox (par défaut)
+- **Prod** : `flutter build --dart-define=APP_ENV=prod` +
+  `lib/firebase_options_prod.dart` (voir [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md))
 
 ## Développement
 
@@ -52,8 +75,6 @@ Déploiement des règles/index/fonctions : `firebase deploy --only firestore,fun
 
 ## Avant la mise en production
 
-- [ ] Passer Plaid de `sandbox` à `production` (`functions/src/index.ts`)
-- [ ] Vérifier la signature JWT des webhooks Plaid
-- [ ] Renseigner les clés RevenueCat (`lib/services/revenuecat_service.dart`)
-- [ ] Configurer Play Integrity / App Attest et une vraie clé reCAPTCHA (App Check)
-- [ ] Dater et faire valider les documents légaux (`assets/legal/`)
+Voir **[PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md)** : la liste complète
+et à jour (paiements réels, SSL/domaine, environnements séparés, sauvegardes,
+App Check, Plaid production, conformité Loi 25).

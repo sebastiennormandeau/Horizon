@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'register_screen.dart';
 import '../theme/app_colors.dart';
+import '../utils/validators.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,6 +12,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
@@ -23,11 +25,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
     setState(() => _isLoading = true);
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+        password: _passwordController.text,
       );
       // Navigation is handled by AuthRouter in main.dart
     } on FirebaseAuthException catch (e) {
@@ -43,10 +47,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _resetPassword() async {
     final email = _emailController.text.trim();
-    if (email.isEmpty) {
+    final emailError = validateEmail(email);
+    if (emailError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Entrez votre email pour réinitialiser le mot de passe.'),
+          content: Text(
+            'Entrez une adresse courriel valide pour réinitialiser le mot de passe.',
+          ),
         ),
       );
       return;
@@ -76,7 +83,9 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
-          child: Column(
+          child: Form(
+            key: _formKey,
+            child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -96,22 +105,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 48),
-              TextField(
+              TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(
                   labelText: 'Email',
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+                validator: validateEmail,
               ),
               const SizedBox(height: 16),
-              TextField(
+              TextFormField(
                 controller: _passwordController,
                 decoration: const InputDecoration(
                   labelText: 'Mot de passe',
                   border: OutlineInputBorder(),
                 ),
                 obscureText: true,
+                validator: (v) => (v == null || v.isEmpty)
+                    ? 'Veuillez entrer votre mot de passe.'
+                    : null,
               ),
               const SizedBox(height: 24),
               _isLoading
@@ -149,6 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: const Text("Créer un compte"),
               ),
             ],
+            ),
           ),
         ),
       ),
