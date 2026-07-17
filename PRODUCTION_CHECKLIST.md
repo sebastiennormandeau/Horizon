@@ -1,6 +1,6 @@
 # Horizon — Checklist de mise en production
 
-> Dernière mise à jour : 16 juillet 2026
+> Dernière mise à jour : 17 juillet 2026
 >
 > Légende : ✅ fait dans le code (rien à faire) · 🔧 action manuelle requise
 > (console/compte) · 🧪 à tester une fois l'infrastructure en place
@@ -194,6 +194,27 @@ réplique aussi). Deux protections à activer :
    À refaire une fois par trimestre.
 
 ---
+
+## 7 bis. Coach budgétaire IA 🔧
+
+Le code est prêt (fonction `generateCoachAdvice`, écran Bilan). À faire :
+
+1. **Clé API Anthropic** : créer un compte sur https://console.anthropic.com,
+   générer une clé, puis remplacer la valeur temporaire du secret :
+   ```
+   firebase functions:secrets:set ANTHROPIC_API_KEY --project horizon-dbba0
+   firebase deploy --only functions:generateCoachAdvice --project horizon-dbba0
+   ```
+   (tant que la valeur est `REPLACE_ME`, le bouton renvoie « coach non configuré »)
+2. **En production** : dans `functions/.env.<projet-prod>`, mettre
+   `AI_COACH_REQUIRE_PREMIUM=true` — le coach devient un argument Premium.
+   En dev (`functions/.env`), il est ouvert à tous pour tester.
+3. **Coûts** : ~3 ¢ par bilan (Claude Opus 4.8, ~2 000 tokens d'entrée /
+   800 de sortie), limité à 5 générations/jour/utilisateur par le rate
+   limiting. Surveiller la consommation sur console.anthropic.com.
+4. **Confidentialité** : seuls des agrégats anonymisés sont transmis
+   (documenté dans la politique de confidentialité, §3). Ne jamais élargir
+   la charge utile sans mettre à jour la politique.
 
 ## 8. Conformité (Loi 25) ✅🔧
 

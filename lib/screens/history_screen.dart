@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/app_transaction.dart';
 import '../models/household.dart';
 import '../theme/app_colors.dart';
+import '../utils/categories.dart';
 import '../utils/formatters.dart';
 import '../widgets/household_loader.dart';
 import 'paywall_screen.dart';
@@ -20,6 +21,7 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   String _filter = 'all';
+  String _categoryFilter = 'all';
 
   @override
   Widget build(BuildContext context) {
@@ -141,7 +143,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
               .toList();
         }
 
-        if (transactions.isEmpty) {
+        // Catégories réellement présentes (avant filtre de catégorie).
+        final presentCategories =
+            transactions.map((t) => t.category).toSet().toList()..sort();
+
+        if (_categoryFilter != 'all') {
+          transactions = transactions
+              .where((t) => t.category == _categoryFilter)
+              .toList();
+        }
+
+        if (transactions.isEmpty && _categoryFilter == 'all') {
           return const Center(
             child: Text(
               'Aucune transaction catégorisée.',
@@ -155,6 +167,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
         return Column(
           children: [
+            if (presentCategories.length > 1)
+              _buildCategoryChips(presentCategories),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
@@ -188,9 +202,79 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  Widget _buildCategoryChips(List<String> presentCategories) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                label: const Text('Toutes catégories'),
+                selected: _categoryFilter == 'all',
+                selectedColor: AppColors.primary.withValues(alpha: 0.3),
+                onSelected: (_) => setState(() => _categoryFilter = 'all'),
+              ),
+            ),
+            ...presentCategories.map((key) {
+              final cat = categoryOf(key);
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  avatar: Icon(cat.icon, size: 16, color: cat.color),
+                  label: Text(cat.label, style: const TextStyle(fontSize: 12)),
+                  selected: _categoryFilter == key,
+                  selectedColor: cat.color.withValues(alpha: 0.3),
+                  onSelected: (_) => setState(() => _categoryFilter = key),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _changeCategory(AppTransaction t) async {
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Changer la catégorie'),
+        children: kSelectableCategories.map((cat) {
+          return SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, cat.key),
+            child: Row(
+              children: [
+                Icon(cat.icon, size: 20, color: cat.color),
+                const SizedBox(width: 12),
+                Text(cat.label),
+                if (cat.key == t.category) ...[
+                  const Spacer(),
+                  const Icon(Icons.check, size: 18, color: AppColors.primary),
+                ],
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+
+    if (selected == null || selected == t.category || !mounted) return;
+    FirebaseFirestore.instance
+        .collection('transactions')
+        .doc(t.id)
+        .update({'category': selected}).catchError((e) {
+      debugPrint('Erreur de changement de catégorie: $e');
+    });
+  }
+
   Widget _buildTransactionTile(AppTransaction t, Household household) {
     final isCommon = t.assignedToBucket == 'Common';
     final chipColor = isCommon ? AppColors.primary : AppColors.solo;
+    final cat = categoryOf(t.category);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -220,11 +304,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   style: TextStyle(fontSize: 12, color: chipColor),
                 ),
               ),
+              const SizedBox(width: 6),
+              Icon(cat.icon, size: 14, color: cat.color),
+              const SizedBox(width: 2),
+              Flexible(
+                child: Text(
+                  cat.label,
+                  style: TextStyle(fontSize: 11, color: cat.color),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
               if (t.date != null) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Text(
                   t.date!,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
                 ),
               ],
             ],
@@ -242,7 +336,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, color: Colors.grey),
                 color: AppColors.surface,
-                onSelected: (bucket) => _recategorize(t, bucket, household),
+                onSelected: (value) {
+                  if (value == '__category__') {
+                    _changeCategory(t);
+                  } else {
+                    _recategorize(t, value, household);
+                  }
+                },
                 itemBuilder: (context) => [
                   for (final bucket in const ['Solo_A', 'Common', 'Solo_B'])
                     if (bucket != t.assignedToBucket)
@@ -252,6 +352,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           'Déplacer vers ${household.bucketLabel(bucket)}',
                         ),
                       ),
+                  const PopupMenuItem(
+                    value: '__category__',
+                    child: Text('Changer la catégorie'),
+                  ),
                   const PopupMenuItem(
                     value: '',
                     child: Text('Renvoyer dans « À trier »'),

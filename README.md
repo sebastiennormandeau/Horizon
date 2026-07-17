@@ -40,6 +40,16 @@ deux partenaires, calculée au pro-rata configuré (ex. 60/40 selon les revenus)
 6. Monétisation : plan gratuit (1 compte bancaire, 30 jours d'historique) vs
    **Premium** via RevenueCat ; le webhook `revenueCatWebhook` synchronise le
    statut serveur.
+7. Chaque transaction est **catégorisée** (catégories Plaid, corrigeables) ;
+   l'app avertit **avant** qu'une assignation fasse passer une cagnotte dans
+   le négatif (seuil d'alerte configurable).
+8. L'écran **Bilan** agrège les dépenses par catégorie (hebdo/mensuel,
+   moteur déterministe dans `reports.ts`), détecte les **dépenses
+   récurrentes** (ajout au budget en un tap) et suit les **enveloppes par
+   catégorie**.
+9. Le **coach budgétaire IA** (`coach.ts`, API Claude) rédige observations et
+   suggestions à partir des agrégats anonymisés — jamais de données bancaires
+   brutes. Les chiffres viennent toujours du moteur déterministe.
 
 ### Sécurité
 

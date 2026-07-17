@@ -54,6 +54,12 @@ service cloud.firestore {
         allow read: if isUserInHousehold(householdId);
         allow write: if false;
       }
+
+      // Bilans : écrits uniquement par le moteur de bilans (serveur).
+      match /reports/{reportId} {
+        allow read: if isUserInHousehold(householdId);
+        allow write: if false;
+      }
     }
 
     // Contient les access_token Plaid : accessible uniquement via l'Admin SDK.
@@ -69,11 +75,15 @@ service cloud.firestore {
     match /transactions/{transactionId} {
       allow read: if isVerified()
         && resource.data.household_id == userHouseholdId();
-      // Seule l'assignation de bucket est modifiable côté client.
+      // Côté client : seuls le bucket et la catégorie sont modifiables.
       allow update: if isVerified()
         && resource.data.household_id == userHouseholdId()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assigned_to_bucket'])
-        && request.resource.data.assigned_to_bucket in ['', 'Solo_A', 'Solo_B', 'Common'];
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['assigned_to_bucket', 'category'])
+        && request.resource.data.assigned_to_bucket in ['', 'Solo_A', 'Solo_B', 'Common']
+        && (!('category' in request.resource.data)
+            || (request.resource.data.category is string
+                && request.resource.data.category.size() <= 40));
       allow create, delete: if false;
     }
   }

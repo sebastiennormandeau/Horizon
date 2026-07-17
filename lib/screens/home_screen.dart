@@ -7,8 +7,10 @@ import 'package:plaid_flutter/plaid_flutter.dart';
 import '../models/app_transaction.dart';
 import '../models/household.dart';
 import '../theme/app_colors.dart';
+import '../utils/categories.dart';
 import '../utils/formatters.dart';
 import '../widgets/household_loader.dart';
+import 'bilan_screen.dart';
 import 'budget_setup_screen.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
@@ -131,6 +133,49 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Avertit AVANT d'assigner si la dépense ferait passer la cagnotte
+  /// dans le négatif. Retourne true si l'utilisateur confirme.
+  Future<bool> _confirmIfGoesNegative(
+    AppTransaction transaction,
+    String bucket,
+    Household household,
+  ) async {
+    final after = household.bucketBalance(bucket) - transaction.amount;
+    if (after >= 0) return true;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Row(
+          children: const [
+            Icon(Icons.warning_amber, color: Colors.orange),
+            SizedBox(width: 8),
+            Expanded(child: Text('Attention au négatif')),
+          ],
+        ),
+        content: Text(
+          'Assigner « ${transaction.merchantName} » '
+          '(${formatCurrency(transaction.amount)}) mettra la cagnotte '
+          '${household.bucketLabel(bucket)} à ${formatCurrency(after)}.\n\n'
+          'Continuer quand même ?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: const Text('Assigner quand même'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
   Future<void> _settleDebt(Household household) async {
     final debt = household.internalDebtBalance;
     final debtor = debt > 0 ? household.nameB : household.nameA;
@@ -197,6 +242,16 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: true,
         actions: [
           IconButton(
+            icon: const Icon(Icons.insights),
+            tooltip: 'Bilan',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const BilanScreen()),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.history),
             tooltip: 'Historique',
             onPressed: () {
@@ -233,6 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
           return Column(
             children: [
               _buildBucketsOverview(household, uid),
+              _buildAlertBanner(household),
               if (household.awaitingPartner && household.joinCode != null)
                 _buildInviteCard(household.joinCode!),
               _buildDebtBanner(household),
@@ -269,6 +325,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: _buildBucketCard(
               isA ? '${household.nameA} (moi)' : household.nameA,
               household.safeToSpendSoloA,
+              alert: household.alertLevel(household.safeToSpendSoloA),
             ),
           ),
           const SizedBox(width: 8),
@@ -277,6 +334,7 @@ class _HomeScreenState extends State<HomeScreen> {
               'Commun',
               household.safeToSpendCommon,
               color: AppColors.primary,
+              alert: household.alertLevel(household.safeToSpendCommon),
             ),
           ),
           const SizedBox(width: 8),
@@ -284,9 +342,52 @@ class _HomeScreenState extends State<HomeScreen> {
             child: _buildBucketCard(
               !isA ? '${household.nameB} (moi)' : household.nameB,
               household.safeToSpendSoloB,
+              alert: household.alertLevel(household.safeToSpendSoloB),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Bannière d'avertissement quand une cagnotte est basse ou dans le négatif.
+  Widget _buildAlertBanner(Household household) {
+    final levels = [
+      household.alertLevel(household.safeToSpendSoloA),
+      household.alertLevel(household.safeToSpendCommon),
+      household.alertLevel(household.safeToSpendSoloB),
+    ];
+    final worst = levels.reduce((a, b) => a > b ? a : b);
+    if (worst == 0) return const SizedBox.shrink();
+
+    final isNegative = worst == 2;
+    final color = isNegative ? Colors.redAccent : Colors.orange;
+    final text = isNegative
+        ? 'Une cagnotte est dans le négatif — consultez le Bilan pour ajuster.'
+        : 'Une cagnotte approche de zéro (seuil : '
+            '${formatCurrency(household.alertThreshold)}).';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color),
+        ),
+        child: Row(
+          children: [
+            Icon(isNegative ? Icons.error : Icons.warning_amber,
+                color: color, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(text,
+                  style: TextStyle(color: color, fontSize: 13)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -374,15 +475,23 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBucketCard(String title, num amount, {Color? color}) {
+  Widget _buildBucketCard(String title, num amount,
+      {Color? color, int alert = 0}) {
+    // Le niveau d'alerte prime sur la couleur de base de la carte.
+    final Color? alertColor =
+        alert == 2 ? Colors.redAccent : (alert == 1 ? Colors.orange : null);
+    final borderColor = alertColor ?? color ?? Colors.white12;
+    final amountColor = alertColor ?? color ?? Colors.white;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
       decoration: BoxDecoration(
-        color: color?.withValues(alpha: 0.2) ?? AppColors.surface,
+        color: (alertColor ?? color)?.withValues(alpha: 0.15) ??
+            AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: color ?? Colors.white12,
-          width: color != null ? 1.5 : 1.0,
+          color: borderColor,
+          width: (alertColor ?? color) != null ? 1.5 : 1.0,
         ),
       ),
       child: Column(
@@ -399,7 +508,7 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: color ?? Colors.white,
+              color: amountColor,
             ),
           ),
         ],
@@ -479,6 +588,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   'Commun',
                   Alignment.centerRight,
                 ),
+                confirmDismiss: (direction) {
+                  final bucket = direction == DismissDirection.startToEnd
+                      ? soloBucket
+                      : 'Common';
+                  return _confirmIfGoesNegative(
+                    transaction,
+                    bucket,
+                    household,
+                  );
+                },
                 onDismissed: (direction) {
                   final bucket = direction == DismissDirection.startToEnd
                       ? soloBucket
@@ -503,7 +622,26 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontSize: 18,
                       ),
                     ),
-                    subtitle: const Text('Glissez gauche/droite'),
+                    subtitle: Builder(builder: (context) {
+                      final cat = categoryOf(transaction.category);
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(cat.icon, size: 14, color: cat.color),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              cat.label,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: cat.color,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
                     trailing: Text(
                       '-${formatCurrency(transaction.amount)}',
                       style: const TextStyle(

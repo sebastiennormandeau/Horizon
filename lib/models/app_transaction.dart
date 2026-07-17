@@ -9,6 +9,7 @@ class AppTransaction {
   final String? paidByUserId;
   final DateTime? createdAt;
   final String? date;
+  final String category;
 
   const AppTransaction({
     required this.id,
@@ -18,6 +19,7 @@ class AppTransaction {
     required this.paidByUserId,
     required this.createdAt,
     required this.date,
+    required this.category,
   });
 
   factory AppTransaction.fromSnapshot(DocumentSnapshot snapshot) {
@@ -30,6 +32,7 @@ class AppTransaction {
       paidByUserId: data['paid_by_user_id'] as String?,
       createdAt: (data['created_at'] as Timestamp?)?.toDate(),
       date: data['date'] as String?,
+      category: (data['category'] as String?) ?? 'OTHER',
     );
   }
 }

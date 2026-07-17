@@ -18,3 +18,5 @@ export { onTransactionAssigned, settleDebt } from "./ledger";
 export { createHousehold, joinHousehold } from "./households";
 export { deleteAccount, exportMyData } from "./account";
 export { revenueCatWebhook, monthlyRollover } from "./billing";
+export { generateReport, addRecurringToBudget, weeklyReports } from "./reports";
+export { generateCoachAdvice } from "./coach";

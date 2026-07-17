@@ -1,6 +1,6 @@
 # Politique de Confidentialité
 
-Dernière mise à jour : 15 juillet 2026
+Dernière mise à jour : 17 juillet 2026
 
 **Vibe Coding Mind** (le "Studio", "Nous") accorde une grande importance à la vie privée de ses utilisateurs. Cette Politique de confidentialité décrit la manière dont l'application **Horizon** collecte, utilise et protège vos données personnelles, en stricte conformité avec les normes nord-américaines, incluant la **Loi 25 du Québec**.
 
@@ -36,6 +36,7 @@ Pour fonctionner, l'application s'appuie sur l'infrastructure de tiers certifié
 - **Google Firebase (Firestore, Auth, Functions)** : Hébergement principal des données dans le cloud.
 - **Plaid Inc.** : Agrégateur bancaire sécurisé. En liant votre banque, vous acceptez également la politique de confidentialité de Plaid (disponible sur plaid.com/legal).
 - **RevenueCat** : Gestion des abonnements et des achats intégrés.
+- **Anthropic** (fonction « Coach budgétaire IA », sur demande uniquement) : lorsque vous demandez la génération de conseils, des **agrégats anonymisés** de votre bilan (totaux par catégorie, tendances, noms de commerçants, soldes de cagnottes) sont transmis à l'API Claude d'Anthropic pour rédiger les suggestions. **Aucun identifiant personnel, aucune donnée d'authentification et aucune transaction bancaire brute ne sont transmis.** Les conseils générés sont fournis à titre informatif seulement et **ne constituent pas un conseil financier professionnel**.
 
 ## 4. Sécurité et Rétention (Conformité Loi 25)
 

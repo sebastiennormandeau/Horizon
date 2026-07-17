@@ -120,6 +120,10 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
         assigned_to_bucket: "",
         status: "Posted",
         date: t.date ?? null,
+        // Catégorisation Plaid (personal_finance_category), affinable par
+        // l'utilisateur côté client.
+        category: t.personal_finance_category?.primary ?? "OTHER",
+        category_detailed: t.personal_finance_category?.detailed ?? null,
         plaid_transaction_id: t.transaction_id,
         created_at: admin.firestore.FieldValue.serverTimestamp(),
       });
@@ -139,6 +143,8 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
         amount: t.amount,
         merchant_name: t.merchant_name || t.name || "Inconnu",
         date: t.date ?? null,
+        category: t.personal_finance_category?.primary ?? "OTHER",
+        category_detailed: t.personal_finance_category?.detailed ?? null,
       });
     } else {
       // Déjà comptabilisée dans les cagnottes : on ne touche pas au montant.

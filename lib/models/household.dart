@@ -15,6 +15,7 @@ class Household {
   final int splitRatioUserB;
   final String? joinCode;
   final String subscriptionTier;
+  final double alertThreshold;
 
   const Household({
     required this.id,
@@ -30,6 +31,7 @@ class Household {
     required this.splitRatioUserB,
     required this.joinCode,
     required this.subscriptionTier,
+    required this.alertThreshold,
   });
 
   factory Household.fromSnapshot(DocumentSnapshot snapshot) {
@@ -51,7 +53,29 @@ class Household {
       splitRatioUserB: (data['split_ratio_user_B'] as num?)?.toInt() ?? 50,
       joinCode: data['join_code'] as String?,
       subscriptionTier: (data['subscription_tier'] as String?) ?? 'free',
+      alertThreshold: (data['alert_threshold'] as num?)?.toDouble() ?? 100.0,
     );
+  }
+
+  /// État d'alerte d'une cagnotte : 0 = ok, 1 = sous le seuil, 2 = négatif.
+  int alertLevel(double balance) {
+    if (balance < 0) return 2;
+    if (balance < alertThreshold) return 1;
+    return 0;
+  }
+
+  /// Solde actuel d'un bucket.
+  double bucketBalance(String bucket) {
+    switch (bucket) {
+      case 'Solo_A':
+        return safeToSpendSoloA;
+      case 'Solo_B':
+        return safeToSpendSoloB;
+      case 'Common':
+        return safeToSpendCommon;
+      default:
+        return 0;
+    }
   }
 
   bool isUserA(String uid) => uid == userAId;

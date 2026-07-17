@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_colors.dart';
 import '../utils/budget_calculator.dart';
+import '../utils/categories.dart';
 import '../utils/formatters.dart';
 
 class BudgetSetupScreen extends StatefulWidget {
@@ -21,8 +22,10 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
 
   List<Map<String, dynamic>> _fixedExpenses = [];
   List<Map<String, dynamic>> _deductions = [];
+  List<Map<String, dynamic>> _categoryBudgets = [];
 
   double _splitRatioA = 60.0;
+  final _alertThresholdController = TextEditingController(text: '100');
   bool _isLoading = false;
   bool _isInitializing = true;
 
@@ -129,8 +132,37 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                         .toList();
               }
 
+              if (data['category_budgets'] != null) {
+                _categoryBudgets =
+                    List<Map<String, dynamic>>.from(data['category_budgets'])
+                        .map(
+                          (e) => {
+                            'id': DateTime.now()
+                                    .microsecondsSinceEpoch
+                                    .toString() +
+                                e['category'].toString(),
+                            'category': e['category'] ?? 'OTHER',
+                            'amount':
+                                (e['amount'] as num?)?.toDouble() ?? 0.0,
+                          },
+                        )
+                        .toList();
+              }
+
               _splitRatioA = (data['split_ratio_A'] ?? 60).toDouble();
             });
+          }
+
+          // Seuil d'alerte des cagnottes (document du foyer).
+          final householdDoc = await FirebaseFirestore.instance
+              .collection('households')
+              .doc(householdId)
+              .get();
+          final threshold =
+              (householdDoc.data()?['alert_threshold'] as num?)?.toDouble();
+          if (threshold != null && mounted) {
+            setState(() =>
+                _alertThresholdController.text = threshold.toStringAsFixed(0));
           }
         }
       }
@@ -145,7 +177,18 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
   void dispose() {
     _incomeAController.dispose();
     _incomeBController.dispose();
+    _alertThresholdController.dispose();
     super.dispose();
+  }
+
+  void _addCategoryBudget() {
+    setState(() {
+      _categoryBudgets.add({
+        'id': DateTime.now().millisecondsSinceEpoch.toString(),
+        'category': 'FOOD_AND_DRINK',
+        'amount': 0.0,
+      });
+    });
   }
 
   void _addExpense() {
@@ -221,6 +264,12 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
             'next_pay_date': _nextPayDate?.toIso8601String(),
             'fixed_expenses': cleanExpenses,
             'deductions': cleanDeductions,
+            'category_budgets': _categoryBudgets
+                .map((e) => {
+                      'category': e['category'],
+                      'amount': e['amount'],
+                    })
+                .toList(),
             'split_ratio_A': _splitRatioA.round(),
             'split_ratio_B': (100 - _splitRatioA).round(),
             'updated_at': FieldValue.serverTimestamp(),
@@ -240,6 +289,8 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
             // Ratio utilisé par la Cloud Function pour la dette interne.
             'split_ratio_user_A': _splitRatioA.round(),
             'split_ratio_user_B': (100 - _splitRatioA).round(),
+            // Seuil sous lequel les cagnottes passent en alerte.
+            'alert_threshold': parseAmount(_alertThresholdController.text),
           });
 
       if (mounted) {
@@ -258,6 +309,100 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  /// Éditeur des enveloppes : un budget mensuel par catégorie de dépense
+  /// variable (épicerie, restos…), suivi dans l'écran Bilan.
+  Widget _buildCategoryBudgetsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Enveloppes par catégorie',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            IconButton(
+              icon: const Icon(Icons.add_circle, color: AppColors.primary),
+              onPressed: _addCategoryBudget,
+            ),
+          ],
+        ),
+        const Text(
+          'Budgets mensuels pour vos dépenses variables — le Bilan suit '
+          'leur progression.',
+          style: TextStyle(color: Colors.grey, fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+        ..._categoryBudgets.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final item = entry.value;
+          return Padding(
+            key: ValueKey(item['id']),
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: item['category'] as String?,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Catégorie',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: kSelectableCategories
+                        .map(
+                          (c) => DropdownMenuItem(
+                            value: c.key,
+                            child: Row(
+                              children: [
+                                Icon(c.icon, size: 16, color: c.color),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    c.label,
+                                    style: const TextStyle(fontSize: 13),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) =>
+                        setState(() => _categoryBudgets[idx]['category'] = v),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 1,
+                  child: TextFormField(
+                    initialValue: (item['amount'] as double).toString(),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Budget',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (val) =>
+                        _categoryBudgets[idx]['amount'] = parseAmount(val),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.redAccent),
+                  onPressed: () =>
+                      setState(() => _categoryBudgets.removeAt(idx)),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
   }
 
   Widget _buildMagicMonths() {
@@ -473,6 +618,33 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                     'Dépenses Fixes Communes',
                     _fixedExpenses,
                     _addExpense,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ENVELOPPES PAR CATÉGORIE
+                  _buildCategoryBudgetsSection(),
+                  const SizedBox(height: 24),
+
+                  // SEUIL D'ALERTE
+                  const Text(
+                    'Seuil d\'alerte des cagnottes',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'En dessous de ce montant, une cagnotte passe en orange '
+                    'sur le tableau de bord.',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _alertThresholdController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Seuil (\$)',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                   const SizedBox(height: 24),
 

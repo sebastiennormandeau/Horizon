@@ -1,6 +1,6 @@
 # Conditions d'Utilisation (Terms of Service)
 
-Dernière mise à jour : 15 juillet 2026
+Dernière mise à jour : 17 juillet 2026
 
 Bienvenue sur **Horizon**. En créant un compte ou en utilisant notre application, vous acceptez d'être lié par les présentes Conditions d'utilisation. Si vous n'acceptez pas ces termes, vous ne devez pas utiliser notre application.
 
@@ -16,6 +16,8 @@ Horizon est une application logicielle de gestion de finances personnelles ("Zer
 L'application est fournie uniquement à des fins d'organisation personnelle et d'information. Elle effectue des calculs mathématiques et synchronise des données transactionnelles en lecture seule via des fournisseurs tiers (comme Plaid). **Aucun véritable transfert de fonds, paiement ou virement n'est effectué par l'application.**
 
 **Vibe Coding Mind** décline toute responsabilité quant aux décisions financières prises sur la base des informations affichées dans l'application. Vous restez l'unique responsable de la vérification de vos soldes réels auprès de vos institutions bancaires. Nous ne garantissons pas l'exactitude absolue, la rapidité ou l'exhaustivité des données affichées.
+
+**Coach budgétaire IA** : la fonction de conseils générés par intelligence artificielle produit des suggestions d'organisation budgétaire à partir de vos agrégats de dépenses. Ces suggestions sont fournies à titre informatif seulement, peuvent contenir des inexactitudes, et **ne constituent en aucun cas un conseil financier, comptable, fiscal ou juridique professionnel**. Consultez un professionnel accrédité pour toute décision financière importante.
 
 ## 3. Fourniture "Tel quel" (As Is)
 

@@ -1,5 +1,6 @@
 import * as functions from "firebase-functions";
 import { admin, db } from "./init";
+import { generateStoredReport } from "./reports";
 
 /**
  * Webhook RevenueCat : source de vérité serveur pour le statut d'abonnement.
@@ -108,6 +109,13 @@ export const monthlyRollover = functions.pubsub
     let rolled = 0;
 
     for (const householdDoc of households.docs) {
+      // Bilan du mois qui vient de se terminer (indépendant du rollover).
+      try {
+        await generateStoredReport(householdDoc.id, "monthly", prev);
+      } catch (e) {
+        console.error(`Bilan mensuel échoué pour le foyer ${householdDoc.id}:`, e);
+      }
+
       try {
         const budgets = householdDoc.ref.collection("monthly_budgets");
         const [currentSnap, prevSnap] = await Promise.all([
