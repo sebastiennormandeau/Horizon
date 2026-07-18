@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:horizon/l10n/app_localizations_en.dart';
 import 'package:horizon/utils/validators.dart';
 
 void main() {
@@ -50,6 +51,19 @@ void main() {
       expect(validateDisplayName(null), isNotNull);
       expect(validateDisplayName('A'), isNotNull);
       expect(validateDisplayName('X' * 41), isNotNull);
+    });
+  });
+
+  group('localisation des messages', () {
+    test('sans l10n : messages en français (comportement historique)', () {
+      expect(validateEmail(''), 'Veuillez entrer votre adresse courriel.');
+    });
+
+    test('avec l10n anglais : messages en anglais', () {
+      final en = AppLocalizationsEn();
+      expect(validateEmail('', en), 'Please enter your email address.');
+      expect(validatePassword('court1', en), isNotNull);
+      expect(validateJoinCode('ABC', en), en.vJoinCodeInvalid);
     });
   });
 

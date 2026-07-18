@@ -1,0 +1,363 @@
+{
+  "@@locale": "fr",
+
+  "appTagline": "Le ZBB simplifié pour les foyers",
+  "cancel": "Annuler",
+  "save": "Enregistrer",
+  "close": "Fermer",
+  "copy": "Copier",
+  "retry": "Réessayer",
+  "continueLabel": "Continuer",
+  "loadingError": "Erreur de chargement",
+  "profileLoadingError": "Erreur de chargement du profil.",
+  "pleaseReconnect": "Veuillez vous reconnecter",
+  "householdNotFound": "Foyer introuvable",
+
+  "bucketCommon": "Commun",
+  "bucketToSort": "À trier",
+  "bucketMe": "{name} (moi)",
+  "@bucketMe": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+
+  "loginError": "Erreur de connexion",
+  "resetPasswordInvalidEmail": "Entrez une adresse courriel valide pour réinitialiser le mot de passe.",
+  "resetPasswordSent": "Email de réinitialisation envoyé. Vérifiez votre boîte de réception.",
+  "sendError": "Erreur lors de l'envoi.",
+  "emailLabel": "Email",
+  "passwordLabel": "Mot de passe",
+  "passwordRequired": "Veuillez entrer votre mot de passe.",
+  "signIn": "Se connecter",
+  "forgotPassword": "Mot de passe oublié ?",
+  "createAccount": "Créer un compte",
+
+  "registerTitle": "Inscription",
+  "mustAcceptTerms": "Vous devez accepter les conditions d'utilisation.",
+  "registerError": "Erreur d'inscription",
+  "firstNameLabel": "Prénom",
+  "firstNameHelper": "Affiché à votre partenaire dans le foyer",
+  "passwordHelper": "8 caractères min., avec lettres et chiffres",
+  "confirmPasswordLabel": "Confirmer le mot de passe",
+  "iAcceptThe": "J'accepte les ",
+  "termsLinkLabel": "Conditions d'utilisation",
+  "andThe": " et la ",
+  "privacyLinkLabel": "Politique de confidentialité",
+  "sentencePeriod": ".",
+  "termsDocTitle": "Conditions d'Utilisation",
+  "privacyDocTitle": "Politique de Confidentialité",
+
+  "verifyEmailTitle": "Vérification du courriel",
+  "signOut": "Se déconnecter",
+  "verificationSent": "Courriel de vérification envoyé. Vérifiez vos courriels (et vos indésirables).",
+  "confirmYourEmail": "Confirmez votre adresse courriel",
+  "verificationBody": "Un lien de vérification a été envoyé à\n{email}\n\nHorizon gère des données financières : la vérification de votre adresse est obligatoire.",
+  "@verificationBody": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+  "resendIn": "Renvoyer dans {seconds} s",
+  "@resendIn": {
+    "placeholders": {
+      "seconds": { "type": "String" }
+    }
+  },
+  "resendEmail": "Renvoyer le courriel",
+  "iConfirmedMyEmail": "J'ai confirmé mon adresse",
+
+  "householdSetupTitle": "Configuration du Foyer",
+  "householdCreated": "Foyer créé !",
+  "inviteCodeIntro": "Voici votre code pour inviter votre conjoint(e) :",
+  "inviteCodeNote": "Il restera visible sur votre tableau de bord tant que votre partenaire n'a pas rejoint le foyer.",
+  "householdCreateError": "Erreur lors de la création du foyer.",
+  "invalidCodeError": "Code invalide ou erreur.",
+  "welcomeTitle": "Bienvenue sur Horizon",
+  "welcomeBody": "L'application est conçue autour du Foyer. Voulez-vous créer le vôtre ou rejoindre votre partenaire ?",
+  "createHouseholdButton": "Créer un nouveau foyer",
+  "orSeparator": "OU",
+  "joinCodeFieldLabel": "Code de foyer (6 caractères)",
+  "joinButton": "Rejoindre",
+
+  "syncingTransactions": "Synchronisation des transactions en cours...",
+  "bankConnected": "Banque connectée et synchronisée !",
+  "syncError": "Erreur lors de la synchronisation.",
+  "plaidError": "Erreur lors de la connexion à Plaid.",
+  "assignedTo": "Assigné à {bucket}",
+  "@assignedTo": {
+    "placeholders": {
+      "bucket": { "type": "String" }
+    }
+  },
+  "undoAction": "ANNULER",
+  "negativeWarningTitle": "Attention au négatif",
+  "negativeWarningBody": "Assigner « {merchant} » ({amount}) mettra la cagnotte {bucket} à {after}.\n\nContinuer quand même ?",
+  "@negativeWarningBody": {
+    "placeholders": {
+      "merchant": { "type": "String" },
+      "amount": { "type": "String" },
+      "bucket": { "type": "String" },
+      "after": { "type": "String" }
+    }
+  },
+  "assignAnyway": "Assigner quand même",
+  "settleDebtTitle": "Régler la dette interne",
+  "settleDebtBody": "{debtor} doit {amount} à {creditor}.\n\nConfirmez-vous que ce montant a été remboursé (virement, argent comptant, etc.) ? La balance sera remise à zéro.",
+  "@settleDebtBody": {
+    "placeholders": {
+      "debtor": { "type": "String" },
+      "amount": { "type": "String" },
+      "creditor": { "type": "String" }
+    }
+  },
+  "confirmSettlement": "Confirmer le règlement",
+  "debtSettled": "Dette de {amount} réglée !",
+  "@debtSettled": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "settleError": "Erreur lors du règlement.",
+  "bilanTooltip": "Bilan",
+  "historyTooltip": "Historique",
+  "budgetConfigTooltip": "Configuration du budget",
+  "settingsTooltip": "Réglages",
+  "transactionsToNeutralize": "Transactions à neutraliser",
+  "alertNegativeBanner": "Une cagnotte est dans le négatif — consultez le Bilan pour ajuster.",
+  "alertLowBanner": "Une cagnotte approche de zéro (seuil : {threshold}).",
+  "@alertLowBanner": {
+    "placeholders": {
+      "threshold": { "type": "String" }
+    }
+  },
+  "inviteWithCode": "Invitez votre conjoint(e) avec ce code :",
+  "internalBalanceSettled": "Balance interne : équilibrée",
+  "internalDebtOwes": "{debtor} doit {amount} à {creditor}",
+  "@internalDebtOwes": {
+    "placeholders": {
+      "debtor": { "type": "String" },
+      "amount": { "type": "String" },
+      "creditor": { "type": "String" }
+    }
+  },
+  "settleButton": "RÉGLER",
+  "noTransactionsToSort": "Aucune transaction à trier.",
+  "connectMyBank": "Connecter ma banque",
+
+  "historyTitle": "Historique",
+  "freePlanBanner": "Plan gratuit : 30 jours d'historique.",
+  "premiumButton": "PREMIUM",
+  "filterAll": "Tous",
+  "noCategorizedTransactions": "Aucune transaction catégorisée.",
+  "transactionCount": "{count} transaction(s)",
+  "@transactionCount": {
+    "placeholders": {
+      "count": { "type": "String" }
+    }
+  },
+  "totalAmount": "Total : {amount}",
+  "@totalAmount": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "allCategories": "Toutes catégories",
+  "changeCategory": "Changer la catégorie",
+  "moveTo": "Déplacer vers {bucket}",
+  "@moveTo": {
+    "placeholders": {
+      "bucket": { "type": "String" }
+    }
+  },
+  "sendBackToSort": "Renvoyer dans « À trier »",
+  "sentBackToSort": "Transaction renvoyée dans « À trier ».",
+  "movedTo": "Déplacée vers {bucket}.",
+  "@movedTo": {
+    "placeholders": {
+      "bucket": { "type": "String" }
+    }
+  },
+
+  "bilanTitle": "Bilan",
+  "refreshTooltip": "Rafraîchir",
+  "reportError": "Erreur lors de la génération du bilan.",
+  "coachUnavailable": "Le coach IA est indisponible.",
+  "addedToFixedExpenses": "« {name} » ajouté aux dépenses fixes ({amount}/mois).",
+  "@addedToFixedExpenses": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "amount": { "type": "String" }
+    }
+  },
+  "addError": "Erreur lors de l'ajout.",
+  "noLongerSuggested": "« {name} » ne sera plus suggéré.",
+  "@noLongerSuggested": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "thisMonth": "Ce mois-ci",
+  "thisWeek": "Cette semaine",
+  "reportUnavailable": "Bilan indisponible.",
+  "spendingByCategory": "Dépenses par catégorie",
+  "topMerchants": "Principaux commerçants",
+  "recurringDetected": "Dépenses récurrentes détectées",
+  "aiCoachSection": "Coach budgétaire IA",
+  "monthSpending": "Dépenses du mois",
+  "weekSpending": "Dépenses de la semaine",
+  "vsPreviousPeriod": "{delta} % vs période précédente ({amount})",
+  "@vsPreviousPeriod": {
+    "placeholders": {
+      "delta": { "type": "String" },
+      "amount": { "type": "String" }
+    }
+  },
+  "noPreviousPeriod": "Pas encore de période précédente à comparer.",
+  "recurringInfo": "Dépense {frequency} détectée ({occurrences} fois) — ≈ {monthly}/mois",
+  "@recurringInfo": {
+    "placeholders": {
+      "frequency": { "type": "String" },
+      "occurrences": { "type": "String" },
+      "monthly": { "type": "String" }
+    }
+  },
+  "freqLabelWeekly": "hebdomadaire",
+  "freqLabelBiweekly": "aux 2 semaines",
+  "freqLabelMonthly": "mensuelle",
+  "ignore": "Ignorer",
+  "addToBudget": "Ajouter au budget",
+  "monthEnvelopes": "Enveloppes du mois",
+  "overBudgetBy": "Dépassement de {amount}",
+  "@overBudgetBy": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "spentOfBudget": "{spent} / {budget}",
+  "@spentOfBudget": {
+    "placeholders": {
+      "spent": { "type": "String" },
+      "budget": { "type": "String" }
+    }
+  },
+  "aiDisclaimer": "Ces suggestions sont générées par une IA à partir de vos agrégats de dépenses et ne constituent pas un conseil financier professionnel.",
+  "aiPitch": "Obtenez des observations et suggestions personnalisées, rédigées à partir des chiffres de ce bilan.",
+  "generateAdvice": "Générer mes conseils IA",
+  "regenerateAdvice": "Régénérer les conseils",
+
+  "budgetSetupTitle": "Configuration Budget ZBB",
+  "freqMonthly": "Mensuel",
+  "freqBiweekly": "Bi-hebdomadaire",
+  "freqWeekly": "Hebdomadaire",
+  "newExpenseDefault": "Nouvelle dépense",
+  "newAllocationDefault": "Nouvelle allocation",
+  "budgetSaved": "Budget mensuel sauvegardé !",
+  "budgetSaveError": "Erreur lors de la sauvegarde.",
+  "envelopesTitle": "Enveloppes par catégorie",
+  "envelopesSubtitle": "Budgets mensuels pour vos dépenses variables — le Bilan suit leur progression.",
+  "categoryFieldLabel": "Catégorie",
+  "budgetFieldLabel": "Budget",
+  "magicMonthsTitle": "Calendrier des Mois Magiques 🌟",
+  "magicMonthsSubtitle": "Un mois magique contient une paie supplémentaire.",
+  "nameFieldLabel": "Nom",
+  "amountFieldLabel": "Montant",
+  "incomeSection": "Revenus",
+  "incomeALabel": "Revenu A",
+  "incomeBLabel": "Revenu B",
+  "payFrequencyLabel": "Fréquence de paie",
+  "nextPayDateLabel": "Prochaine date de paie",
+  "selectADate": "Sélectionner une date",
+  "allocationsSection": "Allocations & Déductions",
+  "fixedExpensesSection": "Dépenses Fixes Communes",
+  "alertThresholdTitle": "Seuil d'alerte des cagnottes",
+  "alertThresholdSubtitle": "En dessous de ce montant, une cagnotte passe en orange sur le tableau de bord.",
+  "thresholdFieldLabel": "Seuil ($)",
+  "proRataTitle": "Répartition pro-rata",
+  "userAShare": "User A : {pct}%",
+  "@userAShare": {
+    "placeholders": {
+      "pct": { "type": "String" }
+    }
+  },
+  "userBShare": "User B : {pct}%",
+  "@userBShare": {
+    "placeholders": {
+      "pct": { "type": "String" }
+    }
+  },
+  "netCommonExpenses": "Dépenses nettes communes :",
+  "aPays": "A paie : {amount}",
+  "@aPays": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "bPays": "B paie : {amount}",
+  "@bPays": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "saveBudgetButton": "Sauvegarder le Budget",
+
+  "settingsTitle": "Réglages",
+  "editMyName": "Modifier mon prénom",
+  "nameUpdated": "Prénom mis à jour.",
+  "updateError": "Erreur lors de la mise à jour.",
+  "myDataJson": "Mes données (JSON)",
+  "copiedToClipboard": "Données copiées dans le presse-papiers.",
+  "exportError": "Erreur lors de l'export.",
+  "deleteAccountTitle": "Supprimer mon compte",
+  "deleteAccountBody": "Cette action est IRRÉVERSIBLE :\n\n• Vos connexions bancaires seront révoquées\n• Vos transactions seront supprimées\n• Votre compte sera définitivement effacé\n\nTapez {keyword} pour confirmer :",
+  "@deleteAccountBody": {
+    "placeholders": {
+      "keyword": { "type": "String" }
+    }
+  },
+  "deleteKeyword": "SUPPRIMER",
+  "deleteForever": "Supprimer définitivement",
+  "deleteError": "Erreur lors de la suppression.",
+  "profileSection": "Profil",
+  "emailVerified": "Courriel vérifié",
+  "emailNotVerified": "Courriel non vérifié",
+  "subscriptionSection": "Abonnement",
+  "premiumPlanTitle": "Horizon Premium",
+  "freePlanTitle": "Plan gratuit",
+  "manageSubscription": "Gérez votre abonnement depuis l'App Store / Play Store.",
+  "freePlanLimits": "1 compte bancaire, 30 jours d'historique",
+  "myDataSection": "Mes données (Loi 25)",
+  "exportMyData": "Exporter mes données",
+  "exportSubtitle": "Copie JSON de toutes vos données",
+  "accountSection": "Compte",
+  "deleteAccountSubtitle": "Suppression définitive de toutes vos données",
+  "languageSection": "Langue / Language",
+  "languageTile": "Langue de l'application",
+  "languageFrench": "Français",
+  "languageEnglish": "English",
+  "languageSystem": "Automatique (langue de l'appareil)",
+
+  "paywallTitle": "Horizon Premium",
+  "featUnlimitedBanks": "Comptes bancaires illimités",
+  "featFullHistory": "Historique complet et illimité",
+  "featRealtimeSync": "Synchronisation en temps réel",
+  "featPrioritySupport": "Soutien prioritaire",
+  "purchaseWelcome": "Bienvenue dans Horizon Premium ! Activation en cours (quelques secondes)...",
+  "purchaseFailed": "L'achat a échoué. Réessayez.",
+  "purchasesRestored": "Achats restaurés avec succès !",
+  "nothingToRestore": "Aucun achat à restaurer.",
+  "goPremium": "Passez à Horizon Premium",
+  "webNoPurchase": "L'abonnement s'effectue depuis l'application mobile Horizon (Android ou iPhone). Une fois abonné, votre statut Premium s'applique automatiquement à tout votre foyer, y compris sur le Web.",
+  "storeUnavailable": "La boutique n'est pas encore disponible. Réessayez plus tard.",
+  "restorePurchases": "Restaurer mes achats",
+
+  "vEmailRequired": "Veuillez entrer votre adresse courriel.",
+  "vEmailInvalid": "Adresse courriel invalide.",
+  "vPasswordRequired": "Veuillez entrer un mot de passe.",
+  "vPasswordTooShort": "Le mot de passe doit contenir au moins 8 caractères.",
+  "vPasswordNeedsLetterDigit": "Le mot de passe doit contenir au moins une lettre et un chiffre.",
+  "vPasswordMismatch": "Les mots de passe ne correspondent pas.",
+  "vNameTooShort": "Veuillez entrer votre prénom (2 lettres min.).",
+  "vNameTooLong": "Prénom trop long (40 caractères max.).",
+  "vJoinCodeInvalid": "Le code doit contenir 6 lettres ou chiffres."
+}

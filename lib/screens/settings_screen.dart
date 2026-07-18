@@ -6,15 +6,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/household.dart';
 import '../theme/app_colors.dart';
+import '../utils/locale_controller.dart';
 import '../utils/validators.dart';
 import '../widgets/household_loader.dart';
 import '../widgets/legal_documents.dart';
 import 'paywall_screen.dart';
 
-/// Réglages : profil, abonnement, données personnelles (export/suppression —
-/// Loi 25), documents légaux et déconnexion.
+/// Réglages : profil, langue, abonnement, données personnelles
+/// (export/suppression — Loi 25), documents légaux et déconnexion.
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -25,7 +27,10 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _busy = false;
 
+  AppLocalizations get _l10n => AppLocalizations.of(context)!;
+
   Future<void> _editDisplayName(Household household, String uid) async {
+    final l10n = _l10n;
     final controller = TextEditingController();
     final isA = household.isUserA(uid);
     controller.text = isA ? household.nameA : household.nameB;
@@ -34,32 +39,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Modifier mon prénom'),
+        title: Text(l10n.editMyName),
         content: TextField(
           controller: controller,
           maxLength: 40,
           textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(
-            labelText: 'Prénom',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.firstNameLabel,
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, controller.text.trim()),
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            child: const Text('Enregistrer'),
+            child: Text(l10n.save),
           ),
         ],
       ),
     );
 
     if (newName == null || !mounted) return;
-    final error = validateDisplayName(newName);
+    final error = validateDisplayName(newName, _l10n);
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error)),
@@ -85,13 +90,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Prénom mis à jour.')),
+        SnackBar(content: Text(_l10n.nameUpdated)),
       );
     } catch (e) {
       debugPrint('Erreur de mise à jour du prénom: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erreur lors de la mise à jour.')),
+        SnackBar(content: Text(_l10n.updateError)),
       );
     }
   }
@@ -106,11 +111,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           .convert(jsonDecode(jsonEncode(result.data)));
 
       if (!mounted) return;
+      final l10n = _l10n;
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: AppColors.surface,
-          title: const Text('Mes données (JSON)'),
+          title: Text(l10n.myDataJson),
           content: SizedBox(
             width: double.maxFinite,
             height: 400,
@@ -127,19 +133,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 await Clipboard.setData(ClipboardData(text: json));
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Données copiées dans le presse-papiers.'),
-                    ),
+                    SnackBar(content: Text(l10n.copiedToClipboard)),
                   );
                 }
               },
-              child: const Text('Copier'),
+              child: Text(l10n.copy),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style:
                   ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: const Text('Fermer'),
+              child: Text(l10n.close),
             ),
           ],
         ),
@@ -147,13 +151,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Erreur lors de l\'export.')),
+        SnackBar(content: Text(e.message ?? _l10n.exportError)),
       );
     } catch (e) {
       debugPrint('Erreur exportMyData: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erreur lors de l\'export.')),
+        SnackBar(content: Text(_l10n.exportError)),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -161,30 +165,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _deleteAccount() async {
+    final l10n = _l10n;
     final controller = TextEditingController();
+    final keyword = l10n.deleteKeyword;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Supprimer mon compte'),
+        title: Text(l10n.deleteAccountTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Cette action est IRRÉVERSIBLE :\n\n'
-              '• Vos connexions bancaires seront révoquées\n'
-              '• Vos transactions seront supprimées\n'
-              '• Votre compte sera définitivement effacé\n\n'
-              'Tapez SUPPRIMER pour confirmer :',
-            ),
+            Text(l10n.deleteAccountBody(keyword)),
             const SizedBox(height: 12),
             TextField(
               controller: controller,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'SUPPRIMER',
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                hintText: keyword,
               ),
             ),
           ],
@@ -192,13 +192,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuler'),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () =>
-                Navigator.pop(context, controller.text.trim() == 'SUPPRIMER'),
+                Navigator.pop(context, controller.text.trim() == keyword),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('Supprimer définitivement'),
+            child: Text(l10n.deleteForever),
           ),
         ],
       ),
@@ -217,7 +217,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Erreur lors de la suppression.')),
+        SnackBar(content: Text(e.message ?? _l10n.deleteError)),
       );
     } catch (e) {
       debugPrint('Erreur deleteAccount: $e');
@@ -231,10 +231,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = _l10n;
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Réglages')),
+      appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: _busy
           ? const Center(child: CircularProgressIndicator())
           : HouseholdLoader(
@@ -245,7 +246,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    _sectionTitle('Profil'),
+                    _sectionTitle(l10n.profileSection),
                     _card([
                       ListTile(
                         leading:
@@ -266,13 +267,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         title: Text(
                           user?.emailVerified == true
-                              ? 'Courriel vérifié'
-                              : 'Courriel non vérifié',
+                              ? l10n.emailVerified
+                              : l10n.emailNotVerified,
                         ),
                       ),
                     ]),
                     const SizedBox(height: 16),
-                    _sectionTitle('Abonnement'),
+                    _sectionTitle(l10n.languageSection),
+                    _buildLanguageCard(),
+                    const SizedBox(height: 16),
+                    _sectionTitle(l10n.subscriptionSection),
                     _card([
                       ListTile(
                         leading: Icon(
@@ -285,14 +289,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         title: Text(
                           household.isPremium
-                              ? 'Horizon Premium'
-                              : 'Plan gratuit',
+                              ? l10n.premiumPlanTitle
+                              : l10n.freePlanTitle,
                         ),
                         subtitle: Text(
                           household.isPremium
-                              ? 'Gérez votre abonnement depuis l\'App Store / '
-                                  'Play Store.'
-                              : '1 compte bancaire, 30 jours d\'historique',
+                              ? l10n.manageSubscription
+                              : l10n.freePlanLimits,
                         ),
                         trailing: household.isPremium
                             ? null
@@ -310,43 +313,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ]),
                     const SizedBox(height: 16),
-                    _sectionTitle('Mes données (Loi 25)'),
+                    _sectionTitle(l10n.myDataSection),
                     _card([
                       ListTile(
                         leading: const Icon(Icons.download,
                             color: AppColors.primary),
-                        title: const Text('Exporter mes données'),
-                        subtitle:
-                            const Text('Copie JSON de toutes vos données'),
+                        title: Text(l10n.exportMyData),
+                        subtitle: Text(l10n.exportSubtitle),
                         onTap: _exportData,
                       ),
                       ListTile(
                         leading: const Icon(Icons.description,
                             color: AppColors.primary),
-                        title: const Text('Conditions d\'utilisation'),
+                        title: Text(l10n.termsLinkLabel),
                         onTap: () => showLegalDocument(
                           context,
-                          'terms.md',
-                          'Conditions d\'Utilisation',
+                          'terms',
+                          l10n.termsDocTitle,
                         ),
                       ),
                       ListTile(
                         leading: const Icon(Icons.privacy_tip,
                             color: AppColors.primary),
-                        title: const Text('Politique de confidentialité'),
+                        title: Text(l10n.privacyLinkLabel),
                         onTap: () => showLegalDocument(
                           context,
-                          'privacy.md',
-                          'Politique de Confidentialité',
+                          'privacy',
+                          l10n.privacyDocTitle,
                         ),
                       ),
                     ]),
                     const SizedBox(height: 16),
-                    _sectionTitle('Compte'),
+                    _sectionTitle(l10n.accountSection),
                     _card([
                       ListTile(
                         leading: const Icon(Icons.logout, color: Colors.grey),
-                        title: const Text('Se déconnecter'),
+                        title: Text(l10n.signOut),
                         onTap: () async {
                           await FirebaseAuth.instance.signOut();
                           if (context.mounted) {
@@ -360,13 +362,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ListTile(
                         leading: const Icon(Icons.delete_forever,
                             color: Colors.redAccent),
-                        title: const Text(
-                          'Supprimer mon compte',
-                          style: TextStyle(color: Colors.redAccent),
+                        title: Text(
+                          l10n.deleteAccountTitle,
+                          style: const TextStyle(color: Colors.redAccent),
                         ),
-                        subtitle: const Text(
-                          'Suppression définitive de toutes vos données',
-                        ),
+                        subtitle: Text(l10n.deleteAccountSubtitle),
                         onTap: _deleteAccount,
                       ),
                     ]),
@@ -375,6 +375,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
     );
+  }
+
+  /// Choix de la langue : français, anglais, ou automatique (appareil).
+  Widget _buildLanguageCard() {
+    final l10n = _l10n;
+    final current = LocaleController.instance.value?.languageCode;
+
+    RadioListTile<String?> option(String? code, String label) {
+      return RadioListTile<String?>(
+        value: code,
+        // ignore: deprecated_member_use
+        groupValue: current,
+        // ignore: deprecated_member_use
+        onChanged: (selected) async {
+          await LocaleController.instance.setLocale(selected);
+          if (mounted) setState(() {});
+        },
+        title: Text(label),
+        activeColor: AppColors.primary,
+        dense: true,
+      );
+    }
+
+    return _card([
+      option('fr', l10n.languageFrench),
+      option('en', l10n.languageEnglish),
+      option(null, l10n.languageSystem),
+    ]);
   }
 
   Widget _sectionTitle(String title) {

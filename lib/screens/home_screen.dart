@@ -4,11 +4,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:plaid_flutter/plaid_flutter.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/app_transaction.dart';
 import '../models/household.dart';
 import '../theme/app_colors.dart';
 import '../utils/categories.dart';
 import '../utils/formatters.dart';
+import '../utils/locale_controller.dart';
 import '../widgets/household_loader.dart';
 import 'bilan_screen.dart';
 import 'budget_setup_screen.dart';
@@ -27,6 +29,8 @@ class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription<LinkEvent>? _eventSubscription;
   StreamSubscription<LinkExit>? _exitSubscription;
 
+  AppLocalizations get _l10n => AppLocalizations.of(context)!;
+
   @override
   void initState() {
     super.initState();
@@ -34,9 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _successSubscription = PlaidLink.onSuccess.listen((event) async {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Synchronisation des transactions en cours...'),
-        ),
+        SnackBar(content: Text(_l10n.syncingTransactions)),
       );
 
       try {
@@ -47,21 +49,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Banque connectée et synchronisée !')),
+          SnackBar(content: Text(_l10n.bankConnected)),
         );
       } on FirebaseFunctionsException catch (e) {
         debugPrint("Erreur d'échange de token: ${e.code} ${e.message}");
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message ?? 'Erreur lors de la synchronisation.'),
-          ),
+          SnackBar(content: Text(e.message ?? _l10n.syncError)),
         );
       } catch (e) {
         debugPrint("Erreur d'échange de token: $e");
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erreur lors de la synchronisation.')),
+          SnackBar(content: Text(_l10n.syncError)),
         );
       }
     });
@@ -88,7 +88,10 @@ class _HomeScreenState extends State<HomeScreen> {
       final callable = FirebaseFunctions.instance.httpsCallable(
         'generatePlaidLinkToken',
       );
-      final result = await callable();
+      // Plaid Link s'affiche dans la langue active de l'app.
+      final result = await callable.call({
+        'language': LocaleController.instance.effectiveLanguageCode,
+      });
       final linkToken = result.data['link_token'];
 
       final linkTokenConfiguration = LinkTokenConfiguration(token: linkToken);
@@ -99,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
       debugPrint('Erreur Plaid: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erreur lors de la connexion à Plaid.')),
+        SnackBar(content: Text(_l10n.plaidError)),
       );
     }
   }
@@ -119,9 +122,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Assigné à ${household.bucketLabel(bucket)}'),
+        content: Text(_l10n.assignedTo(household.bucketLabel(bucket, _l10n))),
         action: SnackBarAction(
-          label: 'ANNULER',
+          label: _l10n.undoAction,
           onPressed: () {
             // La Cloud Function annule l'effet sur les cagnottes.
             docRef.update({'assigned_to_bucket': ''}).catchError((e) {
@@ -142,33 +145,36 @@ class _HomeScreenState extends State<HomeScreen> {
   ) async {
     final after = household.bucketBalance(bucket) - transaction.amount;
     if (after >= 0) return true;
+    final l10n = _l10n;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
         title: Row(
-          children: const [
-            Icon(Icons.warning_amber, color: Colors.orange),
-            SizedBox(width: 8),
-            Expanded(child: Text('Attention au négatif')),
+          children: [
+            const Icon(Icons.warning_amber, color: Colors.orange),
+            const SizedBox(width: 8),
+            Expanded(child: Text(l10n.negativeWarningTitle)),
           ],
         ),
         content: Text(
-          'Assigner « ${transaction.merchantName} » '
-          '(${formatCurrency(transaction.amount)}) mettra la cagnotte '
-          '${household.bucketLabel(bucket)} à ${formatCurrency(after)}.\n\n'
-          'Continuer quand même ?',
+          l10n.negativeWarningBody(
+            transaction.merchantName,
+            formatCurrency(transaction.amount),
+            household.bucketLabel(bucket, l10n),
+            formatCurrency(after),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuler'),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: const Text('Assigner quand même'),
+            child: Text(l10n.assignAnyway),
           ),
         ],
       ),
@@ -177,6 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _settleDebt(Household household) async {
+    final l10n = _l10n;
     final debt = household.internalDebtBalance;
     final debtor = debt > 0 ? household.nameB : household.nameA;
     final creditor = debt > 0 ? household.nameA : household.nameB;
@@ -185,21 +192,19 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Régler la dette interne'),
+        title: Text(l10n.settleDebtTitle),
         content: Text(
-          '$debtor doit ${formatCurrency(debt.abs())} à $creditor.\n\n'
-          'Confirmez-vous que ce montant a été remboursé (virement, argent '
-          'comptant, etc.) ? La balance sera remise à zéro.',
+          l10n.settleDebtBody(debtor, formatCurrency(debt.abs()), creditor),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuler'),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            child: const Text('Confirmer le règlement'),
+            child: Text(l10n.confirmSettlement),
           ),
         ],
       ),
@@ -213,26 +218,25 @@ class _HomeScreenState extends State<HomeScreen> {
       final amount = (result.data['amount_settled'] as num?)?.toDouble() ?? 0;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Dette de ${formatCurrency(amount)} réglée !'),
-        ),
+        SnackBar(content: Text(_l10n.debtSettled(formatCurrency(amount)))),
       );
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Erreur lors du règlement.')),
+        SnackBar(content: Text(e.message ?? _l10n.settleError)),
       );
     } catch (e) {
       debugPrint('Erreur settleDebt: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erreur lors du règlement.')),
+        SnackBar(content: Text(_l10n.settleError)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = _l10n;
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -243,7 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.insights),
-            tooltip: 'Bilan',
+            tooltip: l10n.bilanTooltip,
             onPressed: () {
               Navigator.push(
                 context,
@@ -253,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.history),
-            tooltip: 'Historique',
+            tooltip: l10n.historyTooltip,
             onPressed: () {
               Navigator.push(
                 context,
@@ -263,7 +267,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.tune),
-            tooltip: 'Configuration du budget',
+            tooltip: l10n.budgetConfigTooltip,
             onPressed: () {
               Navigator.push(
                 context,
@@ -273,7 +277,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.settings),
-            tooltip: 'Réglages',
+            tooltip: l10n.settingsTooltip,
             onPressed: () {
               Navigator.push(
                 context,
@@ -292,13 +296,13 @@ class _HomeScreenState extends State<HomeScreen> {
               if (household.awaitingPartner && household.joinCode != null)
                 _buildInviteCard(household.joinCode!),
               _buildDebtBanner(household),
-              const Padding(
-                padding: EdgeInsets.all(16.0),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Transactions à neutraliser',
-                    style: TextStyle(
+                    l10n.transactionsToNeutralize,
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -316,6 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBucketsOverview(Household household, String uid) {
+    final l10n = _l10n;
     final isA = household.isUserA(uid);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -323,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Expanded(
             child: _buildBucketCard(
-              isA ? '${household.nameA} (moi)' : household.nameA,
+              isA ? l10n.bucketMe(household.nameA) : household.nameA,
               household.safeToSpendSoloA,
               alert: household.alertLevel(household.safeToSpendSoloA),
             ),
@@ -331,7 +336,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: _buildBucketCard(
-              'Commun',
+              l10n.bucketCommon,
               household.safeToSpendCommon,
               color: AppColors.primary,
               alert: household.alertLevel(household.safeToSpendCommon),
@@ -340,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: _buildBucketCard(
-              !isA ? '${household.nameB} (moi)' : household.nameB,
+              !isA ? l10n.bucketMe(household.nameB) : household.nameB,
               household.safeToSpendSoloB,
               alert: household.alertLevel(household.safeToSpendSoloB),
             ),
@@ -363,9 +368,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final isNegative = worst == 2;
     final color = isNegative ? Colors.redAccent : Colors.orange;
     final text = isNegative
-        ? 'Une cagnotte est dans le négatif — consultez le Bilan pour ajuster.'
-        : 'Une cagnotte approche de zéro (seuil : '
-            '${formatCurrency(household.alertThreshold)}).';
+        ? _l10n.alertNegativeBanner
+        : _l10n.alertLowBanner(formatCurrency(household.alertThreshold));
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
@@ -406,10 +410,10 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const Icon(Icons.group_add, color: AppColors.primary),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Text(
-                'Invitez votre conjoint(e) avec ce code :',
-                style: TextStyle(fontSize: 13),
+                _l10n.inviteWithCode,
+                style: const TextStyle(fontSize: 13),
               ),
             ),
             SelectableText(
@@ -428,17 +432,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildDebtBanner(Household household) {
+    final l10n = _l10n;
     final debt = household.internalDebtBalance;
     final bool isSettled = debt.abs() < 0.01;
     final String text;
     if (isSettled) {
-      text = 'Balance interne : équilibrée';
+      text = l10n.internalBalanceSettled;
     } else if (debt > 0) {
-      text =
-          '${household.nameB} doit ${formatCurrency(debt)} à ${household.nameA}';
+      text = l10n.internalDebtOwes(
+          household.nameB, formatCurrency(debt), household.nameA);
     } else {
-      text =
-          '${household.nameA} doit ${formatCurrency(-debt)} à ${household.nameB}';
+      text = l10n.internalDebtOwes(
+          household.nameA, formatCurrency(-debt), household.nameB);
     }
 
     return Padding(
@@ -461,9 +466,9 @@ class _HomeScreenState extends State<HomeScreen> {
             if (!isSettled)
               TextButton(
                 onPressed: () => _settleDebt(household),
-                child: const Text(
-                  'RÉGLER',
-                  style: TextStyle(
+                child: Text(
+                  l10n.settleButton,
+                  style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
                   ),
@@ -517,6 +522,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTransactionSwipeList(Household household, String uid) {
+    final l10n = _l10n;
+    final lang = Localizations.localeOf(context).languageCode;
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('transactions')
@@ -528,7 +535,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           debugPrint('Erreur transactions: ${snapshot.error}');
-          return const Center(child: Text('Erreur de chargement'));
+          return Center(child: Text(l10n.loadingError));
         }
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
@@ -541,15 +548,15 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  'Aucune transaction à trier.',
-                  style: TextStyle(color: Colors.grey, fontSize: 18),
+                Text(
+                  l10n.noTransactionsToSort,
+                  style: const TextStyle(color: Colors.grey, fontSize: 18),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
                   onPressed: _openPlaid,
                   icon: const Icon(Icons.account_balance),
-                  label: const Text('Connecter ma banque'),
+                  label: Text(l10n.connectMyBank),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(
@@ -564,7 +571,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         final soloBucket = household.soloBucketFor(uid);
-        final soloLabel = household.bucketLabel(soloBucket);
+        final soloLabel = household.bucketLabel(soloBucket, l10n);
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
@@ -585,7 +592,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 secondaryBackground: _buildSwipeBackground(
                   AppColors.primary,
                   Icons.people,
-                  'Commun',
+                  l10n.bucketCommon,
                   Alignment.centerRight,
                 ),
                 confirmDismiss: (direction) {
@@ -631,7 +638,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              cat.label,
+                              cat.labelFor(lang),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: cat.color,

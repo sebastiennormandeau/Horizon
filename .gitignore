@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Rapport gen-l10n (derive, regenere a chaque build)
+l10n_untranslated.txt

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/app_transaction.dart';
 import '../models/household.dart';
 import '../theme/app_colors.dart';
@@ -23,10 +24,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
   String _filter = 'all';
   String _categoryFilter = 'all';
 
+  AppLocalizations get _l10n => AppLocalizations.of(context)!;
+  String get _lang => Localizations.localeOf(context).languageCode;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Historique')),
+      appBar: AppBar(title: Text(_l10n.historyTitle)),
       body: HouseholdLoader(
         builder: (context, household, uid) {
           return Column(
@@ -54,10 +58,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
           children: [
             const Icon(Icons.lock_clock, size: 18, color: AppColors.primary),
             const SizedBox(width: 8),
-            const Expanded(
+            Expanded(
               child: Text(
-                'Plan gratuit : 30 jours d\'historique.',
-                style: TextStyle(fontSize: 13),
+                _l10n.freePlanBanner,
+                style: const TextStyle(fontSize: 13),
               ),
             ),
             TextButton(
@@ -67,7 +71,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   MaterialPageRoute(builder: (_) => const PaywallScreen()),
                 );
               },
-              child: const Text('PREMIUM'),
+              child: Text(_l10n.premiumButton),
             ),
           ],
         ),
@@ -76,11 +80,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildFilterChips(Household household) {
+    final l10n = _l10n;
     final filters = <String, String>{
-      'all': 'Tous',
-      'Solo_A': household.bucketLabel('Solo_A'),
-      'Common': 'Commun',
-      'Solo_B': household.bucketLabel('Solo_B'),
+      'all': l10n.filterAll,
+      'Solo_A': household.bucketLabel('Solo_A', l10n),
+      'Common': household.bucketLabel('Common', l10n),
+      'Solo_B': household.bucketLabel('Solo_B', l10n),
     };
 
     return Padding(
@@ -128,7 +133,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           debugPrint('Erreur historique: ${snapshot.error}');
-          return const Center(child: Text('Erreur de chargement'));
+          return Center(child: Text(_l10n.loadingError));
         }
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
@@ -154,10 +159,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
         }
 
         if (transactions.isEmpty && _categoryFilter == 'all') {
-          return const Center(
+          return Center(
             child: Text(
-              'Aucune transaction catégorisée.',
-              style: TextStyle(color: Colors.grey),
+              _l10n.noCategorizedTransactions,
+              style: const TextStyle(color: Colors.grey),
             ),
           );
         }
@@ -175,11 +180,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '${transactions.length} transaction(s)',
+                    _l10n.transactionCount('${transactions.length}'),
                     style: const TextStyle(color: Colors.grey),
                   ),
                   Text(
-                    'Total : ${formatCurrency(total)}',
+                    _l10n.totalAmount(formatCurrency(total)),
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -212,7 +217,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: FilterChip(
-                label: const Text('Toutes catégories'),
+                label: Text(_l10n.allCategories),
                 selected: _categoryFilter == 'all',
                 selectedColor: AppColors.primary.withValues(alpha: 0.3),
                 onSelected: (_) => setState(() => _categoryFilter = 'all'),
@@ -224,7 +229,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 padding: const EdgeInsets.only(right: 8),
                 child: FilterChip(
                   avatar: Icon(cat.icon, size: 16, color: cat.color),
-                  label: Text(cat.label, style: const TextStyle(fontSize: 12)),
+                  label: Text(
+                    cat.labelFor(_lang),
+                    style: const TextStyle(fontSize: 12),
+                  ),
                   selected: _categoryFilter == key,
                   selectedColor: cat.color.withValues(alpha: 0.3),
                   onSelected: (_) => setState(() => _categoryFilter = key),
@@ -242,7 +250,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       context: context,
       builder: (context) => SimpleDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Changer la catégorie'),
+        title: Text(_l10n.changeCategory),
         children: kSelectableCategories.map((cat) {
           return SimpleDialogOption(
             onPressed: () => Navigator.pop(context, cat.key),
@@ -250,7 +258,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               children: [
                 Icon(cat.icon, size: 20, color: cat.color),
                 const SizedBox(width: 12),
-                Text(cat.label),
+                Text(cat.labelFor(_lang)),
                 if (cat.key == t.category) ...[
                   const Spacer(),
                   const Icon(Icons.check, size: 18, color: AppColors.primary),
@@ -272,6 +280,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildTransactionTile(AppTransaction t, Household household) {
+    final l10n = _l10n;
     final isCommon = t.assignedToBucket == 'Common';
     final chipColor = isCommon ? AppColors.primary : AppColors.solo;
     final cat = categoryOf(t.category);
@@ -300,7 +309,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  household.bucketLabel(t.assignedToBucket),
+                  household.bucketLabel(t.assignedToBucket, l10n),
                   style: TextStyle(fontSize: 12, color: chipColor),
                 ),
               ),
@@ -309,7 +318,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               const SizedBox(width: 2),
               Flexible(
                 child: Text(
-                  cat.label,
+                  cat.labelFor(_lang),
                   style: TextStyle(fontSize: 11, color: cat.color),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -349,16 +358,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       PopupMenuItem(
                         value: bucket,
                         child: Text(
-                          'Déplacer vers ${household.bucketLabel(bucket)}',
+                          l10n.moveTo(household.bucketLabel(bucket, l10n)),
                         ),
                       ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: '__category__',
-                    child: Text('Changer la catégorie'),
+                    child: Text(l10n.changeCategory),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: '',
-                    child: Text('Renvoyer dans « À trier »'),
+                    child: Text(l10n.sendBackToSort),
                   ),
                 ],
               ),
@@ -386,8 +395,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
       SnackBar(
         content: Text(
           bucket.isEmpty
-              ? 'Transaction renvoyée dans « À trier ».'
-              : 'Déplacée vers ${household.bucketLabel(bucket)}.',
+              ? _l10n.sentBackToSort
+              : _l10n.movedTo(household.bucketLabel(bucket, _l10n)),
         ),
       ),
     );

@@ -64,5 +64,23 @@ void main() {
       expect(parseAmount(''), 0.0);
       expect(parseAmount('abc'), 0.0);
     });
+
+    test('formatCurrency : style en-CA quand la langue est en', () {
+      expect(formatCurrency(1234.5, languageCode: 'en'), r'$1,234.50');
+      expect(formatCurrency(0, languageCode: 'en'), r'$0.00');
+      expect(formatCurrency(-42.5, languageCode: 'en'), r'-$42.50');
+      expect(
+        formatCurrency(1000000, languageCode: 'en'),
+        r'$1,000,000.00',
+      );
+    });
+
+    test('parseAmount : accepte aussi la convention anglaise', () {
+      // "1,234.56" : la virgule est un séparateur de milliers.
+      expect(parseAmount('1,234.56'), 1234.56);
+      expect(parseAmount(r'$1,234.56'), 1234.56);
+      // "1.234,56" : le point est un séparateur de milliers.
+      expect(parseAmount('1.234,56'), 1234.56);
+    });
   });
 }

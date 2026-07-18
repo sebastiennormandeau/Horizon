@@ -4,11 +4,16 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 
 /// Affiche un document légal (markdown embarqué dans les assets) dans une
 /// feuille déroulante. Utilisé à l'inscription et dans les réglages.
+///
+/// `baseName` : 'terms' ou 'privacy'. En anglais, la traduction de courtoisie
+/// `<baseName>_en.md` est affichée (la version française prévaut légalement).
 Future<void> showLegalDocument(
   BuildContext context,
-  String filename,
+  String baseName,
   String title,
 ) async {
+  final lang = Localizations.localeOf(context).languageCode;
+  final filename = lang == 'en' ? '${baseName}_en.md' : '$baseName.md';
   final text = await rootBundle.loadString('assets/legal/$filename');
   if (!context.mounted) return;
 

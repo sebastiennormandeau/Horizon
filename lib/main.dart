@@ -8,12 +8,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'config/app_env.dart';
 import 'firebase_options.dart';
 import 'firebase_options_prod.dart' as prod_options;
+import 'l10n/app_localizations.dart';
 import 'services/revenuecat_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/household_setup_screen.dart';
 import 'screens/verify_email_screen.dart';
 import 'theme/app_colors.dart';
+import 'utils/locale_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,6 +50,9 @@ void main() async {
 
   await RevenueCatService.initialize();
 
+  // Langue de l'app (fr par défaut, en en option) persistée localement.
+  await LocaleController.instance.init();
+
   // Garde l'identité RevenueCat alignée sur l'utilisateur Firebase : le
   // webhook serveur retrouve l'abonné via app_user_id == uid.
   FirebaseAuth.instance.authStateChanges().listen((user) {
@@ -66,26 +71,37 @@ class HorizonApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Horizon',
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: AppColors.background,
-        primaryColor: AppColors.primary,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primary,
-          brightness: Brightness.dark,
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.surface,
-          elevation: 0,
-        ),
-        fontFamily: 'Inter',
-        useMaterial3: true,
-      ),
-      home: const AuthRouter(),
-      routes: {'/home': (context) => const HomeScreen()},
-      debugShowCheckedModeBanner: false,
+    return ValueListenableBuilder<Locale?>(
+      valueListenable: LocaleController.instance,
+      builder: (context, locale, _) {
+        return MaterialApp(
+          title: 'Horizon',
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          // Appareil non pris en charge (ni fr ni en) : repli sur le français.
+          localeResolutionCallback: (device, supported) =>
+              LocaleController.resolveLocale(device, supported),
+          theme: ThemeData(
+            brightness: Brightness.dark,
+            scaffoldBackgroundColor: AppColors.background,
+            primaryColor: AppColors.primary,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primary,
+              brightness: Brightness.dark,
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: AppColors.surface,
+              elevation: 0,
+            ),
+            fontFamily: 'Inter',
+            useMaterial3: true,
+          ),
+          home: const AuthRouter(),
+          routes: {'/home': (context) => const HomeScreen()},
+          debugShowCheckedModeBanner: false,
+        );
+      },
     );
   }
 }
@@ -131,9 +147,9 @@ class AuthRouter extends StatelessWidget {
             }
 
             if (userSnapshot.hasError) {
-              return const Scaffold(
+              return Scaffold(
                 body: Center(
-                  child: Text('Erreur de chargement du profil.'),
+                  child: Text(AppLocalizations.of(context)!.profileLoadingError),
                 ),
               );
             }

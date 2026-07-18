@@ -209,12 +209,18 @@ Le code est prêt (fonction `generateCoachAdvice`, écran Bilan). À faire :
 2. **En production** : dans `functions/.env.<projet-prod>`, mettre
    `AI_COACH_REQUIRE_PREMIUM=true` — le coach devient un argument Premium.
    En dev (`functions/.env`), il est ouvert à tous pour tester.
-3. **Coûts** : ~3 ¢ par bilan (Claude Opus 4.8, ~2 000 tokens d'entrée /
-   800 de sortie), limité à 5 générations/jour/utilisateur par le rate
-   limiting. Surveiller la consommation sur console.anthropic.com.
-4. **Confidentialité** : seuls des agrégats anonymisés sont transmis
-   (documenté dans la politique de confidentialité, §3). Ne jamais élargir
-   la charge utile sans mettre à jour la politique.
+3. **Coûts** : ~5 ¢ par bilan (Claude Opus 4.8 avec réflexion adaptative,
+   ~2 500 tokens d'entrée / ~1 500 de sortie incluant la réflexion), limité
+   à 5 générations/jour/utilisateur par le rate limiting. Surveiller la
+   consommation sur console.anthropic.com.
+4. **Confidentialité** : seuls des agrégats anonymisés sont transmis —
+   totaux par catégorie, commerçants, cagnottes, et montants budgétaires
+   agrégés (revenus totaux, dépenses fixes, objectifs d'enveloppes) —
+   documenté dans la politique de confidentialité, §3 (fr **et** en).
+   Ne jamais élargir la charge utile sans mettre à jour les deux politiques.
+5. **Langue** : le coach répond dans la langue active de l'app (fr/en) ;
+   le conseil est partagé par le foyer — le bouton « Régénérer » permet à
+   l'autre partenaire de l'obtenir dans sa langue.
 
 ## 8. Conformité (Loi 25) ✅🔧
 

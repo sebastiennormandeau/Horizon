@@ -3,10 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/household.dart';
 import '../theme/app_colors.dart';
 import '../utils/categories.dart';
 import '../utils/formatters.dart';
+import '../utils/locale_controller.dart';
 import '../widgets/household_loader.dart';
 import 'paywall_screen.dart';
 
@@ -26,10 +28,28 @@ class _BilanScreenState extends State<BilanScreen> {
   bool _generatingAdvice = false;
   String? _error;
 
+  AppLocalizations get _l10n => AppLocalizations.of(context)!;
+  String get _lang => Localizations.localeOf(context).languageCode;
+
   @override
   void initState() {
     super.initState();
     _refreshReport();
+  }
+
+  /// Les libellés de fréquence sont produits en français par le serveur
+  /// (moteur de bilans) ; on les traduit à l'affichage.
+  String _frequencyLabel(String serverLabel) {
+    switch (serverLabel) {
+      case 'hebdomadaire':
+        return _l10n.freqLabelWeekly;
+      case 'aux 2 semaines':
+        return _l10n.freqLabelBiweekly;
+      case 'mensuelle':
+        return _l10n.freqLabelMonthly;
+      default:
+        return serverLabel;
+    }
   }
 
   Future<void> _refreshReport() async {
@@ -49,14 +69,14 @@ class _BilanScreenState extends State<BilanScreen> {
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.message ?? 'Erreur lors de la génération du bilan.';
+        _error = e.message ?? _l10n.reportError;
         _loading = false;
       });
     } catch (e) {
       debugPrint('Erreur generateReport: $e');
       if (!mounted) return;
       setState(() {
-        _error = 'Erreur lors de la génération du bilan.';
+        _error = _l10n.reportError;
         _loading = false;
       });
     }
@@ -68,7 +88,11 @@ class _BilanScreenState extends State<BilanScreen> {
     try {
       final callable =
           FirebaseFunctions.instance.httpsCallable('generateCoachAdvice');
-      await callable.call({'report_id': _reportId});
+      // Le coach répond dans la langue active de l'app.
+      await callable.call({
+        'report_id': _reportId,
+        'language': LocaleController.instance.effectiveLanguageCode,
+      });
       // Le doc du bilan est mis à jour côté serveur; le stream rafraîchit l'UI.
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
@@ -79,14 +103,14 @@ class _BilanScreenState extends State<BilanScreen> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Le coach IA est indisponible.')),
+          SnackBar(content: Text(e.message ?? _l10n.coachUnavailable)),
         );
       }
     } catch (e) {
       debugPrint('Erreur generateCoachAdvice: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Le coach IA est indisponible.')),
+        SnackBar(content: Text(_l10n.coachUnavailable)),
       );
     } finally {
       if (mounted) setState(() => _generatingAdvice = false);
@@ -102,8 +126,7 @@ class _BilanScreenState extends State<BilanScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '« $name » ajouté aux dépenses fixes '
-            '(${formatCurrency(monthlyAmount)}/mois).',
+            _l10n.addedToFixedExpenses(name, formatCurrency(monthlyAmount)),
           ),
         ),
       );
@@ -111,7 +134,7 @@ class _BilanScreenState extends State<BilanScreen> {
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? "Erreur lors de l'ajout.")),
+        SnackBar(content: Text(e.message ?? _l10n.addError)),
       );
     } catch (e) {
       debugPrint('Erreur addRecurringToBudget: $e');
@@ -128,7 +151,7 @@ class _BilanScreenState extends State<BilanScreen> {
       });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('« $name » ne sera plus suggéré.')),
+        SnackBar(content: Text(_l10n.noLongerSuggested(name))),
       );
       _refreshReport();
     } catch (e) {
@@ -138,13 +161,14 @@ class _BilanScreenState extends State<BilanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = _l10n;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bilan'),
+        title: Text(l10n.bilanTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Rafraîchir',
+            tooltip: l10n.refreshTooltip,
             onPressed: _loading ? null : _refreshReport,
           ),
         ],
@@ -163,12 +187,13 @@ class _BilanScreenState extends State<BilanScreen> {
   }
 
   Widget _buildPeriodChips() {
+    final l10n = _l10n;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           ChoiceChip(
-            label: const Text('Ce mois-ci'),
+            label: Text(l10n.thisMonth),
             selected: _periodType == 'monthly',
             selectedColor: AppColors.primary.withValues(alpha: 0.3),
             onSelected: (_) {
@@ -178,7 +203,7 @@ class _BilanScreenState extends State<BilanScreen> {
           ),
           const SizedBox(width: 8),
           ChoiceChip(
-            label: const Text('Cette semaine'),
+            label: Text(l10n.thisWeek),
             selected: _periodType == 'weekly',
             selectedColor: AppColors.primary.withValues(alpha: 0.3),
             onSelected: (_) {
@@ -200,12 +225,12 @@ class _BilanScreenState extends State<BilanScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(_error ?? 'Bilan indisponible.',
+            Text(_error ?? _l10n.reportUnavailable,
                 style: const TextStyle(color: Colors.grey)),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: _refreshReport,
-              child: const Text('Réessayer'),
+              child: Text(_l10n.retry),
             ),
           ],
         ),
@@ -230,6 +255,7 @@ class _BilanScreenState extends State<BilanScreen> {
   }
 
   Widget _buildReport(Household household, Map<String, dynamic> report) {
+    final l10n = _l10n;
     final total = (report['total_spent'] as num?)?.toDouble() ?? 0;
     final prevTotal = (report['prev_total_spent'] as num?)?.toDouble() ?? 0;
     final byCategory = Map<String, dynamic>.from(
@@ -253,19 +279,21 @@ class _BilanScreenState extends State<BilanScreen> {
         _buildTotalCard(total, prevTotal),
         const SizedBox(height: 16),
         if (byCategory.isNotEmpty) ...[
-          _sectionTitle('Dépenses par catégorie'),
+          _sectionTitle(l10n.spendingByCategory),
           _buildCategoryBars(byCategory, prevByCategory),
           const SizedBox(height: 16),
         ],
         if (topMerchants.isNotEmpty) ...[
-          _sectionTitle('Principaux commerçants'),
+          _sectionTitle(l10n.topMerchants),
           _card(
             topMerchants.map((m) {
               return ListTile(
                 dense: true,
                 title: Text(m['name'] as String? ?? ''),
-                subtitle: Text('${m['count']} transaction(s)',
-                    style: const TextStyle(fontSize: 12)),
+                subtitle: Text(
+                  l10n.transactionCount('${m['count']}'),
+                  style: const TextStyle(fontSize: 12),
+                ),
                 trailing: Text(
                   formatCurrency((m['amount'] as num?)?.toDouble() ?? 0),
                   style: const TextStyle(fontWeight: FontWeight.bold),
@@ -276,20 +304,21 @@ class _BilanScreenState extends State<BilanScreen> {
           const SizedBox(height: 16),
         ],
         if (recurring.isNotEmpty) ...[
-          _sectionTitle('Dépenses récurrentes détectées'),
+          _sectionTitle(l10n.recurringDetected),
           ...recurring.map((r) => _buildRecurringCard(household, r)),
           const SizedBox(height: 16),
         ],
         if (_periodType == 'monthly') ...[
           _buildEnvelopes(household, byCategory),
         ],
-        _sectionTitle('Coach budgétaire IA'),
+        _sectionTitle(l10n.aiCoachSection),
         _buildAiSection(aiAdvice),
       ],
     );
   }
 
   Widget _buildTotalCard(double total, double prevTotal) {
+    final l10n = _l10n;
     final double? deltaPct =
         prevTotal > 0 ? ((total - prevTotal) / prevTotal) * 100 : null;
     final up = (deltaPct ?? 0) > 0;
@@ -304,9 +333,7 @@ class _BilanScreenState extends State<BilanScreen> {
       child: Column(
         children: [
           Text(
-            _periodType == 'monthly'
-                ? 'Dépenses du mois'
-                : 'Dépenses de la semaine',
+            _periodType == 'monthly' ? l10n.monthSpending : l10n.weekSpending,
             style: const TextStyle(color: Colors.grey),
           ),
           const SizedBox(height: 4),
@@ -326,8 +353,10 @@ class _BilanScreenState extends State<BilanScreen> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${up ? '+' : ''}${deltaPct.toStringAsFixed(0)} % vs '
-                  'période précédente (${formatCurrency(prevTotal)})',
+                  l10n.vsPreviousPeriod(
+                    '${up ? '+' : ''}${deltaPct.toStringAsFixed(0)}',
+                    formatCurrency(prevTotal),
+                  ),
                   style: TextStyle(
                     fontSize: 12,
                     color: up ? Colors.redAccent : Colors.green,
@@ -336,9 +365,9 @@ class _BilanScreenState extends State<BilanScreen> {
               ],
             )
           else
-            const Text(
-              'Pas encore de période précédente à comparer.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+            Text(
+              l10n.noPreviousPeriod,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
         ],
       ),
@@ -371,7 +400,7 @@ class _BilanScreenState extends State<BilanScreen> {
                   Icon(cat.icon, size: 16, color: cat.color),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: Text(cat.label,
+                    child: Text(cat.labelFor(_lang),
                         style: const TextStyle(fontSize: 13)),
                   ),
                   Text(
@@ -409,6 +438,7 @@ class _BilanScreenState extends State<BilanScreen> {
   }
 
   Widget _buildRecurringCard(Household household, Map<String, dynamic> r) {
+    final l10n = _l10n;
     final name = r['merchant'] as String? ?? '';
     final amount = (r['amount'] as num?)?.toDouble() ?? 0;
     final monthly = (r['monthly_amount'] as num?)?.toDouble() ?? amount;
@@ -445,8 +475,11 @@ class _BilanScreenState extends State<BilanScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Dépense $label détectée ($occurrences fois) — '
-              '≈ ${formatCurrency(monthly)}/mois',
+              l10n.recurringInfo(
+                _frequencyLabel(label),
+                '$occurrences',
+                formatCurrency(monthly),
+              ),
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(height: 8),
@@ -455,15 +488,17 @@ class _BilanScreenState extends State<BilanScreen> {
               children: [
                 TextButton(
                   onPressed: () => _dismissRecurring(household, name),
-                  child: const Text('Ignorer',
-                      style: TextStyle(color: Colors.grey)),
+                  child: Text(
+                    l10n.ignore,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () => _addRecurring(name, monthly),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary),
-                  child: const Text('Ajouter au budget'),
+                  child: Text(l10n.addToBudget),
                 ),
               ],
             ),
@@ -497,7 +532,7 @@ class _BilanScreenState extends State<BilanScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionTitle('Enveloppes du mois'),
+            _sectionTitle(_l10n.monthEnvelopes),
             _card(
               envelopes.map((e) {
                 final cat = categoryOf(e['category'] as String?);
@@ -522,12 +557,14 @@ class _BilanScreenState extends State<BilanScreen> {
                           Icon(cat.icon, size: 16, color: cat.color),
                           const SizedBox(width: 6),
                           Expanded(
-                            child: Text(cat.label,
+                            child: Text(cat.labelFor(_lang),
                                 style: const TextStyle(fontSize: 13)),
                           ),
                           Text(
-                            '${formatCurrency(spent)} / '
-                            '${formatCurrency(budget)}',
+                            _l10n.spentOfBudget(
+                              formatCurrency(spent),
+                              formatCurrency(budget),
+                            ),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -550,8 +587,9 @@ class _BilanScreenState extends State<BilanScreen> {
                         Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(
-                            'Dépassement de '
-                            '${formatCurrency(spent - budget)}',
+                            _l10n.overBudgetBy(
+                              formatCurrency(spent - budget),
+                            ),
                             style: const TextStyle(
                                 fontSize: 11, color: Colors.redAccent),
                           ),
@@ -569,6 +607,7 @@ class _BilanScreenState extends State<BilanScreen> {
   }
 
   Widget _buildAiSection(String? aiAdvice) {
+    final l10n = _l10n;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -585,21 +624,18 @@ class _BilanScreenState extends State<BilanScreen> {
               styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Ces suggestions sont générées par une IA à partir de vos '
-              'agrégats de dépenses et ne constituent pas un conseil '
-              'financier professionnel.',
-              style: TextStyle(fontSize: 11, color: Colors.grey),
+            Text(
+              l10n.aiDisclaimer,
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
             ),
             const SizedBox(height: 12),
           ] else ...[
             const Icon(Icons.auto_awesome, color: AppColors.primary, size: 32),
             const SizedBox(height: 8),
-            const Text(
-              'Obtenez des observations et suggestions personnalisées, '
-              'rédigées à partir des chiffres de ce bilan.',
+            Text(
+              l10n.aiPitch,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 13),
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
             ),
             const SizedBox(height: 12),
           ],
@@ -615,8 +651,8 @@ class _BilanScreenState extends State<BilanScreen> {
                   icon: const Icon(Icons.auto_awesome),
                   label: Text(
                     aiAdvice == null
-                        ? 'Générer mes conseils IA'
-                        : 'Régénérer les conseils',
+                        ? l10n.generateAdvice
+                        : l10n.regenerateAdvice,
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'register_screen.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../utils/validators.dart';
 
@@ -26,6 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final l10n = AppLocalizations.of(context)!;
 
     setState(() => _isLoading = true);
     try {
@@ -37,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Erreur de connexion')),
+          SnackBar(content: Text(e.message ?? l10n.loginError)),
         );
       }
     } finally {
@@ -46,15 +48,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _resetPassword() async {
+    final l10n = AppLocalizations.of(context)!;
     final email = _emailController.text.trim();
-    final emailError = validateEmail(email);
+    final emailError = validateEmail(email, l10n);
     if (emailError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Entrez une adresse courriel valide pour réinitialiser le mot de passe.',
-          ),
-        ),
+        SnackBar(content: Text(l10n.resetPasswordInvalidEmail)),
       );
       return;
     }
@@ -63,15 +62,13 @@ class _LoginScreenState extends State<LoginScreen> {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Email de réinitialisation envoyé. Vérifiez votre boîte de réception.'),
-          ),
+          SnackBar(content: Text(l10n.resetPasswordSent)),
         );
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? "Erreur lors de l'envoi.")),
+          SnackBar(content: Text(e.message ?? l10n.sendError)),
         );
       }
     }
@@ -79,6 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -99,33 +97,32 @@ class _LoginScreenState extends State<LoginScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Le ZBB simplifié pour les foyers',
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+              Text(
+                l10n.appTagline,
+                style: const TextStyle(color: Colors.grey, fontSize: 16),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 48),
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.emailLabel,
+                  border: const OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.email],
-                validator: validateEmail,
+                validator: (v) => validateEmail(v, l10n),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Mot de passe',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.passwordLabel,
+                  border: const OutlineInputBorder(),
                 ),
                 obscureText: true,
-                validator: (v) => (v == null || v.isEmpty)
-                    ? 'Veuillez entrer votre mot de passe.'
-                    : null,
+                validator: (v) =>
+                    (v == null || v.isEmpty) ? l10n.passwordRequired : null,
               ),
               const SizedBox(height: 24),
               _isLoading
@@ -136,9 +133,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         backgroundColor: AppColors.primary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text(
-                        'Se connecter',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.signIn,
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -147,9 +144,9 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 8),
               TextButton(
                 onPressed: _resetPassword,
-                child: const Text(
-                  'Mot de passe oublié ?',
-                  style: TextStyle(color: Colors.grey),
+                child: Text(
+                  l10n.forgotPassword,
+                  style: const TextStyle(color: Colors.grey),
                 ),
               ),
               const SizedBox(height: 8),
@@ -160,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     MaterialPageRoute(builder: (_) => const RegisterScreen()),
                   );
                 },
-                child: const Text("Créer un compte"),
+                child: Text(l10n.createAccount),
               ),
             ],
             ),

@@ -261,6 +261,15 @@ export const generatePlaidLinkToken = functions
     const uid = requireAuth(context);
     await enforceRateLimit("generatePlaidLinkToken", uid, 20, 3600);
 
+    // Langue de l'interface Plaid Link (l'app est bilingue fr/en).
+    const language =
+      data?.language === undefined
+        ? "fr"
+        : assertString(data.language, "language", {
+            maxLength: 2,
+            pattern: /^(fr|en)$/,
+          });
+
     const client = getPlaidClient();
     const projectId = process.env.GCLOUD_PROJECT;
     const webhookUrl = projectId
@@ -275,7 +284,7 @@ export const generatePlaidLinkToken = functions
         client_name: "Horizon App",
         products: [Products.Transactions],
         country_codes: [CountryCode.Us, CountryCode.Ca],
-        language: "fr",
+        language,
         webhook: webhookUrl,
       });
       return { link_token: response.data.link_token };

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/revenuecat_service.dart';
 import '../theme/app_colors.dart';
 
@@ -19,12 +20,7 @@ class PaywallScreen extends StatefulWidget {
 class _PaywallScreenState extends State<PaywallScreen> {
   bool _busy = false;
 
-  static const _features = [
-    ('Comptes bancaires illimités', Icons.account_balance),
-    ('Historique complet et illimité', Icons.history),
-    ('Synchronisation en temps réel', Icons.sync),
-    ('Soutien prioritaire', Icons.support_agent),
-  ];
+  AppLocalizations get _l10n => AppLocalizations.of(context)!;
 
   Future<void> _purchase(Package package) async {
     setState(() => _busy = true);
@@ -33,19 +29,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
       if (!mounted) return;
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Bienvenue dans Horizon Premium ! Activation en cours '
-              '(quelques secondes)...',
-            ),
-          ),
+          SnackBar(content: Text(_l10n.purchaseWelcome)),
         );
         Navigator.pop(context);
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('L\'achat a échoué. Réessayez.')),
+        SnackBar(content: Text(_l10n.purchaseFailed)),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -60,9 +51,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            restored
-                ? 'Achats restaurés avec succès !'
-                : 'Aucun achat à restaurer.',
+            restored ? _l10n.purchasesRestored : _l10n.nothingToRestore,
           ),
         ),
       );
@@ -73,8 +62,16 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = _l10n;
+    final features = [
+      (l10n.featUnlimitedBanks, Icons.account_balance),
+      (l10n.featFullHistory, Icons.history),
+      (l10n.featRealtimeSync, Icons.sync),
+      (l10n.featPrioritySupport, Icons.support_agent),
+    ];
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Horizon Premium')),
+      appBar: AppBar(title: Text(l10n.paywallTitle)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -83,13 +80,13 @@ class _PaywallScreenState extends State<PaywallScreen> {
             const Icon(Icons.workspace_premium,
                 size: 64, color: AppColors.primary),
             const SizedBox(height: 16),
-            const Text(
-              'Passez à Horizon Premium',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            Text(
+              l10n.goPremium,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            ..._features.map(
+            ...features.map(
               (f) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Row(
@@ -124,11 +121,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white12),
       ),
-      child: const Text(
-        'L\'abonnement s\'effectue depuis l\'application mobile Horizon '
-        '(Android ou iPhone). Une fois abonné, votre statut Premium '
-        's\'applique automatiquement à tout votre foyer, y compris sur le Web.',
-        style: TextStyle(color: Colors.grey),
+      child: Text(
+        _l10n.webNoPurchase,
+        style: const TextStyle(color: Colors.grey),
         textAlign: TextAlign.center,
       ),
     );
@@ -142,9 +137,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white12),
       ),
-      child: const Text(
-        'La boutique n\'est pas encore disponible. Réessayez plus tard.',
-        style: TextStyle(color: Colors.grey),
+      child: Text(
+        _l10n.storeUnavailable,
+        style: const TextStyle(color: Colors.grey),
         textAlign: TextAlign.center,
       ),
     );
@@ -192,7 +187,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
             ),
             TextButton(
               onPressed: _restore,
-              child: const Text('Restaurer mes achats'),
+              child: Text(_l10n.restorePurchases),
             ),
           ],
         );

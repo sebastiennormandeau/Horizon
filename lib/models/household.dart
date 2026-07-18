@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../l10n/app_localizations.dart';
+
 /// Représentation typée d'un document `households/{id}`.
 class Household {
   final String id;
@@ -93,17 +95,17 @@ class Household {
   String get nameB =>
       (userBName?.trim().isNotEmpty ?? false) ? userBName!.trim() : 'B';
 
-  /// Libellé d'un bucket pour affichage.
-  String bucketLabel(String bucket) {
+  /// Libellé d'un bucket pour affichage, dans la langue active.
+  String bucketLabel(String bucket, AppLocalizations l10n) {
     switch (bucket) {
       case 'Solo_A':
         return 'Solo $nameA';
       case 'Solo_B':
         return 'Solo $nameB';
       case 'Common':
-        return 'Commun';
+        return l10n.bucketCommon;
       default:
-        return 'À trier';
+        return l10n.bucketToSort;
     }
   }
 

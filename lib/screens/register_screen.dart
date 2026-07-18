@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../utils/validators.dart';
 import '../widgets/legal_documents.dart';
@@ -33,12 +34,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _register() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final l10n = AppLocalizations.of(context)!;
 
     if (!_acceptedTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Vous devez accepter les conditions d'utilisation."),
-        ),
+        SnackBar(content: Text(l10n.mustAcceptTerms)),
       );
       return;
     }
@@ -74,7 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Erreur d\'inscription')),
+          SnackBar(content: Text(e.message ?? l10n.registerError)),
         );
       }
     } finally {
@@ -84,8 +84,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Inscription')),
+      appBar: AppBar(title: Text(l10n.registerTitle)),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -98,48 +99,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Prénom',
-                    helperText: 'Affiché à votre partenaire dans le foyer',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.firstNameLabel,
+                    helperText: l10n.firstNameHelper,
+                    border: const OutlineInputBorder(),
                   ),
                   textCapitalization: TextCapitalization.words,
                   maxLength: 40,
-                  validator: validateDisplayName,
+                  validator: (v) => validateDisplayName(v, l10n),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.emailLabel,
+                    border: const OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   autofillHints: const [AutofillHints.email],
-                  validator: validateEmail,
+                  validator: (v) => validateEmail(v, l10n),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Mot de passe',
-                    helperText: '8 caractères min., avec lettres et chiffres',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.passwordLabel,
+                    helperText: l10n.passwordHelper,
+                    border: const OutlineInputBorder(),
                   ),
                   obscureText: true,
-                  validator: validatePassword,
+                  validator: (v) => validatePassword(v, l10n),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _confirmController,
-                  decoration: const InputDecoration(
-                    labelText: 'Confirmer le mot de passe',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.confirmPasswordLabel,
+                    border: const OutlineInputBorder(),
                   ),
                   obscureText: true,
                   validator: (v) => validatePasswordConfirmation(
                     v,
                     _passwordController.text,
+                    l10n,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -154,37 +156,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Expanded(
                       child: Wrap(
                         children: [
-                          const Text("J'accepte les "),
+                          Text(l10n.iAcceptThe),
                           GestureDetector(
                             onTap: () => showLegalDocument(
                               context,
-                              'terms.md',
-                              "Conditions d'Utilisation",
+                              'terms',
+                              l10n.termsDocTitle,
                             ),
-                            child: const Text(
-                              "Conditions d'utilisation",
-                              style: TextStyle(
+                            child: Text(
+                              l10n.termsLinkLabel,
+                              style: const TextStyle(
                                 color: AppColors.primary,
                                 decoration: TextDecoration.underline,
                               ),
                             ),
                           ),
-                          const Text(" et la "),
+                          Text(l10n.andThe),
                           GestureDetector(
                             onTap: () => showLegalDocument(
                               context,
-                              'privacy.md',
-                              "Politique de Confidentialité",
+                              'privacy',
+                              l10n.privacyDocTitle,
                             ),
-                            child: const Text(
-                              "Politique de confidentialité",
-                              style: TextStyle(
+                            child: Text(
+                              l10n.privacyLinkLabel,
+                              style: const TextStyle(
                                 color: AppColors.primary,
                                 decoration: TextDecoration.underline,
                               ),
                             ),
                           ),
-                          const Text("."),
+                          Text(l10n.sentencePeriod),
                         ],
                       ),
                     ),
@@ -199,9 +201,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           backgroundColor: AppColors.primary,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                        child: const Text(
-                          'Créer un compte',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.createAccount,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),

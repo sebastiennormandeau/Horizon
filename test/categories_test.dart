@@ -25,5 +25,15 @@ void main() {
       expect(keys, isNot(contains('TRANSFER_IN')));
       expect(keys, contains('FOOD_AND_DRINK'));
     });
+
+    test('labelFor retourne le libellé selon la langue', () {
+      final cat = categoryOf('FOOD_AND_DRINK');
+      expect(cat.labelFor('fr'), 'Restauration & alcool');
+      expect(cat.labelFor('en'), 'Food & drink');
+      // Toutes les catégories ont un libellé anglais non vide.
+      for (final c in kCategories) {
+        expect(c.labelEn, isNotEmpty);
+      }
+    });
   });
 }

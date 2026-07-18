@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Horizon — a French-language (Quebec) Flutter app for couples doing Zero-Based Budgeting. Partners form a "Foyer" (household), connect banks via Plaid, then swipe transactions Tinder-style into three buckets: `Solo_A`, `Common`, `Solo_B`. The server maintains per-bucket "safe-to-spend" balances and an internal debt ledger between partners. Monetization: free tier vs Premium (RevenueCat). An AI coach (Anthropic API) writes budget advice from server-computed aggregates.
+Horizon — a Quebec Flutter app (bilingual UI: French default, English optional) for couples doing Zero-Based Budgeting. Partners form a "Foyer" (household), connect banks via Plaid, then swipe transactions Tinder-style into three buckets: `Solo_A`, `Common`, `Solo_B`. The server maintains per-bucket "safe-to-spend" balances and an internal debt ledger between partners. Monetization: free tier vs Premium (RevenueCat). An AI coach (Anthropic API) writes budget advice from server-computed aggregates.
 
-**All UI strings, code comments, commit messages, and legal docs are in French — keep it that way.**
+**Code comments, commit messages and the authoritative legal docs are in French — keep it that way.** The UI is bilingual (fr default, en optional): every user-facing string lives in `lib/l10n/app_fr.arb` (template) + `app_en.arb`, generated into `lib/l10n/app_localizations*.dart` by `flutter gen-l10n` (runs automatically on `flutter pub get`). Never hardcode a UI string — add a key to BOTH ARB files. The language choice is persisted by `lib/utils/locale_controller.dart` (SharedPreferences; also syncs `currencyLanguageCode` for money formatting) and exposed in Settings.
 
 ## Commands
 
@@ -53,13 +53,14 @@ The ONLY transaction fields a client may write are `assigned_to_bucket` and `cat
 
 - Firestore uses `snake_case` fields; Dart models (`lib/models/`) are typed camelCase wrappers with defensive `(x as num?)?.toDouble()` casts (Firestore returns ints for whole numbers). `Household` has a back-compat fallback: `user_A_id ?? created_by`.
 - `lib/widgets/household_loader.dart` is the shared user-doc → household-doc stream chain used by Home/History/Bilan/Settings — use it instead of duplicating the StreamBuilder nesting.
-- `lib/utils/categories.dart` is the category referential: keys are Plaid `personal_finance_category.primary` values (e.g. `FOOD_AND_DRINK`). Reports aggregate by these keys and `category_budgets` (envelopes) reference them, so renaming a key breaks aggregation continuity.
-- Currency/input formatting is locale-aware fr-CA without the intl package: `formatCurrency`/`parseAmount` in `lib/utils/formatters.dart` (NBSP thousands separator, comma decimals). Amount inputs must use `parseAmount`, never bare `double.tryParse`.
+- `lib/utils/categories.dart` is the category referential: keys are Plaid `personal_finance_category.primary` values (e.g. `FOOD_AND_DRINK`). Reports aggregate by these keys and `category_budgets` (envelopes) reference them, so renaming a key breaks aggregation continuity. Display labels are bilingual via `TxCategory.labelFor(languageCode)`.
+- Currency/input formatting is bilingual without the intl package: `formatCurrency`/`parseAmount` in `lib/utils/formatters.dart` (fr: NBSP thousands + comma decimals `1 234,56 $`; en: `$1,234.56`; default follows `currencyLanguageCode`, kept in sync by `LocaleController`). Amount inputs must use `parseAmount`, never bare `double.tryParse` — it accepts both decimal conventions.
+- i18n gotchas: validators take an optional `AppLocalizations` (French fallback keeps tests pure); `Household.bucketLabel(bucket, l10n)` needs the l10n; stored DATA values stay French for continuity (`pay_frequency` values `Mensuel/Bi-hebdomadaire/Hebdomadaire` that `BudgetCalculator` switches on, and the server's `frequency_label`) — only their display is translated (maps in `budget_setup_screen.dart` / `bilan_screen.dart`). Legal docs: `assets/legal/*.md` French authoritative + `*_en.md` courtesy translations picked by `showLegalDocument`.
 - New Firestore queries usually need a composite index in `firestore.indexes.json` — deploy it or the query fails at runtime with `failed-precondition`.
 
 ### Anthropic API usage
 
-`coach.ts` uses `@anthropic-ai/sdk` with model `claude-opus-4-8`, a French system prompt with strict output structure, and a 250-word cap. Rate-limited 5/day/user. If the secret is the `REPLACE_ME` placeholder, the function returns a clear failed-precondition. Any expansion of the payload sent to the API requires updating the privacy policy (`assets/legal/privacy.md` §3 — Loi 25 disclosure).
+`coach.ts` uses `@anthropic-ai/sdk` with model `claude-opus-4-8`, adaptive thinking (`thinking: {type: "adaptive"}`), and two financial-planner system prompts (fr/en, chosen by the callable's `language` input; 350-word cap, fixed markdown sections). The persona may cite general benchmarks (50/30/20, emergency fund) but household amounts must come ONLY from the JSON payload. The payload includes report aggregates plus monthly budget context (total income, fixed expenses, envelope targets) — any expansion of it requires updating BOTH privacy policies (`assets/legal/privacy.md` §3 and `privacy_en.md` — Loi 25 disclosure). Rate-limited 5/day/user. If the secret is the `REPLACE_ME` placeholder, the function returns a clear failed-precondition.
 
 ### Testing
 

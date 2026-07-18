@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../utils/validators.dart';
 
@@ -23,6 +24,7 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
   }
 
   Future<void> _createHousehold() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _isLoading = true);
     try {
       HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
@@ -37,13 +39,11 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
           barrierDismissible: false,
           builder: (context) => AlertDialog(
             backgroundColor: AppColors.surface,
-            title: const Text("Foyer créé !"),
+            title: Text(l10n.householdCreated),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  "Voici votre code pour inviter votre conjoint(e) :",
-                ),
+                Text(l10n.inviteCodeIntro),
                 const SizedBox(height: 16),
                 SelectableText(
                   joinCode,
@@ -55,9 +55,9 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  "Il restera visible sur votre tableau de bord tant que votre partenaire n'a pas rejoint le foyer.",
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                Text(
+                  l10n.inviteCodeNote,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
@@ -68,9 +68,9 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
                   // The AuthRouter in main.dart will automatically rebuild and show HomeScreen
                   // because household_id is now set in the user document.
                 },
-                child: const Text(
-                  "Continuer",
-                  style: TextStyle(color: AppColors.primary),
+                child: Text(
+                  l10n.continueLabel,
+                  style: const TextStyle(color: AppColors.primary),
                 ),
               ),
             ],
@@ -81,9 +81,7 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
       debugPrint('Erreur createHousehold: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erreur lors de la création du foyer.'),
-          ),
+          SnackBar(content: Text(l10n.householdCreateError)),
         );
       }
     } finally {
@@ -92,8 +90,9 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
   }
 
   Future<void> _joinHousehold() async {
+    final l10n = AppLocalizations.of(context)!;
     final code = _codeController.text.trim().toUpperCase();
-    final codeError = validateJoinCode(code);
+    final codeError = validateJoinCode(code, l10n);
     if (codeError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(codeError)),
@@ -111,14 +110,14 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
     } on FirebaseFunctionsException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Code invalide ou erreur.')),
+          SnackBar(content: Text(e.message ?? l10n.invalidCodeError)),
         );
       }
     } catch (e) {
       debugPrint('Erreur joinHousehold: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Code invalide ou erreur.')),
+          SnackBar(content: Text(l10n.invalidCodeError)),
         );
       }
     } finally {
@@ -132,9 +131,10 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Configuration du Foyer'),
+        title: Text(l10n.householdSetupTitle),
         actions: [
           IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
         ],
@@ -149,15 +149,18 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
                 children: [
                   const Icon(Icons.home, size: 64, color: AppColors.primary),
                   const SizedBox(height: 16),
-                  const Text(
-                    "Bienvenue sur Horizon",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.welcomeTitle,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    "L'application est conçue autour du Foyer. Voulez-vous créer le vôtre ou rejoindre votre partenaire ?",
-                    style: TextStyle(color: Colors.grey),
+                  Text(
+                    l10n.welcomeBody,
+                    style: const TextStyle(color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),
@@ -167,31 +170,34 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
                       backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text(
-                      'Créer un nouveau foyer',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.createHouseholdButton,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                   const SizedBox(height: 32),
-                  const Row(
+                  Row(
                     children: [
-                      Expanded(child: Divider(color: Colors.white24)),
+                      const Expanded(child: Divider(color: Colors.white24)),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Text("OU", style: TextStyle(color: Colors.grey)),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          l10n.orSeparator,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
                       ),
-                      Expanded(child: Divider(color: Colors.white24)),
+                      const Expanded(child: Divider(color: Colors.white24)),
                     ],
                   ),
                   const SizedBox(height: 32),
                   TextField(
                     controller: _codeController,
-                    decoration: const InputDecoration(
-                      labelText: 'Code de foyer (6 caractères)',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.joinCodeFieldLabel,
+                      border: const OutlineInputBorder(),
                     ),
                     textCapitalization: TextCapitalization.characters,
                     maxLength: 6,
@@ -203,9 +209,12 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       side: const BorderSide(color: AppColors.primary),
                     ),
-                    child: const Text(
-                      'Rejoindre',
-                      style: TextStyle(fontSize: 16, color: AppColors.primary),
+                    child: Text(
+                      l10n.joinButton,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                 ],

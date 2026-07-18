@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../utils/budget_calculator.dart';
 import '../utils/categories.dart';
@@ -29,11 +30,31 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
   bool _isLoading = false;
   bool _isInitializing = true;
 
-  final List<String> _frequencies = [
+  AppLocalizations get _l10n => AppLocalizations.of(context)!;
+  String get _lang => Localizations.localeOf(context).languageCode;
+
+  /// Les valeurs de fréquence sont stockées en français dans Firestore
+  /// (BudgetCalculator s'y fie) ; seul l'affichage est traduit.
+  static const List<String> _frequencies = [
     'Mensuel',
     'Bi-hebdomadaire',
     'Hebdomadaire',
   ];
+
+  String _frequencyLabel(String value) {
+    switch (value) {
+      case 'Mensuel':
+        return _l10n.freqMonthly;
+      case 'Bi-hebdomadaire':
+        return _l10n.freqBiweekly;
+      case 'Hebdomadaire':
+        return _l10n.freqWeekly;
+      default:
+        return value;
+    }
+  }
+
+  // Initiales des mois : identiques en français et en anglais.
   final List<String> _months = [
     'J',
     'F',
@@ -195,7 +216,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
     setState(() {
       _fixedExpenses.add({
         'id': DateTime.now().millisecondsSinceEpoch.toString(),
-        'name': 'Nouvelle dépense',
+        'name': _l10n.newExpenseDefault,
         'amount': 0.0,
       });
     });
@@ -205,7 +226,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
     setState(() {
       _deductions.add({
         'id': DateTime.now().millisecondsSinceEpoch.toString(),
-        'name': 'Nouvelle allocation',
+        'name': _l10n.newAllocationDefault,
         'amount': 0.0,
       });
     });
@@ -295,7 +316,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Budget mensuel sauvegardé !')),
+          SnackBar(content: Text(_l10n.budgetSaved)),
         );
         Navigator.pop(context);
       }
@@ -303,7 +324,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
       debugPrint('Erreur de sauvegarde du budget: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erreur lors de la sauvegarde.')),
+          SnackBar(content: Text(_l10n.budgetSaveError)),
         );
       }
     } finally {
@@ -314,15 +335,16 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
   /// Éditeur des enveloppes : un budget mensuel par catégorie de dépense
   /// variable (épicerie, restos…), suivi dans l'écran Bilan.
   Widget _buildCategoryBudgetsSection() {
+    final l10n = _l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Enveloppes par catégorie',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              l10n.envelopesTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             IconButton(
               icon: const Icon(Icons.add_circle, color: AppColors.primary),
@@ -330,10 +352,9 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
             ),
           ],
         ),
-        const Text(
-          'Budgets mensuels pour vos dépenses variables — le Bilan suit '
-          'leur progression.',
-          style: TextStyle(color: Colors.grey, fontSize: 12),
+        Text(
+          l10n.envelopesSubtitle,
+          style: const TextStyle(color: Colors.grey, fontSize: 12),
         ),
         const SizedBox(height: 8),
         ..._categoryBudgets.asMap().entries.map((entry) {
@@ -349,9 +370,9 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   child: DropdownButtonFormField<String>(
                     initialValue: item['category'] as String?,
                     isExpanded: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Catégorie',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.categoryFieldLabel,
+                      border: const OutlineInputBorder(),
                     ),
                     items: kSelectableCategories
                         .map(
@@ -363,7 +384,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                                 const SizedBox(width: 8),
                                 Flexible(
                                   child: Text(
-                                    c.label,
+                                    c.labelFor(_lang),
                                     style: const TextStyle(fontSize: 13),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -384,9 +405,9 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                     initialValue: (item['amount'] as double).toString(),
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Budget',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.budgetFieldLabel,
+                      border: const OutlineInputBorder(),
                     ),
                     onChanged: (val) =>
                         _categoryBudgets[idx]['amount'] = parseAmount(val),
@@ -406,6 +427,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
   }
 
   Widget _buildMagicMonths() {
+    final l10n = _l10n;
     List<int> magicMonths = [];
     if (_nextPayDate != null) {
       magicMonths = BudgetCalculator.calculateMagicMonths(
@@ -424,14 +446,14 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Calendrier des Mois Magiques 🌟',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Text(
+            l10n.magicMonthsTitle,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Un mois magique contient une paie supplémentaire.',
-            style: TextStyle(color: Colors.grey, fontSize: 12),
+          Text(
+            l10n.magicMonthsSubtitle,
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
           ),
           const SizedBox(height: 16),
           Row(
@@ -466,6 +488,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
     List<Map<String, dynamic>> items,
     VoidCallback onAdd,
   ) {
+    final l10n = _l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -494,9 +517,9 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   flex: 2,
                   child: TextFormField(
                     initialValue: item['name'],
-                    decoration: const InputDecoration(
-                      labelText: 'Nom',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.nameFieldLabel,
+                      border: const OutlineInputBorder(),
                     ),
                     onChanged: (val) => items[idx]['name'] =
                         val, // No setState to prevent focus loss
@@ -508,9 +531,9 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   child: TextFormField(
                     initialValue: item['amount'].toString(),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Montant',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.amountFieldLabel,
+                      border: const OutlineInputBorder(),
                     ),
                     onChanged: (val) {
                       items[idx]['amount'] = parseAmount(val);
@@ -532,8 +555,9 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = _l10n;
     return Scaffold(
-      appBar: AppBar(title: const Text('Configuration Budget ZBB')),
+      appBar: AppBar(title: Text(l10n.budgetSetupTitle)),
       body: _isLoading || _isInitializing
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -542,9 +566,12 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // REVENUS
-                  const Text(
-                    'Revenus',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.incomeSection,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -553,9 +580,9 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                         child: TextField(
                           controller: _incomeAController,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          decoration: const InputDecoration(
-                            labelText: 'Revenu A',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: l10n.incomeALabel,
+                            border: const OutlineInputBorder(),
                           ),
                         ),
                       ),
@@ -564,9 +591,9 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                         child: TextField(
                           controller: _incomeBController,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          decoration: const InputDecoration(
-                            labelText: 'Revenu B',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: l10n.incomeBLabel,
+                            border: const OutlineInputBorder(),
                           ),
                         ),
                       ),
@@ -575,21 +602,24 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     initialValue: _payFrequency,
-                    decoration: const InputDecoration(
-                      labelText: 'Fréquence de paie',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.payFrequencyLabel,
+                      border: const OutlineInputBorder(),
                     ),
                     items: _frequencies
-                        .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                        .map((f) => DropdownMenuItem(
+                              value: f,
+                              child: Text(_frequencyLabel(f)),
+                            ))
                         .toList(),
                     onChanged: (v) => setState(() => _payFrequency = v!),
                   ),
                   const SizedBox(height: 16),
                   ListTile(
-                    title: const Text('Prochaine date de paie'),
+                    title: Text(l10n.nextPayDateLabel),
                     subtitle: Text(
                       _nextPayDate == null
-                          ? 'Sélectionner une date'
+                          ? l10n.selectADate
                           : "${_nextPayDate!.day}/${_nextPayDate!.month}/${_nextPayDate!.year}",
                     ),
                     trailing: const Icon(Icons.calendar_today),
@@ -607,7 +637,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
 
                   // DEDUCTIONS (ALLOCATIONS)
                   _buildListSection(
-                    'Allocations & Déductions',
+                    l10n.allocationsSection,
                     _deductions,
                     _addDeduction,
                   ),
@@ -615,7 +645,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
 
                   // DEPENSES FIXES
                   _buildListSection(
-                    'Dépenses Fixes Communes',
+                    l10n.fixedExpensesSection,
                     _fixedExpenses,
                     _addExpense,
                   ),
@@ -626,39 +656,44 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   const SizedBox(height: 24),
 
                   // SEUIL D'ALERTE
-                  const Text(
-                    'Seuil d\'alerte des cagnottes',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.alertThresholdTitle,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'En dessous de ce montant, une cagnotte passe en orange '
-                    'sur le tableau de bord.',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  Text(
+                    l10n.alertThresholdSubtitle,
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _alertThresholdController,
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Seuil (\$)',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.thresholdFieldLabel,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 24),
 
                   // SLIDER RATIO
-                  const Text(
-                    'Répartition pro-rata',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.proRataTitle,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('User A: ${_splitRatioA.round()}%'),
-                      Text('User B: ${(100 - _splitRatioA).round()}%'),
+                      Text(l10n.userAShare('${_splitRatioA.round()}')),
+                      Text(l10n.userBShare('${(100 - _splitRatioA).round()}')),
                     ],
                   ),
                   Slider(
@@ -684,9 +719,9 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Dépenses nettes communes :',
-                  style: TextStyle(color: Colors.grey),
+                Text(
+                  _l10n.netCommonExpenses,
+                  style: const TextStyle(color: Colors.grey),
                 ),
                 Text(
                   formatCurrency(_netCommunalExpenses),
@@ -699,14 +734,14 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'A paie : ${formatCurrency(_contributionA)}',
+                  _l10n.aPays(formatCurrency(_contributionA)),
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  'B paie : ${formatCurrency(_contributionB)}',
+                  _l10n.bPays(formatCurrency(_contributionB)),
                   style: const TextStyle(
                     color: Colors.orange,
                     fontWeight: FontWeight.bold,
@@ -723,9 +758,12 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text(
-                  'Sauvegarder le Budget',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                child: Text(
+                  _l10n.saveBudgetButton,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

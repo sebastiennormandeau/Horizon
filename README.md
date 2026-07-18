@@ -47,9 +47,15 @@ deux partenaires, calculée au pro-rata configuré (ex. 60/40 selon les revenus)
    moteur déterministe dans `reports.ts`), détecte les **dépenses
    récurrentes** (ajout au budget en un tap) et suit les **enveloppes par
    catégorie**.
-9. Le **coach budgétaire IA** (`coach.ts`, API Claude) rédige observations et
-   suggestions à partir des agrégats anonymisés — jamais de données bancaires
-   brutes. Les chiffres viennent toujours du moteur déterministe.
+9. Le **coach budgétaire IA** (`coach.ts`, API Claude) incarne un
+   planificateur financier d'expérience : observations chiffrées, analyse
+   (ratios, repères comme la règle 50/30/20, fonds d'urgence) et plan
+   d'action priorisé, à partir des agrégats anonymisés — jamais de données
+   bancaires brutes. Les chiffres du foyer viennent toujours du moteur
+   déterministe.
+10. **Interface bilingue** : français (défaut) et anglais, sélectionnables
+    dans les Réglages (fichiers ARB `lib/l10n/`, choix persisté). Les
+    conseils du coach IA suivent la langue active.
 
 ### Sécurité
 

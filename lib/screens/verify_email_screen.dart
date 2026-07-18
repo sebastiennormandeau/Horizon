@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 
 /// Bloque l'accès à l'application tant que l'adresse courriel n'est pas
@@ -57,16 +58,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   Future<void> _resendEmail() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null || _resendCooldown > 0 || _sending) return;
+    final l10n = AppLocalizations.of(context)!;
 
     setState(() => _sending = true);
     try {
       await user.sendEmailVerification();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Courriel de vérification envoyé. Vérifiez vos'
-              ' courriels (et vos indésirables).'),
-        ),
+        SnackBar(content: Text(l10n.verificationSent)),
       );
       setState(() => _resendCooldown = 60);
       _cooldownTimer?.cancel();
@@ -80,7 +79,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Erreur lors de l\'envoi.')),
+        SnackBar(content: Text(e.message ?? l10n.sendError)),
       );
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -89,15 +88,16 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final email = FirebaseAuth.instance.currentUser?.email ?? '';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vérification du courriel'),
+        title: Text(l10n.verifyEmailTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Se déconnecter',
+            tooltip: l10n.signOut,
             onPressed: () => FirebaseAuth.instance.signOut(),
           ),
         ],
@@ -111,16 +111,17 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               const Icon(Icons.mark_email_unread,
                   size: 72, color: AppColors.primary),
               const SizedBox(height: 24),
-              const Text(
-                'Confirmez votre adresse courriel',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              Text(
+                l10n.confirmYourEmail,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
-                'Un lien de vérification a été envoyé à\n$email\n\n'
-                'Horizon gère des données financières : la vérification de '
-                'votre adresse est obligatoire.',
+                l10n.verificationBody(email),
                 style: const TextStyle(color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
@@ -131,8 +132,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 icon: const Icon(Icons.send),
                 label: Text(
                   _resendCooldown > 0
-                      ? 'Renvoyer dans $_resendCooldown s'
-                      : 'Renvoyer le courriel',
+                      ? l10n.resendIn('$_resendCooldown')
+                      : l10n.resendEmail,
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -145,7 +146,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: _checkVerified,
-                child: const Text("J'ai confirmé mon adresse"),
+                child: Text(l10n.iConfirmedMyEmail),
               ),
             ],
           ),

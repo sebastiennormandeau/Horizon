@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/household.dart';
 
 /// Charge le foyer de l'utilisateur connecté (profil -> household) et le
@@ -17,7 +18,7 @@ class HouseholdLoader extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      return const Center(child: Text('Veuillez vous reconnecter'));
+      return Center(child: Text(AppLocalizations.of(context)!.pleaseReconnect));
     }
 
     return StreamBuilder<DocumentSnapshot>(
@@ -35,7 +36,9 @@ class HouseholdLoader extends StatelessWidget {
         final householdId = userData['household_id'] as String?;
 
         if (householdId == null) {
-          return const Center(child: Text('Foyer introuvable'));
+          return Center(
+            child: Text(AppLocalizations.of(context)!.householdNotFound),
+          );
         }
 
         return StreamBuilder<DocumentSnapshot>(
