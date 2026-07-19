@@ -46,3 +46,6 @@ app.*.map.json
 
 # Rapport gen-l10n (derive, regenere a chaque build)
 l10n_untranslated.txt
+
+# Cache local du CLI Firebase
+.firebase/
