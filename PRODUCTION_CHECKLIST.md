@@ -1,6 +1,6 @@
 # Horizon — Checklist de mise en production
 
-> Dernière mise à jour : 17 juillet 2026
+> Dernière mise à jour : 19 juillet 2026
 >
 > Légende : ✅ fait dans le code (rien à faire) · 🔧 action manuelle requise
 > (console/compte) · 🧪 à tester une fois l'infrastructure en place
@@ -17,16 +17,27 @@
   référence dans les questionnaires de sécurité (Plaid, stores).
 
 ### 🔧 MFA sur les accès internes (obligatoire — voir politique §1)
-Activer l'authentification multifacteur sur CHAQUE compte d'administration :
-- [ ] **Compte Google** (contrôle Firebase + Google Cloud — le plus
-      critique) : https://myaccount.google.com/security → validation en
-      deux étapes (privilégier une clé d'accès/passkey ou une app
-      d'authentification, pas le SMS seul)
-- [ ] **GitHub** : Settings → Password and authentication → Two-factor
-      authentication
-- [ ] **Plaid** (dashboard.plaid.com) : Account → Two-factor authentication
-- [ ] **RevenueCat** (app.revenuecat.com) : Account → Security → 2FA
-- [ ] **Anthropic** (console.anthropic.com) : Settings → Security
+
+**Groupe A — comptes qui existent déjà : à faire maintenant.**
+Ces trois comptes protègent des données et du code réels ; c'est la priorité.
+- [ ] **Compte Google** ← *commencer par celui-là* : il contrôle Firebase et
+      Google Cloud, donc la base de données, les secrets et les fonctions.
+      https://myaccount.google.com/security → Validation en deux étapes.
+      Privilégier une clé d'accès (passkey) ou une app d'authentification —
+      **pas le SMS seul** (vulnérable à l'échange de carte SIM).
+- [ ] **GitHub** (ton code) : Settings → Password and authentication →
+      Two-factor authentication
+- [ ] **Plaid** (dashboard.plaid.com — compte déjà créé pour les clés
+      sandbox) : Account → Two-factor authentication
+
+**Groupe B — comptes pas encore créés : à activer le jour de la création.**
+Rien à faire tant que le compte n'existe pas ; la règle est simplement
+« MFA activé dès l'inscription ».
+- [ ] **Anthropic** (console.anthropic.com) : Settings → Security —
+      *bientôt*, requis pour la clé du coach IA (voir §7 bis)
+- [ ] **RevenueCat** (app.revenuecat.com) : Account → Security → 2FA —
+      *seulement si tu commercialises* (voir §3) ; l'app fonctionne
+      parfaitement sans, le paywall affiche « boutique non disponible »
 
 ### 🔧 MFA pour les utilisateurs de l'app (optionnel, recommandé avant le
 lancement public)
@@ -245,13 +256,33 @@ réplique aussi). Deux protections à activer :
 
 Le code est prêt (fonction `generateCoachAdvice`, écran Bilan). À faire :
 
-1. **Clé API Anthropic** : créer un compte sur https://console.anthropic.com,
-   générer une clé, puis remplacer la valeur temporaire du secret :
-   ```
-   firebase functions:secrets:set ANTHROPIC_API_KEY --project horizon-dbba0
-   firebase deploy --only functions:generateCoachAdvice --project horizon-dbba0
-   ```
-   (tant que la valeur est `REPLACE_ME`, le bouton renvoie « coach non configuré »)
+1. **Clé API Anthropic** — tant que la valeur du secret est `REPLACE_ME`, le
+   bouton du Bilan renvoie « coach non configuré ». Marche à suivre :
+   1. Créer un compte sur https://console.anthropic.com
+      (**activer le MFA immédiatement** : Settings → Security — groupe B du §0).
+   2. Ajouter un moyen de paiement / des crédits : Settings → **Billing**.
+      L'API est prépayée et distincte d'un abonnement Claude.ai — un
+      abonnement Pro ne donne **pas** de crédits API. 5 $ US suffisent
+      largement pour tester (~100 bilans à ~5 ¢).
+   3. Créer la clé : Settings → **API keys** → *Create key*. Elle commence
+      par `sk-ant-`. **Elle ne s'affiche qu'une seule fois** — copie-la.
+   4. Enregistrer le secret **dans ton propre terminal** (la commande
+      demande la valeur de façon interactive : la clé n'apparaît ni dans
+      l'historique du shell ni dans une conversation) :
+      ```
+      firebase functions:secrets:set ANTHROPIC_API_KEY --project horizon-dbba0
+      ```
+      Coller la clé au prompt `? Enter a value for ANTHROPIC_API_KEY`, Entrée.
+   5. Redéployer la fonction pour qu'elle prenne la nouvelle version du
+      secret (obligatoire — sans ça elle continue de lire `REPLACE_ME`) :
+      ```
+      firebase deploy --only functions:generateCoachAdvice --project horizon-dbba0
+      ```
+   6. 🧪 Tester : app → Bilan → « Générer mes conseils IA ».
+   - ⚠️ **Ne jamais** mettre la clé dans le code, dans `functions/.env`, ni
+     dans un message — uniquement Secret Manager (politique de sécurité §3).
+   - Rotation : refaire les étapes 3 à 5 (l'ancienne clé se révoque depuis
+     la console Anthropic).
 2. **En production** : dans `functions/.env.<projet-prod>`, mettre
    `AI_COACH_REQUIRE_PREMIUM=true` — le coach devient un argument Premium.
    En dev (`functions/.env`), il est ouvert à tous pour tester.
