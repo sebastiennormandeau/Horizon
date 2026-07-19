@@ -170,6 +170,8 @@ Le code est prêt (paywall, achats, restauration, webhook, gating serveur).
 - Plaid `client_id`/`secret` : **Google Secret Manager** ✅
 - Secret webhook RevenueCat : **Google Secret Manager** ✅ (créé le
   16 juillet 2026)
+- Clé API Anthropic : **Google Secret Manager** ✅ (vraie clé posée le
+  19 juillet 2026 — voir §7 bis)
 - Clés SDK RevenueCat : publiques, injectées par `--dart-define`
 - Jeton d'accès bancaire Plaid : Firestore `bank_connections`, **interdit de
   lecture aux clients** (règles `allow read, write: if false`)
@@ -256,8 +258,10 @@ réplique aussi). Deux protections à activer :
 
 Le code est prêt (fonction `generateCoachAdvice`, écran Bilan). À faire :
 
-1. **Clé API Anthropic** — tant que la valeur du secret est `REPLACE_ME`, le
-   bouton du Bilan renvoie « coach non configuré ». Marche à suivre :
+1. ✅ **Clé API Anthropic — configurée le 19 juillet 2026** (version 2 du
+   secret ; la version 1 `REPLACE_ME` a été détruite, fonction redéployée).
+   Marche à suivre conservée pour la **rotation** et pour le futur projet
+   de production, qui aura son propre secret :
    1. Créer un compte sur https://console.anthropic.com
       (**activer le MFA immédiatement** : Settings → Security — groupe B du §0).
    2. Ajouter un moyen de paiement / des crédits : Settings → **Billing**.
