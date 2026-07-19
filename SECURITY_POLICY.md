@@ -4,7 +4,9 @@
 **Application** : Horizon (gestion de finances personnelles pour couples)
 **Responsable de la sécurité et de la protection des renseignements personnels** :
 Sébastien Normandeau — sebastiennormandeau@gmail.com
-**Version** : 1.0 — 18 juillet 2026 · **Prochaine revue** : juillet 2027 (revue annuelle obligatoire)
+**Version** : 1.1 — 19 juillet 2026 · **Prochaine revue** : juillet 2027 (revue annuelle obligatoire)
+*Journal : 1.1 — double authentification obligatoire pour tous les comptes
+utilisateurs et procédure de réinitialisation administrateur (§6 bis).*
 
 Cette politique s'applique à l'ensemble des systèmes d'Horizon : application
 Flutter (Android, iOS, Web), Cloud Functions, bases de données Firestore,
@@ -18,10 +20,14 @@ utilisés pour le développement.
 - **Moindre privilège.** Chaque utilisateur de l'application n'accède qu'aux
   données de son propre foyer, appliqué par les règles de sécurité Firestore
   (`firestore.rules`) côté serveur — jamais uniquement côté client.
-- **Authentification des utilisateurs** : Firebase Authentication
+- **Authentification des utilisateurs** : Firebase Identity Platform
   (courriel/mot de passe, 8 caractères minimum avec lettres et chiffres),
   **vérification du courriel obligatoire** appliquée en trois couches
-  (client, Cloud Functions, règles Firestore).
+  (client, Cloud Functions, règles Firestore), et **double authentification
+  (TOTP) obligatoire pour tous les comptes** — imposée côté serveur et
+  matérialisée par une porte d'enrôlement bloquante dans l'application.
+  La réinitialisation d'un facteur perdu relève d'une procédure
+  administrateur hors application (voir §6bis).
 - **Données sensibles inaccessibles aux clients** : les jetons d'accès
   bancaires Plaid (`bank_connections`) et les compteurs de limitation
   (`rate_limits`) sont en interdiction totale de lecture/écriture ; seules
@@ -103,6 +109,26 @@ vulnérabilité exploitée) :
    (obligation Loi 25) — date, nature, données visées, mesures prises.
 5. **Corriger** : éliminer la cause racine, ajouter un test ou un contrôle
    empêchant la récurrence.
+
+## 6 bis. Réinitialisation d'un second facteur (MFA)
+
+Le TOTP n'a aucune récupération intégrée : un utilisateur privé de son
+application d'authentification est définitivement bloqué sans intervention.
+
+- **Le pouvoir de réinitialisation vit hors de l'application** — script local
+  `functions/scripts/mfa-admin.js`, jamais déployé, exigeant les
+  identifiants Google administrateur (eux-mêmes protégés par MFA). Aucune
+  fonction « admin » n'est exposée sur Internet.
+- **Vérification d'identité obligatoire par un canal indépendant du
+  courriel** (appel téléphonique, question de sécurité convenue) avant toute
+  réinitialisation. Une demande reçue par courriel ne prouve rien : la
+  compromission d'une boîte courriel est précisément la menace contre
+  laquelle le second facteur protège.
+- **Traçabilité** : chaque réinitialisation est consignée (date, compte
+  visé, demandeur, moyen de vérification employé) dans le registre tenu au
+  titre du §6. Le script révoque également les jetons de session existants.
+- **Après réinitialisation**, la porte d'enrôlement de l'application force
+  immédiatement la mise en place d'un nouveau facteur.
 
 ## 7. Cycle de vie des données
 

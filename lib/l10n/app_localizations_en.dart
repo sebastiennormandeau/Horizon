@@ -156,6 +156,112 @@ class AppLocalizationsEn extends AppLocalizations {
   String get iConfirmedMyEmail => 'I have confirmed my address';
 
   @override
+  String get mfaEnrollTitle => 'Secure your account';
+
+  @override
+  String get mfaEnrollHeading => 'Two-factor authentication required';
+
+  @override
+  String get mfaEnrollIntro =>
+      'Horizon handles financial data: a second factor is required on every account. This takes two minutes and is done only once.';
+
+  @override
+  String get mfaStep1 => '1. Install an authenticator app';
+
+  @override
+  String get mfaStep1Detail =>
+      'Google Authenticator, Microsoft Authenticator, Authy, or your phone\'s password manager.';
+
+  @override
+  String get mfaStep2 => '2. Scan this QR code';
+
+  @override
+  String get mfaStep2Manual =>
+      'Can\'t scan? Enter this key manually in the app:';
+
+  @override
+  String get mfaCopyKey => 'Copy key';
+
+  @override
+  String get mfaKeyCopied => 'Key copied to clipboard.';
+
+  @override
+  String get mfaStep3 => '3. Enter the code shown';
+
+  @override
+  String get mfaCodeLabel => '6-digit code';
+
+  @override
+  String get mfaCodeRequired => 'Enter the 6-digit code.';
+
+  @override
+  String get mfaCodeInvalidFormat => 'The code must be exactly 6 digits.';
+
+  @override
+  String get mfaActivate => 'Enable two-factor authentication';
+
+  @override
+  String get mfaDeviceNameDefault => 'Authenticator app';
+
+  @override
+  String get mfaEnrollSuccess =>
+      'Two-factor authentication enabled. Your account is protected.';
+
+  @override
+  String get mfaEnrollError => 'Activation failed. Please try again.';
+
+  @override
+  String get mfaCodeRejected =>
+      'Code rejected. Check your phone\'s clock and enter the code currently displayed.';
+
+  @override
+  String get mfaRecentLoginRequired =>
+      'For security, please sign in again before enabling two-factor authentication.';
+
+  @override
+  String get mfaPreparing => 'Preparing your security key...';
+
+  @override
+  String get mfaSecretError =>
+      'Could not generate the security key. Please try again.';
+
+  @override
+  String get mfaBackupWarning =>
+      'Important: keep access to this authenticator app. Without it you will not be able to sign in, and you will need to email us to reset your access.';
+
+  @override
+  String get mfaOpenInApp => 'Open in my authenticator app';
+
+  @override
+  String get mfaChallengeTitle => 'Two-step verification';
+
+  @override
+  String get mfaChallengeHeading => 'Enter your security code';
+
+  @override
+  String mfaChallengeIntro(String email) {
+    return 'Open your authenticator app and enter the 6-digit code shown for $email.';
+  }
+
+  @override
+  String get mfaVerify => 'Verify';
+
+  @override
+  String get mfaChallengeError =>
+      'Code rejected. Try again with the code currently displayed.';
+
+  @override
+  String get mfaLostAccess => 'I lost access to my app';
+
+  @override
+  String get mfaLostAccessTitle => 'Lost access?';
+
+  @override
+  String mfaLostAccessBody(String email) {
+    return 'For your security, only an administrator can reset two-factor authentication. Email $email from your account\'s email address, including your name. We will verify your identity before any reset.';
+  }
+
+  @override
   String get householdSetupTitle => 'Household Setup';
 
   @override

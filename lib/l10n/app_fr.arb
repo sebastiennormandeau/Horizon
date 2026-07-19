@@ -67,6 +67,49 @@
   "resendEmail": "Renvoyer le courriel",
   "iConfirmedMyEmail": "J'ai confirmé mon adresse",
 
+  "mfaEnrollTitle": "Sécurisez votre compte",
+  "mfaEnrollHeading": "Double authentification obligatoire",
+  "mfaEnrollIntro": "Horizon gère des données financières : un deuxième facteur est exigé pour tous les comptes. Cette étape prend deux minutes et ne se fait qu'une seule fois.",
+  "mfaStep1": "1. Installez une application d'authentification",
+  "mfaStep1Detail": "Google Authenticator, Microsoft Authenticator, Authy, ou le gestionnaire de mots de passe de votre téléphone.",
+  "mfaStep2": "2. Scannez ce code QR",
+  "mfaStep2Manual": "Impossible de scanner ? Entrez cette clé manuellement dans l'application :",
+  "mfaCopyKey": "Copier la clé",
+  "mfaKeyCopied": "Clé copiée dans le presse-papiers.",
+  "mfaStep3": "3. Entrez le code affiché",
+  "mfaCodeLabel": "Code à 6 chiffres",
+  "mfaCodeRequired": "Entrez le code à 6 chiffres.",
+  "mfaCodeInvalidFormat": "Le code doit contenir exactement 6 chiffres.",
+  "mfaActivate": "Activer la double authentification",
+  "mfaDeviceNameDefault": "Application d'authentification",
+  "mfaEnrollSuccess": "Double authentification activée. Votre compte est protégé.",
+  "mfaEnrollError": "L'activation a échoué. Réessayez.",
+  "mfaCodeRejected": "Code refusé. Vérifiez l'heure de votre téléphone et entrez le code affiché en ce moment.",
+  "mfaRecentLoginRequired": "Par sécurité, reconnectez-vous avant d'activer la double authentification.",
+  "mfaPreparing": "Préparation de la clé de sécurité...",
+  "mfaSecretError": "Impossible de générer la clé de sécurité. Réessayez.",
+  "mfaBackupWarning": "Important : gardez l'accès à cette application d'authentification. Sans elle, vous ne pourrez plus vous connecter et il faudra nous écrire pour réinitialiser votre accès.",
+  "mfaOpenInApp": "Ouvrir dans mon application d'authentification",
+
+  "mfaChallengeTitle": "Vérification en deux étapes",
+  "mfaChallengeHeading": "Entrez votre code de sécurité",
+  "mfaChallengeIntro": "Ouvrez votre application d'authentification et entrez le code à 6 chiffres affiché pour {email}.",
+  "@mfaChallengeIntro": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+  "mfaVerify": "Vérifier",
+  "mfaChallengeError": "Code refusé. Réessayez avec le code affiché en ce moment.",
+  "mfaLostAccess": "J'ai perdu l'accès à mon application",
+  "mfaLostAccessTitle": "Accès perdu ?",
+  "mfaLostAccessBody": "Pour votre sécurité, seul un administrateur peut réinitialiser la double authentification. Écrivez à {email} depuis l'adresse courriel de votre compte en précisant votre nom. Nous vérifierons votre identité avant toute réinitialisation.",
+  "@mfaLostAccessBody": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+
   "householdSetupTitle": "Configuration du Foyer",
   "householdCreated": "Foyer créé !",
   "inviteCodeIntro": "Voici votre code pour inviter votre conjoint(e) :",

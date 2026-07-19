@@ -374,6 +374,192 @@ abstract class AppLocalizations {
   /// **'J\'ai confirmé mon adresse'**
   String get iConfirmedMyEmail;
 
+  /// No description provided for @mfaEnrollTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sécurisez votre compte'**
+  String get mfaEnrollTitle;
+
+  /// No description provided for @mfaEnrollHeading.
+  ///
+  /// In fr, this message translates to:
+  /// **'Double authentification obligatoire'**
+  String get mfaEnrollHeading;
+
+  /// No description provided for @mfaEnrollIntro.
+  ///
+  /// In fr, this message translates to:
+  /// **'Horizon gère des données financières : un deuxième facteur est exigé pour tous les comptes. Cette étape prend deux minutes et ne se fait qu\'une seule fois.'**
+  String get mfaEnrollIntro;
+
+  /// No description provided for @mfaStep1.
+  ///
+  /// In fr, this message translates to:
+  /// **'1. Installez une application d\'authentification'**
+  String get mfaStep1;
+
+  /// No description provided for @mfaStep1Detail.
+  ///
+  /// In fr, this message translates to:
+  /// **'Google Authenticator, Microsoft Authenticator, Authy, ou le gestionnaire de mots de passe de votre téléphone.'**
+  String get mfaStep1Detail;
+
+  /// No description provided for @mfaStep2.
+  ///
+  /// In fr, this message translates to:
+  /// **'2. Scannez ce code QR'**
+  String get mfaStep2;
+
+  /// No description provided for @mfaStep2Manual.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de scanner ? Entrez cette clé manuellement dans l\'application :'**
+  String get mfaStep2Manual;
+
+  /// No description provided for @mfaCopyKey.
+  ///
+  /// In fr, this message translates to:
+  /// **'Copier la clé'**
+  String get mfaCopyKey;
+
+  /// No description provided for @mfaKeyCopied.
+  ///
+  /// In fr, this message translates to:
+  /// **'Clé copiée dans le presse-papiers.'**
+  String get mfaKeyCopied;
+
+  /// No description provided for @mfaStep3.
+  ///
+  /// In fr, this message translates to:
+  /// **'3. Entrez le code affiché'**
+  String get mfaStep3;
+
+  /// No description provided for @mfaCodeLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code à 6 chiffres'**
+  String get mfaCodeLabel;
+
+  /// No description provided for @mfaCodeRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Entrez le code à 6 chiffres.'**
+  String get mfaCodeRequired;
+
+  /// No description provided for @mfaCodeInvalidFormat.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le code doit contenir exactement 6 chiffres.'**
+  String get mfaCodeInvalidFormat;
+
+  /// No description provided for @mfaActivate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Activer la double authentification'**
+  String get mfaActivate;
+
+  /// No description provided for @mfaDeviceNameDefault.
+  ///
+  /// In fr, this message translates to:
+  /// **'Application d\'authentification'**
+  String get mfaDeviceNameDefault;
+
+  /// No description provided for @mfaEnrollSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Double authentification activée. Votre compte est protégé.'**
+  String get mfaEnrollSuccess;
+
+  /// No description provided for @mfaEnrollError.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'activation a échoué. Réessayez.'**
+  String get mfaEnrollError;
+
+  /// No description provided for @mfaCodeRejected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code refusé. Vérifiez l\'heure de votre téléphone et entrez le code affiché en ce moment.'**
+  String get mfaCodeRejected;
+
+  /// No description provided for @mfaRecentLoginRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Par sécurité, reconnectez-vous avant d\'activer la double authentification.'**
+  String get mfaRecentLoginRequired;
+
+  /// No description provided for @mfaPreparing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Préparation de la clé de sécurité...'**
+  String get mfaPreparing;
+
+  /// No description provided for @mfaSecretError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de générer la clé de sécurité. Réessayez.'**
+  String get mfaSecretError;
+
+  /// No description provided for @mfaBackupWarning.
+  ///
+  /// In fr, this message translates to:
+  /// **'Important : gardez l\'accès à cette application d\'authentification. Sans elle, vous ne pourrez plus vous connecter et il faudra nous écrire pour réinitialiser votre accès.'**
+  String get mfaBackupWarning;
+
+  /// No description provided for @mfaOpenInApp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir dans mon application d\'authentification'**
+  String get mfaOpenInApp;
+
+  /// No description provided for @mfaChallengeTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérification en deux étapes'**
+  String get mfaChallengeTitle;
+
+  /// No description provided for @mfaChallengeHeading.
+  ///
+  /// In fr, this message translates to:
+  /// **'Entrez votre code de sécurité'**
+  String get mfaChallengeHeading;
+
+  /// No description provided for @mfaChallengeIntro.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrez votre application d\'authentification et entrez le code à 6 chiffres affiché pour {email}.'**
+  String mfaChallengeIntro(String email);
+
+  /// No description provided for @mfaVerify.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérifier'**
+  String get mfaVerify;
+
+  /// No description provided for @mfaChallengeError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code refusé. Réessayez avec le code affiché en ce moment.'**
+  String get mfaChallengeError;
+
+  /// No description provided for @mfaLostAccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'J\'ai perdu l\'accès à mon application'**
+  String get mfaLostAccess;
+
+  /// No description provided for @mfaLostAccessTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accès perdu ?'**
+  String get mfaLostAccessTitle;
+
+  /// No description provided for @mfaLostAccessBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pour votre sécurité, seul un administrateur peut réinitialiser la double authentification. Écrivez à {email} depuis l\'adresse courriel de votre compte en précisant votre nom. Nous vérifierons votre identité avant toute réinitialisation.'**
+  String mfaLostAccessBody(String email);
+
   /// No description provided for @householdSetupTitle.
   ///
   /// In fr, this message translates to:

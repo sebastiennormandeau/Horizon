@@ -18,36 +18,56 @@
 
 ### 🔧 MFA sur les accès internes (obligatoire — voir politique §1)
 
-**Groupe A — comptes qui existent déjà : à faire maintenant.**
-Ces trois comptes protègent des données et du code réels ; c'est la priorité.
-- [ ] **Compte Google** ← *commencer par celui-là* : il contrôle Firebase et
-      Google Cloud, donc la base de données, les secrets et les fonctions.
-      https://myaccount.google.com/security → Validation en deux étapes.
-      Privilégier une clé d'accès (passkey) ou une app d'authentification —
-      **pas le SMS seul** (vulnérable à l'échange de carte SIM).
-- [ ] **GitHub** (ton code) : Settings → Password and authentication →
-      Two-factor authentication
-- [ ] **Plaid** (dashboard.plaid.com — compte déjà créé pour les clés
-      sandbox) : Account → Two-factor authentication
+**Groupe A — comptes existants.** ✅ **Fait le 19 juillet 2026**
+(Google, GitHub, Plaid, Anthropic).
 
-**Groupe B — comptes pas encore créés : à activer le jour de la création.**
-Rien à faire tant que le compte n'existe pas ; la règle est simplement
-« MFA activé dès l'inscription ».
-- [ ] **Anthropic** (console.anthropic.com) : Settings → Security —
-      *bientôt*, requis pour la clé du coach IA (voir §7 bis)
+**Groupe B — comptes pas encore créés : MFA à activer dès l'inscription.**
 - [ ] **RevenueCat** (app.revenuecat.com) : Account → Security → 2FA —
       *seulement si tu commercialises* (voir §3) ; l'app fonctionne
       parfaitement sans, le paywall affiche « boutique non disponible »
 
-### 🔧 MFA pour les utilisateurs de l'app (optionnel, recommandé avant le
-lancement public)
-Firebase Auth de base ne fait pas de MFA ; il faut passer à **Identity
-Platform** (même console, surclassement gratuit jusqu'à 50 k utilisateurs) :
-1. Console Google Cloud → Identity Platform → Upgrade.
-2. Activer le facteur **TOTP** (app d'authentification) et/ou SMS.
-3. Côté app : ajouter le flux d'inscription/validation MFA
-   (`firebase_auth` le supporte — `user.multiFactor`). À développer quand
-   décidé — me le demander.
+### ✅ MFA obligatoire pour les utilisateurs de l'app (fait)
+Identity Platform est activé avec **MFA obligatoire (TOTP)** pour tous les
+comptes, et l'application implémente le cycle complet :
+
+- **Enrôlement forcé** (`lib/screens/mfa_enroll_screen.dart`) : porte dans
+  `AuthRouter`, placée **après** la vérification du courriel — Firebase exige
+  un courriel vérifié avant d'accepter un second facteur. Code QR + clé
+  manuelle + confirmation par code à 6 chiffres. Seule sortie : déconnexion.
+- **Défi à la connexion** (`lib/screens/mfa_challenge_screen.dart`) :
+  `LoginScreen` intercepte `FirebaseAuthMultiFactorException` et résout la
+  session via le `resolver`.
+- L'ordre des portes est : courriel vérifié → **MFA enrôlé** → foyer → accueil.
+
+### 🔧 Récupération d'accès MFA (procédure administrateur)
+Firebase n'offre **aucune récupération intégrée** pour le TOTP : un
+utilisateur qui perd son application d'authentification est bloqué. Le
+pouvoir de réinitialisation est volontairement **hors de l'application**
+(une fonction déployée « admin » serait une porte dérobée exposée) :
+
+1. **Prérequis, une seule fois** — installer Google Cloud CLI
+   (https://cloud.google.com/sdk/docs/install ; il sert aussi aux
+   sauvegardes du §7), puis :
+   ```
+   gcloud auth application-default login
+   ```
+2. **Consulter** les facteurs d'un compte :
+   ```
+   cd functions
+   node scripts/mfa-admin.js list quelquun@example.com
+   ```
+3. **Réinitialiser** (retire les facteurs et révoque les sessions) :
+   ```
+   node scripts/mfa-admin.js reset quelquun@example.com
+   ```
+   L'utilisateur peut alors se reconnecter avec son mot de passe seul, et la
+   porte MFA le force immédiatement à ré-enrôler une application.
+- ⚠️ **Vérifier l'identité du demandeur par un canal indépendant du
+  courriel** (appel téléphonique) avant toute réinitialisation : une boîte
+  courriel compromise est précisément le scénario contre lequel le MFA
+  protège. Consigner la demande (registre — SECURITY_POLICY.md §6).
+- Le script n'est jamais déployé (exclusion `scripts` dans `firebase.json`)
+  et exige les identifiants Google administrateur, eux-mêmes sous MFA.
 
 ### ✅ Gestion des vulnérabilités (fait côté code)
 - **Dependabot** actif (`.github/dependabot.yml`) : npm (fonctions), pub

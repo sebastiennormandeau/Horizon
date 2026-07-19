@@ -157,6 +157,113 @@ class AppLocalizationsFr extends AppLocalizations {
   String get iConfirmedMyEmail => 'J\'ai confirmé mon adresse';
 
   @override
+  String get mfaEnrollTitle => 'Sécurisez votre compte';
+
+  @override
+  String get mfaEnrollHeading => 'Double authentification obligatoire';
+
+  @override
+  String get mfaEnrollIntro =>
+      'Horizon gère des données financières : un deuxième facteur est exigé pour tous les comptes. Cette étape prend deux minutes et ne se fait qu\'une seule fois.';
+
+  @override
+  String get mfaStep1 => '1. Installez une application d\'authentification';
+
+  @override
+  String get mfaStep1Detail =>
+      'Google Authenticator, Microsoft Authenticator, Authy, ou le gestionnaire de mots de passe de votre téléphone.';
+
+  @override
+  String get mfaStep2 => '2. Scannez ce code QR';
+
+  @override
+  String get mfaStep2Manual =>
+      'Impossible de scanner ? Entrez cette clé manuellement dans l\'application :';
+
+  @override
+  String get mfaCopyKey => 'Copier la clé';
+
+  @override
+  String get mfaKeyCopied => 'Clé copiée dans le presse-papiers.';
+
+  @override
+  String get mfaStep3 => '3. Entrez le code affiché';
+
+  @override
+  String get mfaCodeLabel => 'Code à 6 chiffres';
+
+  @override
+  String get mfaCodeRequired => 'Entrez le code à 6 chiffres.';
+
+  @override
+  String get mfaCodeInvalidFormat =>
+      'Le code doit contenir exactement 6 chiffres.';
+
+  @override
+  String get mfaActivate => 'Activer la double authentification';
+
+  @override
+  String get mfaDeviceNameDefault => 'Application d\'authentification';
+
+  @override
+  String get mfaEnrollSuccess =>
+      'Double authentification activée. Votre compte est protégé.';
+
+  @override
+  String get mfaEnrollError => 'L\'activation a échoué. Réessayez.';
+
+  @override
+  String get mfaCodeRejected =>
+      'Code refusé. Vérifiez l\'heure de votre téléphone et entrez le code affiché en ce moment.';
+
+  @override
+  String get mfaRecentLoginRequired =>
+      'Par sécurité, reconnectez-vous avant d\'activer la double authentification.';
+
+  @override
+  String get mfaPreparing => 'Préparation de la clé de sécurité...';
+
+  @override
+  String get mfaSecretError =>
+      'Impossible de générer la clé de sécurité. Réessayez.';
+
+  @override
+  String get mfaBackupWarning =>
+      'Important : gardez l\'accès à cette application d\'authentification. Sans elle, vous ne pourrez plus vous connecter et il faudra nous écrire pour réinitialiser votre accès.';
+
+  @override
+  String get mfaOpenInApp => 'Ouvrir dans mon application d\'authentification';
+
+  @override
+  String get mfaChallengeTitle => 'Vérification en deux étapes';
+
+  @override
+  String get mfaChallengeHeading => 'Entrez votre code de sécurité';
+
+  @override
+  String mfaChallengeIntro(String email) {
+    return 'Ouvrez votre application d\'authentification et entrez le code à 6 chiffres affiché pour $email.';
+  }
+
+  @override
+  String get mfaVerify => 'Vérifier';
+
+  @override
+  String get mfaChallengeError =>
+      'Code refusé. Réessayez avec le code affiché en ce moment.';
+
+  @override
+  String get mfaLostAccess => 'J\'ai perdu l\'accès à mon application';
+
+  @override
+  String get mfaLostAccessTitle => 'Accès perdu ?';
+
+  @override
+  String mfaLostAccessBody(String email) {
+    return 'Pour votre sécurité, seul un administrateur peut réinitialiser la double authentification. Écrivez à $email depuis l\'adresse courriel de votre compte en précisant votre nom. Nous vérifierons votre identité avant toute réinitialisation.';
+  }
+
+  @override
   String get householdSetupTitle => 'Configuration du Foyer';
 
   @override

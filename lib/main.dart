@@ -13,6 +13,7 @@ import 'services/revenuecat_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/household_setup_screen.dart';
+import 'screens/mfa_enroll_screen.dart';
 import 'screens/verify_email_screen.dart';
 import 'theme/app_colors.dart';
 import 'utils/locale_controller.dart';
@@ -128,41 +129,93 @@ class AuthRouter extends StatelessWidget {
           return const LoginScreen();
         }
 
-        // Porte de sécurité : courriel vérifié obligatoire (les règles
-        // Firestore l'exigent aussi côté serveur).
+        // Porte de sécurité 1 : courriel vérifié obligatoire (les règles
+        // Firestore l'exigent aussi côté serveur). Firebase exige aussi un
+        // courriel vérifié avant tout enrôlement MFA : cette porte doit
+        // donc rester AVANT la suivante.
         if (user.email != null && !user.emailVerified) {
           return const VerifyEmailScreen();
         }
 
-        return StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .snapshots(),
-          builder: (context, userSnapshot) {
-            if (userSnapshot.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
+        // Porte de sécurité 2 : double authentification obligatoire.
+        return _MfaGate(user: user);
+      },
+    );
+  }
+}
 
-            if (userSnapshot.hasError) {
-              return Scaffold(
-                body: Center(
-                  child: Text(AppLocalizations.of(context)!.profileLoadingError),
-                ),
-              );
-            }
+/// Bloque l'accès tant qu'aucun second facteur n'est enrôlé.
+///
+/// Le MFA est imposé côté serveur (Identity Platform, politique « MFA
+/// obligatoire ») : sans facteur enrôlé, l'utilisateur ne pourrait de toute
+/// façon plus se reconnecter. Cette porte le lui fait faire tout de suite,
+/// pendant qu'il est encore authentifié.
+class _MfaGate extends StatelessWidget {
+  final User user;
 
-            final data = userSnapshot.data?.data() as Map<String, dynamic>?;
+  const _MfaGate({required this.user});
 
-            if (data == null || data['household_id'] == null) {
-              return const HouseholdSetupScreen();
-            }
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<MultiFactorInfo>>(
+      future: user.multiFactor.getEnrolledFactors(),
+      builder: (context, mfaSnapshot) {
+        if (mfaSnapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-            return const HomeScreen();
-          },
-        );
+        // Échec de lecture : on ferme la porte plutôt que de l'ouvrir.
+        // Au pire l'utilisateur voit l'écran d'enrôlement alors qu'il a déjà
+        // un facteur ; Firebase refusera alors un doublon, ce qui est moins
+        // grave que de laisser passer un compte non protégé.
+        final factors = mfaSnapshot.data;
+        if (factors == null || factors.isEmpty) {
+          return const MfaEnrollScreen();
+        }
+
+        return _HouseholdGate(user: user);
+      },
+    );
+  }
+}
+
+/// Aiguille vers la configuration du foyer ou l'accueil.
+class _HouseholdGate extends StatelessWidget {
+  final User user;
+
+  const _HouseholdGate({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots(),
+      builder: (context, userSnapshot) {
+        if (userSnapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (userSnapshot.hasError) {
+          return Scaffold(
+            body: Center(
+              child: Text(AppLocalizations.of(context)!.profileLoadingError),
+            ),
+          );
+        }
+
+        final data = userSnapshot.data?.data() as Map<String, dynamic>?;
+
+        if (data == null || data['household_id'] == null) {
+          return const HouseholdSetupScreen();
+        }
+
+        return const HomeScreen();
       },
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'mfa_challenge_screen.dart';
 import 'register_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
@@ -36,6 +37,20 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       // Navigation is handled by AuthRouter in main.dart
+    } on FirebaseAuthMultiFactorException catch (e) {
+      // La double authentification est obligatoire : tout compte enrôlé
+      // passe par ici. Le resolver porte la session de connexion en attente.
+      // NB : ce `on` doit précéder FirebaseAuthException (classe parente).
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MfaChallengeScreen(
+            resolver: e.resolver,
+            email: _emailController.text.trim(),
+          ),
+        ),
+      );
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
