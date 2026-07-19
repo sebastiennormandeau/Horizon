@@ -1,6 +1,10 @@
-import * as admin from "firebase-admin";
+// Initialisation Admin SDK (API modulaire de firebase-admin 13+).
+import { initializeApp } from "firebase-admin/app";
+import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 
-admin.initializeApp();
+initializeApp();
 
-export const db = admin.firestore();
-export { admin };
+export const db = getFirestore();
+export const auth = getAuth();
+export { FieldValue, Timestamp };

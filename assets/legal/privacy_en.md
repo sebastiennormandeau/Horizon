@@ -52,4 +52,11 @@ In accordance with Quebec's Law 25:
 
 ## 5. Data Protection Officer Contact
 
-If you have questions about your personal data or wish to exercise your rights, you can contact our privacy officer at: [Support Email Address].
+In accordance with Law 25, the person responsible for the protection of personal information is:
+
+**Sébastien Normandeau** (Vibe Coding Mind)
+Email: sebastiennormandeau@gmail.com
+
+If you have questions about your personal data or wish to exercise your rights (access, rectification, withdrawal of consent, deletion), write to this address. We respond within a maximum of 30 days.
+
+This policy is also available online: https://horizon-dbba0.web.app/privacy

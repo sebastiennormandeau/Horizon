@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Politique de confidentialité — Horizon</title>
+<style>
+  body{font-family:Georgia,'Times New Roman',serif;max-width:720px;margin:0 auto;padding:2rem 1.25rem 4rem;line-height:1.65;color:#222;background:#fdfcfa}
+  h1{font-size:1.7rem;border-bottom:2px solid #2e6e5e;padding-bottom:.4rem}
+  h2{font-size:1.2rem;margin-top:2rem;color:#2e6e5e}
+  h3{font-size:1.05rem;margin-top:1.2rem}
+  .meta{color:#666;font-size:.9rem}
+  .lang{float:right;font-size:.9rem}
+  a{color:#2e6e5e}
+  strong{color:#111}
+</style>
+</head>
+<body>
+<p class="lang"><a href="/privacy-en">English</a></p>
+<h1>Politique de Confidentialité</h1>
+<p class="meta">Application <strong>Horizon</strong> — Vibe Coding Mind · Dernière mise à jour : 18 juillet 2026</p>
+
+<p><strong>Vibe Coding Mind</strong> (le « Studio », « Nous ») accorde une grande importance à la vie privée de ses utilisateurs. Cette Politique de confidentialité décrit la manière dont l'application <strong>Horizon</strong> collecte, utilise et protège vos données personnelles, en stricte conformité avec les normes nord-américaines, incluant la <strong>Loi 25 du Québec</strong>.</p>
+
+<h2>1. Données collectées</h2>
+<h3>A. Données d'identification et de compte</h3>
+<p>Pour créer votre compte ou un Foyer, nous collectons :</p>
+<ul>
+<li>Votre adresse courriel (chiffrée et sécurisée par Firebase Authentication).</li>
+<li>Un code de foyer alphanumérique (pour lier des comptes conjoints).</li>
+</ul>
+<h3>B. Données financières (lecture seule)</h3>
+<p>Lorsque vous connectez votre banque, nous utilisons un fournisseur de confiance (Plaid). <strong>Nous ne stockons JAMAIS vos identifiants bancaires.</strong> Nous collectons et stockons (sur Firebase Firestore) :</p>
+<ul>
+<li>Le nom de la transaction, le montant et la date.</li>
+<li>Des « tokens » d'accès sécurisés nous permettant de rafraîchir la liste de vos transactions.</li>
+</ul>
+<h3>C. Données d'utilisation</h3>
+<p>Nous utilisons <strong>Google Analytics</strong> et <strong>Firebase Crashlytics</strong> pour détecter les bugs (crashs) et comprendre l'utilisation générale de l'application de façon anonymisée.</p>
+
+<h2>2. Utilisation des données</h2>
+<p>Vos données sont utilisées exclusivement pour :</p>
+<ul>
+<li>Fournir le service central de l'application (le moteur de budget Zero-Based).</li>
+<li>Synchroniser les transactions avec vos appareils et ceux de votre conjoint (dans le cadre du « Foyer Partagé »).</li>
+<li>Traiter l'abonnement Premium via notre partenaire <strong>RevenueCat</strong>.</li>
+<li>Assurer la sécurité des accès via <strong>Firebase App Check</strong>.</li>
+</ul>
+<p><strong>Nous ne vendons AUCUNE donnée personnelle ou financière à des tiers.</strong></p>
+
+<h2>3. Fournisseurs tiers</h2>
+<p>Pour fonctionner, l'application s'appuie sur l'infrastructure de tiers certifiés et hautement sécurisés :</p>
+<ul>
+<li><strong>Google Firebase (Firestore, Auth, Functions)</strong> : hébergement principal des données dans le cloud.</li>
+<li><strong>Plaid Inc.</strong> : agrégateur bancaire sécurisé. En liant votre banque, vous acceptez également la politique de confidentialité de Plaid (disponible sur <a href="https://plaid.com/legal" rel="noopener">plaid.com/legal</a>).</li>
+<li><strong>RevenueCat</strong> : gestion des abonnements et des achats intégrés.</li>
+<li><strong>Anthropic</strong> (fonction « Coach budgétaire IA », sur demande uniquement) : lorsque vous demandez la génération de conseils, des <strong>agrégats anonymisés</strong> de votre bilan (totaux par catégorie, tendances, noms de commerçants, soldes de cagnottes, ainsi que des montants budgétaires agrégés : revenus totaux, dépenses fixes totales et objectifs d'enveloppes par catégorie) sont transmis à l'API Claude d'Anthropic pour rédiger les suggestions. <strong>Aucun identifiant personnel, aucune donnée d'authentification et aucune transaction bancaire brute ne sont transmis.</strong> Les conseils générés sont fournis à titre informatif seulement et <strong>ne constituent pas un conseil financier professionnel</strong>.</li>
+</ul>
+
+<h2>4. Sécurité et rétention (conformité Loi 25)</h2>
+<ul>
+<li><strong>Sécurité</strong> : vos données sont chiffrées en transit (HTTPS) et au repos par les serveurs de Google. L'accès à la base de données est restreint par des règles de sécurité rigides (votre compte ne peut lire que les données de son propre foyer).</li>
+<li><strong>Rétention</strong> : vos données transactionnelles et budgétaires sont conservées tant que votre compte est actif.</li>
+<li><strong>Droit à l'oubli</strong> : vous avez le droit de demander la suppression intégrale de vos données. Cette demande supprimera votre compte, les tokens de connexion Plaid et toutes les transactions associées de nos serveurs. La suppression est aussi offerte en libre-service dans l'application (Réglages → Supprimer mon compte).</li>
+</ul>
+
+<h2>5. Contact du responsable de la protection des données</h2>
+<p>Conformément à la Loi 25, le responsable de la protection des renseignements personnels est :</p>
+<p><strong>Sébastien Normandeau</strong> (Vibe Coding Mind)<br>
+Courriel : <a href="mailto:sebastiennormandeau@gmail.com">sebastiennormandeau@gmail.com</a></p>
+<p>Si vous avez des questions sur vos données personnelles ou si vous souhaitez exercer vos droits (accès, rectification, retrait du consentement, suppression), écrivez à cette adresse. Nous répondons dans un délai maximal de 30 jours.</p>
+
+<p class="meta">Voir aussi : <a href="/terms">Conditions d'utilisation</a></p>
+</body>
+</html>

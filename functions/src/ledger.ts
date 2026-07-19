@@ -1,5 +1,5 @@
-import * as functions from "firebase-functions";
-import { admin, db } from "./init";
+import * as functions from "firebase-functions/v1";
+import { db, FieldValue } from "./init";
 import { requireAuth, enforceRateLimit } from "./security";
 
 const VALID_BUCKETS = ["Common", "Solo_A", "Solo_B"];
@@ -64,7 +64,7 @@ export const onTransactionAssigned = functions.firestore
         safe_to_spend_solo_A: soloA,
         safe_to_spend_solo_B: soloB,
         internal_debt_balance: internalDebt,
-        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        updated_at: FieldValue.serverTimestamp(),
       });
     });
   });
@@ -108,11 +108,11 @@ export const settleDebt = functions.https.onCall(async (data, context) => {
       amount: Math.abs(debt),
       direction: debt > 0 ? "B_owes_A" : "A_owes_B",
       settled_by: uid,
-      created_at: admin.firestore.FieldValue.serverTimestamp(),
+      created_at: FieldValue.serverTimestamp(),
     });
     tx.update(householdRef, {
       internal_debt_balance: 0,
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_at: FieldValue.serverTimestamp(),
     });
 
     return debt;

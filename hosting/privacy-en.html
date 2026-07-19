@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Horizon</title>
+<style>
+  body{font-family:Georgia,'Times New Roman',serif;max-width:720px;margin:0 auto;padding:2rem 1.25rem 4rem;line-height:1.65;color:#222;background:#fdfcfa}
+  h1{font-size:1.7rem;border-bottom:2px solid #2e6e5e;padding-bottom:.4rem}
+  h2{font-size:1.2rem;margin-top:2rem;color:#2e6e5e}
+  h3{font-size:1.05rem;margin-top:1.2rem}
+  .meta{color:#666;font-size:.9rem}
+  .lang{float:right;font-size:.9rem}
+  .notice{background:#f0ece2;border-left:4px solid #2e6e5e;padding:.6rem 1rem;font-size:.92rem}
+  a{color:#2e6e5e}
+  strong{color:#111}
+</style>
+</head>
+<body>
+<p class="lang"><a href="/privacy">Français</a></p>
+<h1>Privacy Policy</h1>
+<p class="meta"><strong>Horizon</strong> app — Vibe Coding Mind · Last updated: July 18, 2026</p>
+<p class="notice">This English version is provided as a courtesy translation. In case of any discrepancy or dispute, the French version ("<a href="/privacy">Politique de Confidentialité</a>") shall prevail.</p>
+
+<p><strong>Vibe Coding Mind</strong> (the "Studio", "We") places great importance on the privacy of its users. This Privacy Policy describes how the <strong>Horizon</strong> application collects, uses, and protects your personal data, in strict compliance with North American standards, including <strong>Quebec's Law 25</strong>.</p>
+
+<h2>1. Data Collected</h2>
+<h3>A. Identification and Account Data</h3>
+<p>To create your account or a Household, we collect:</p>
+<ul>
+<li>Your email address (encrypted and secured by Firebase Authentication).</li>
+<li>An alphanumeric household code (to link partner accounts).</li>
+</ul>
+<h3>B. Financial Data (Read-only)</h3>
+<p>When you connect your bank, we use a trusted provider (Plaid). <strong>We NEVER store your banking credentials.</strong> We collect and store (on Firebase Firestore):</p>
+<ul>
+<li>The transaction name, amount, and date.</li>
+<li>Secure access "tokens" allowing us to refresh your transaction list.</li>
+</ul>
+<h3>C. Usage Data</h3>
+<p>We use <strong>Google Analytics</strong> and <strong>Firebase Crashlytics</strong> to detect bugs (crashes) and understand general application usage in an anonymized way.</p>
+
+<h2>2. Use of Data</h2>
+<p>Your data is used exclusively to:</p>
+<ul>
+<li>Provide the application's core service (the Zero-Based budgeting engine).</li>
+<li>Synchronize transactions across your devices and your partner's (within the "Shared Household").</li>
+<li>Process the Premium subscription through our partner <strong>RevenueCat</strong>.</li>
+<li>Secure access through <strong>Firebase App Check</strong>.</li>
+</ul>
+<p><strong>We do NOT sell any personal or financial data to third parties.</strong></p>
+
+<h2>3. Third-Party Providers</h2>
+<ul>
+<li><strong>Google Firebase (Firestore, Auth, Functions)</strong>: primary cloud hosting of the data.</li>
+<li><strong>Plaid Inc.</strong>: secure banking aggregator. By linking your bank, you also accept Plaid's privacy policy (available at <a href="https://plaid.com/legal" rel="noopener">plaid.com/legal</a>).</li>
+<li><strong>RevenueCat</strong>: subscription and in-app purchase management.</li>
+<li><strong>Anthropic</strong> ("AI budget coach" feature, on demand only): when you request advice generation, <strong>anonymized aggregates</strong> of your review (totals by category, trends, merchant names, pot balances, and aggregated budget figures such as total income, fixed expenses, and category envelope targets) are sent to Anthropic's Claude API to write the suggestions. <strong>No personal identifier, no authentication data, and no raw banking transaction is transmitted.</strong> The generated advice is provided for informational purposes only and <strong>does not constitute professional financial advice</strong>.</li>
+</ul>
+
+<h2>4. Security and Retention (Law 25 Compliance)</h2>
+<ul>
+<li><strong>Security</strong>: your data is encrypted in transit (HTTPS) and at rest by Google's servers. Database access is restricted by strict Security Rules (your account can only read the data of its own household).</li>
+<li><strong>Retention</strong>: your transactional and budget data is retained as long as your account is active.</li>
+<li><strong>Right to erasure</strong>: you have the right to request the complete deletion of your data. This request will delete your account, the Plaid connection tokens, and all associated transactions from our servers. Deletion is also available in-app (Settings → Delete my account).</li>
+</ul>
+
+<h2>5. Data Protection Officer Contact</h2>
+<p>In accordance with Law 25, the person responsible for the protection of personal information is:</p>
+<p><strong>Sébastien Normandeau</strong> (Vibe Coding Mind)<br>
+Email: <a href="mailto:sebastiennormandeau@gmail.com">sebastiennormandeau@gmail.com</a></p>
+<p>If you have questions about your personal data or wish to exercise your rights (access, rectification, withdrawal of consent, deletion), write to this address. We respond within a maximum of 30 days.</p>
+
+<p class="meta">See also: <a href="/terms-en">Terms of Service</a></p>
+</body>
+</html>

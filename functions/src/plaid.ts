@@ -1,4 +1,4 @@
-import * as functions from "firebase-functions";
+import * as functions from "firebase-functions/v1";
 import * as crypto from "crypto";
 import {
   Configuration,
@@ -9,7 +9,7 @@ import {
   Transaction as PlaidTransaction,
   RemovedTransaction,
 } from "plaid";
-import { admin, db } from "./init";
+import { db, FieldValue } from "./init";
 import {
   requireAuth,
   enforceRateLimit,
@@ -125,7 +125,7 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
         category: t.personal_finance_category?.primary ?? "OTHER",
         category_detailed: t.personal_finance_category?.detailed ?? null,
         plaid_transaction_id: t.transaction_id,
-        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        created_at: FieldValue.serverTimestamp(),
       });
       imported++;
     });
@@ -168,7 +168,7 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
 
   await connRef.update({
     sync_cursor: cursor,
-    last_synced_at: admin.firestore.FieldValue.serverTimestamp(),
+    last_synced_at: FieldValue.serverTimestamp(),
   });
 
   return imported;
@@ -353,7 +353,7 @@ export const exchangePublicToken = functions
         household_id: householdId,
         access_token: accessToken,
         item_id: itemId,
-        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        created_at: FieldValue.serverTimestamp(),
       });
 
       const imported = await syncTransactionsForItem(itemId);

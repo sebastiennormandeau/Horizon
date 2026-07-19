@@ -1,5 +1,5 @@
-import * as functions from "firebase-functions";
-import { admin, db } from "./init";
+import * as functions from "firebase-functions/v1";
+import { db, FieldValue } from "./init";
 import { generateStoredReport } from "./reports";
 
 /**
@@ -73,7 +73,7 @@ export const revenueCatWebhook = functions
         await db.collection("households").doc(householdId).set(
           {
             subscription_tier: tier,
-            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+            updated_at: FieldValue.serverTimestamp(),
           },
           { merge: true }
         );
@@ -145,14 +145,14 @@ export const monthlyRollover = functions.pubsub
         await budgets.doc(currentMonth).set({
           ...b,
           rolled_over_from: previousMonth,
-          updated_at: admin.firestore.FieldValue.serverTimestamp(),
+          updated_at: FieldValue.serverTimestamp(),
         });
 
         await householdDoc.ref.update({
           safe_to_spend_common: net,
           safe_to_spend_solo_A: incomeA - contributionA,
           safe_to_spend_solo_B: incomeB - contributionB,
-          updated_at: admin.firestore.FieldValue.serverTimestamp(),
+          updated_at: FieldValue.serverTimestamp(),
         });
         rolled++;
       } catch (e) {

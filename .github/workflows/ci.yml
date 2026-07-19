@@ -37,12 +37,15 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: functions/package-lock.json
 
       - name: Dépendances
         run: npm ci
+
+      - name: Audit des dépendances (vulnérabilités élevées et critiques)
+        run: npm audit --audit-level=high
 
       - name: Build TypeScript
         run: npm run build

@@ -1,0 +1,28 @@
+# Surveillance des vulnérabilités des dépendances (voir SECURITY_POLICY.md §4).
+version: 2
+updates:
+  # Cloud Functions (npm)
+  - package-ecosystem: "npm"
+    directory: "/functions"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependances"
+
+  # Application Flutter (pub)
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependances"
+
+  # Actions GitHub du CI
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependances"

@@ -29,7 +29,7 @@ firebase deploy --only "firestore:rules,firestore:indexes" --project horizon-dbb
 firebase deploy --only functions --project horizon-dbba0
 ```
 
-Prod builds use `--dart-define=APP_ENV=prod` (see `PRODUCTION_CHECKLIST.md` — the authoritative list of manual production steps; keep it updated when adding config that needs console/account work).
+Prod builds use `--dart-define=APP_ENV=prod` (see `PRODUCTION_CHECKLIST.md` — the authoritative list of manual production steps; keep it updated when adding config that needs console/account work). `SECURITY_POLICY.md` is the formal security policy (annual review; update it when security-relevant architecture changes). New callables must keep `npm audit --audit-level=high` green — it gates CI.
 
 ## Architecture — the parts that span multiple files
 
@@ -55,7 +55,7 @@ The ONLY transaction fields a client may write are `assigned_to_bucket` and `cat
 - `lib/widgets/household_loader.dart` is the shared user-doc → household-doc stream chain used by Home/History/Bilan/Settings — use it instead of duplicating the StreamBuilder nesting.
 - `lib/utils/categories.dart` is the category referential: keys are Plaid `personal_finance_category.primary` values (e.g. `FOOD_AND_DRINK`). Reports aggregate by these keys and `category_budgets` (envelopes) reference them, so renaming a key breaks aggregation continuity. Display labels are bilingual via `TxCategory.labelFor(languageCode)`.
 - Currency/input formatting is bilingual without the intl package: `formatCurrency`/`parseAmount` in `lib/utils/formatters.dart` (fr: NBSP thousands + comma decimals `1 234,56 $`; en: `$1,234.56`; default follows `currencyLanguageCode`, kept in sync by `LocaleController`). Amount inputs must use `parseAmount`, never bare `double.tryParse` — it accepts both decimal conventions.
-- i18n gotchas: validators take an optional `AppLocalizations` (French fallback keeps tests pure); `Household.bucketLabel(bucket, l10n)` needs the l10n; stored DATA values stay French for continuity (`pay_frequency` values `Mensuel/Bi-hebdomadaire/Hebdomadaire` that `BudgetCalculator` switches on, and the server's `frequency_label`) — only their display is translated (maps in `budget_setup_screen.dart` / `bilan_screen.dart`). Legal docs: `assets/legal/*.md` French authoritative + `*_en.md` courtesy translations picked by `showLegalDocument`.
+- i18n gotchas: validators take an optional `AppLocalizations` (French fallback keeps tests pure); `Household.bucketLabel(bucket, l10n)` needs the l10n; stored DATA values stay French for continuity (`pay_frequency` values `Mensuel/Bi-hebdomadaire/Hebdomadaire` that `BudgetCalculator` switches on, and the server's `frequency_label`) — only their display is translated (maps in `budget_setup_screen.dart` / `bilan_screen.dart`). Legal docs: `assets/legal/*.md` French authoritative + `*_en.md` courtesy translations picked by `showLegalDocument`. The SAME policies are published publicly at https://horizon-dbba0.web.app/privacy via Firebase Hosting (`hosting/*.html`, `firebase deploy --only hosting`) — any edit to `assets/legal/*.md` must be mirrored in `hosting/*.html` and redeployed.
 - New Firestore queries usually need a composite index in `firestore.indexes.json` — deploy it or the query fails at runtime with `failed-precondition`.
 
 ### Anthropic API usage

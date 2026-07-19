@@ -1,6 +1,6 @@
-import * as functions from "firebase-functions";
+import * as functions from "firebase-functions/v1";
 import * as crypto from "crypto";
-import { admin, db } from "./init";
+import { db, FieldValue } from "./init";
 import {
   requireAuth,
   enforceRateLimit,
@@ -44,7 +44,7 @@ export const createHousehold = functions.https.onCall(
 
     const householdRef = await db.collection("households").add({
       created_by: uid,
-      created_at: admin.firestore.FieldValue.serverTimestamp(),
+      created_at: FieldValue.serverTimestamp(),
       join_code: joinCode,
       user_A_id: uid,
       user_B_id: null,

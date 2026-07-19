@@ -1,6 +1,5 @@
-import * as functions from "firebase-functions";
-import * as admin from "firebase-admin";
-import { db } from "./init";
+import * as functions from "firebase-functions/v1";
+import { db, FieldValue } from "./init";
 
 /**
  * Garde d'authentification commune à toutes les fonctions appelables.
@@ -71,7 +70,7 @@ export async function enforceRateLimit(
     timestamps.push(now);
     tx.set(ref, {
       timestamps,
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_at: FieldValue.serverTimestamp(),
     });
   });
 }

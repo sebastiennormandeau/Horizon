@@ -1,6 +1,6 @@
-import * as functions from "firebase-functions";
+import * as functions from "firebase-functions/v1";
 import Anthropic from "@anthropic-ai/sdk";
-import { admin, db } from "./init";
+import { db, FieldValue } from "./init";
 import { requireAuth, enforceRateLimit, assertString } from "./security";
 
 /**
@@ -225,7 +225,7 @@ export const generateCoachAdvice = functions
 
       await reportRef.update({
         ai_advice: advice,
-        ai_advice_at: admin.firestore.FieldValue.serverTimestamp(),
+        ai_advice_at: FieldValue.serverTimestamp(),
         ai_advice_language: language,
       });
 

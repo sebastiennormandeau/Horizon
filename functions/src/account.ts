@@ -1,5 +1,5 @@
-import * as functions from "firebase-functions";
-import { admin, db } from "./init";
+import * as functions from "firebase-functions/v1";
+import { db, FieldValue, auth } from "./init";
 import { requireAuth, enforceRateLimit } from "./security";
 import { getPlaidClient, plaidSecrets } from "./plaid";
 
@@ -92,7 +92,7 @@ export const deleteAccount = functions
             [isA ? "user_A_name" : "user_B_name"]: null,
             internal_debt_balance: 0,
             [isA ? "safe_to_spend_solo_A" : "safe_to_spend_solo_B"]: 0,
-            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+            updated_at: FieldValue.serverTimestamp(),
           });
         }
       }
@@ -100,7 +100,7 @@ export const deleteAccount = functions
 
     // 3. Profil et compte d'authentification.
     await userRef.delete();
-    await admin.auth().deleteUser(uid);
+    await auth.deleteUser(uid);
 
     return { success: true };
   });

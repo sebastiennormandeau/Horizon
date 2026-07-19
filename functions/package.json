@@ -10,17 +10,17 @@
     "logs": "firebase functions:log"
   },
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "main": "lib/index.js",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.112.2",
-    "firebase-admin": "^11.8.0",
-    "firebase-functions": "^4.3.1",
+    "firebase-admin": "^14.2.0",
+    "firebase-functions": "^7.3.0",
     "plaid": "^43.0.0"
   },
   "devDependencies": {
-    "@types/node": "^18.19.130",
+    "@types/node": "^22.0.0",
     "typescript": "^7.0.2"
   },
   "private": true

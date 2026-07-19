@@ -7,6 +7,52 @@
 
 ---
 
+## 0. Gouvernance de sécurité
+
+### ✅ Politique de sécurité documentée (fait)
+- **[SECURITY_POLICY.md](SECURITY_POLICY.md)** : politique formelle (contrôle
+  d'accès, chiffrement, secrets, postes de travail, réponse aux incidents,
+  cycle de vie des données), version 1.0 du 18 juillet 2026, **revue
+  annuelle obligatoire** (prochaine : juillet 2027). C'est ce document qu'on
+  référence dans les questionnaires de sécurité (Plaid, stores).
+
+### 🔧 MFA sur les accès internes (obligatoire — voir politique §1)
+Activer l'authentification multifacteur sur CHAQUE compte d'administration :
+- [ ] **Compte Google** (contrôle Firebase + Google Cloud — le plus
+      critique) : https://myaccount.google.com/security → validation en
+      deux étapes (privilégier une clé d'accès/passkey ou une app
+      d'authentification, pas le SMS seul)
+- [ ] **GitHub** : Settings → Password and authentication → Two-factor
+      authentication
+- [ ] **Plaid** (dashboard.plaid.com) : Account → Two-factor authentication
+- [ ] **RevenueCat** (app.revenuecat.com) : Account → Security → 2FA
+- [ ] **Anthropic** (console.anthropic.com) : Settings → Security
+
+### 🔧 MFA pour les utilisateurs de l'app (optionnel, recommandé avant le
+lancement public)
+Firebase Auth de base ne fait pas de MFA ; il faut passer à **Identity
+Platform** (même console, surclassement gratuit jusqu'à 50 k utilisateurs) :
+1. Console Google Cloud → Identity Platform → Upgrade.
+2. Activer le facteur **TOTP** (app d'authentification) et/ou SMS.
+3. Côté app : ajouter le flux d'inscription/validation MFA
+   (`firebase_auth` le supporte — `user.multiFactor`). À développer quand
+   décidé — me le demander.
+
+### ✅ Gestion des vulnérabilités (fait côté code)
+- **Dependabot** actif (`.github/dependabot.yml`) : npm (fonctions), pub
+  (Flutter) et GitHub Actions, vérification hebdomadaire.
+- **`npm audit --audit-level=high` bloque le CI** (vulnérabilités élevées
+  et critiques). État au 18 juillet 2026 : 0 élevée/critique ; 7 modérées
+  restantes, toutes transitives dans firebase-admin (uuid < 11.1.1, chemin
+  Storage non utilisé par Horizon) — se résorberont via Dependabot.
+- **firebase-admin 14 + firebase-functions 6 + runtime Node 22** (Node 20
+  était déprécié, décommission le 2026-10-30).
+- [ ] 🔧 Poste de travail : mises à jour automatiques de Windows activées,
+      **BitLocker** activé (Paramètres → Confidentialité et sécurité →
+      Chiffrement de l'appareil), Microsoft Defender actif.
+
+---
+
 ## 1. Sécurité applicative
 
 ### ✅ Vérification du courriel (fait)
@@ -228,10 +274,21 @@ Le code est prêt (fonction `generateCoachAdvice`, écran Bilan). À faire :
 - ✅ Suppression de compte complète (révocation Plaid, effacement Firestore
   et Auth) avec confirmation forte
 - ✅ Consentement aux conditions à l'inscription
+- ✅ Responsable de la protection des renseignements personnels désigné
+  (obligation Loi 25) : **Sébastien Normandeau**, contact indiqué dans la
+  politique de confidentialité (§5) — le placeholder a été remplacé.
+- ✅ **Politique publiée sur une URL publique** (exigence Plaid) :
+  https://horizon-dbba0.web.app/privacy (+ /terms, /privacy-en, /terms-en),
+  servie par Firebase Hosting (`hosting/`, déployée via
+  `firebase deploy --only hosting`). ⚠️ Toute modification de
+  `assets/legal/*.md` doit être répercutée dans `hosting/*.html` (et
+  vice-versa), puis redéployée. Quand le domaine réel existera (§6),
+  mettre à jour l'URL dans les politiques et sur le dashboard Plaid.
+- [ ] 🔧 Remplacer le courriel personnel par une adresse dédiée
+      (ex. confidentialite@horizonapp.ca) quand le domaine existera.
 - [ ] 🔧 Faire réviser conditions + politique par un juriste avant
-      commercialisation (les gabarits actuels sont un point de départ)
-- [ ] 🔧 Désigner un responsable de la protection des renseignements
-      personnels (obligatoire au Québec, même pour un studio solo)
+      commercialisation (les gabarits actuels sont un point de départ) —
+      y compris les traductions anglaises de courtoisie
 
 ---
 

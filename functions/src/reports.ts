@@ -1,5 +1,5 @@
-import * as functions from "firebase-functions";
-import { admin, db } from "./init";
+import * as functions from "firebase-functions/v1";
+import { db, FieldValue, Timestamp } from "./init";
 import { requireAuth, enforceRateLimit, assertString } from "./security";
 
 /**
@@ -81,8 +81,8 @@ async function fetchTransactions(
   const snap = await db
     .collection("transactions")
     .where("household_id", "==", householdId)
-    .where("created_at", ">=", admin.firestore.Timestamp.fromDate(from))
-    .where("created_at", "<", admin.firestore.Timestamp.fromDate(to))
+    .where("created_at", ">=", Timestamp.fromDate(from))
+    .where("created_at", "<", Timestamp.fromDate(to))
     .orderBy("created_at", "desc")
     .limit(3000)
     .get();
@@ -95,7 +95,7 @@ async function fetchTransactions(
       category: (data.category as string) || "OTHER",
       bucket: (data.assigned_to_bucket as string) || "",
       createdAt:
-        (data.created_at as admin.firestore.Timestamp | undefined)?.toDate() ??
+        (data.created_at as Timestamp | undefined)?.toDate() ??
         new Date(0),
     };
   });
@@ -269,9 +269,9 @@ export async function generateStoredReport(
   await reportRef.set(
     {
       period_type: periodType,
-      period_start: admin.firestore.Timestamp.fromDate(bounds.start),
-      period_end: admin.firestore.Timestamp.fromDate(bounds.end),
-      generated_at: admin.firestore.FieldValue.serverTimestamp(),
+      period_start: Timestamp.fromDate(bounds.start),
+      period_end: Timestamp.fromDate(bounds.end),
+      generated_at: FieldValue.serverTimestamp(),
       total_spent: current.total,
       transaction_count: current.count,
       by_category: current.byCategory,
@@ -371,7 +371,7 @@ export const addRecurringToBudget = functions.https.onCall(async (data, context)
       budgetRef,
       {
         fixed_expenses: fixedExpenses,
-        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        updated_at: FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
@@ -379,8 +379,8 @@ export const addRecurringToBudget = functions.https.onCall(async (data, context)
       safe_to_spend_common: net,
       safe_to_spend_solo_A: incomeA - contributionA,
       safe_to_spend_solo_B: incomeB - contributionB,
-      budgeted_recurring: admin.firestore.FieldValue.arrayUnion(name),
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      budgeted_recurring: FieldValue.arrayUnion(name),
+      updated_at: FieldValue.serverTimestamp(),
     });
   });
 

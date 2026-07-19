@@ -47,4 +47,11 @@ Conformément à la Loi 25 du Québec :
 
 ## 5. Contact du Responsable de la Protection des Données
 
-Si vous avez des questions sur vos données personnelles ou si vous souhaitez exercer vos droits, vous pouvez contacter notre responsable à la protection de la vie privée à : [Adresse Email Support].
+Conformément à la Loi 25, le responsable de la protection des renseignements personnels est :
+
+**Sébastien Normandeau** (Vibe Coding Mind)
+Courriel : sebastiennormandeau@gmail.com
+
+Si vous avez des questions sur vos données personnelles ou si vous souhaitez exercer vos droits (accès, rectification, retrait du consentement, suppression), écrivez à cette adresse. Nous répondons dans un délai maximal de 30 jours.
+
+Cette politique est également disponible en ligne : https://horizon-dbba0.web.app/privacy
