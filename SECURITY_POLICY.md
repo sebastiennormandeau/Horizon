@@ -91,6 +91,16 @@ intégral du disque** (BitLocker sur Windows / FileVault sur macOS),
 protection antimaliciel active (Microsoft Defender ou équivalent), et
 verrouillage de session automatique.
 
+Ces postes hébergent des identifiants d'administration à protéger comme des
+secrets : jeton du CLI Firebase et **identifiants par défaut de l'application
+Google Cloud** (`%APPDATA%\gcloud\application_default_credentials.json` sur
+Windows), ce dernier donnant accès à Identity Platform — dont le pouvoir de
+réinitialiser un second facteur (§6 bis). Le chiffrement du disque est donc
+la mesure qui protège cette chaîne. En cas de perte ou de vol du poste :
+révoquer immédiatement ces identifiants
+(`gcloud auth application-default revoke`, `firebase logout`) et appliquer
+la procédure du §6.
+
 ## 6. Réponse aux incidents
 
 En cas d'incident de sécurité (fuite de secret, accès non autorisé,
