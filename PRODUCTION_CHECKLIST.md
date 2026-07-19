@@ -141,10 +141,23 @@ Le code est prêt ; il faut activer les attestations réelles :
 ## 2. Authentification 🧪
 
 - [x] Connexion / inscription avec validation (testé localement)
+- [x] 🧪 **Enrôlement MFA d'un compte existant** — testé le 19 juillet 2026 :
+      Identity Platform laisse un compte sans facteur se connecter, la porte
+      d'enrôlement s'affiche, le code QR est scannable et l'accès aboutit à
+      l'accueil. Facteur confirmé côté serveur via
+      `node scripts/mfa-admin.js list`. **Pas de blocage œuf-poule** : nul
+      besoin de repasser le MFA en optionnel pour enrôler les comptes
+      existants.
+- [ ] 🧪 **Défi MFA à la connexion** — chemin `FirebaseAuthMultiFactorException`
+      → `MfaChallengeScreen` encore non exercé. Se déconnecter puis se
+      reconnecter pour le valider (le code enrôlé sert de test).
+- [ ] 🧪 Enrôler le second compte du foyer (conjointe) — même parcours
 - [ ] 🧪 Tester la réception réelle du courriel de vérification (vérifier les
       indésirables ; personnaliser le gabarit d'abord)
 - [ ] 🧪 Tester « Mot de passe oublié » de bout en bout (envoi → lien → nouveau
-      mot de passe → reconnexion)
+      mot de passe → reconnexion). ⚠️ Vérifier que le défi MFA s'applique
+      bien **après** la réinitialisation : un mot de passe seul ne doit
+      jamais suffire à ouvrir une session.
 - [ ] 🔧 Console Firebase → Authentication → Settings : activer la
       **protection contre l'énumération de courriels** et les
       **quotas d'inscription** (anti-abus supplémentaire)
