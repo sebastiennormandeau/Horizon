@@ -113,7 +113,17 @@ pouvoir de réinitialisation est volontairement **hors de l'application**
   → paramètres SMTP, avec un fournisseur (SendGrid, Postmark, Mailgun) et
   les enregistrements SPF/DKIM sur un domaine possédé. Isoler la cause :
   tester avec une adresse Gmail/Outlook (si elle reçoit normalement, le
-  diagnostic iCloud est confirmé).
+  diagnostic iCloud est confirmé). **Confirmé le 19 juillet 2026** :
+  Gmail reçoit normalement, iCloud non — diagnostic iCloud avéré.
+  Contournement temporaire pour débloquer un compte précis sans attendre
+  la livraison (`functions/scripts/verify-email.js`, même prérequis gcloud
+  que `mfa-admin.js`) :
+  ```
+  cd functions
+  node scripts/verify-email.js verify quelquun@icloud.com
+  ```
+  ⚠️ À utiliser seulement pour un compte dont on est certain qu'il
+  appartient réellement au demandeur (voir l'en-tête du script).
 
 ### ✅ Rate limiting (fait)
 Limites par utilisateur (fenêtre glissante, Firestore `rate_limits`) :
