@@ -12,9 +12,14 @@
 ### ✅ Politique de sécurité documentée (fait)
 - **[SECURITY_POLICY.md](SECURITY_POLICY.md)** : politique formelle (contrôle
   d'accès, chiffrement, secrets, postes de travail, réponse aux incidents,
-  cycle de vie des données), version 1.0 du 18 juillet 2026, **revue
+  cycle de vie des données), version 1.1 du 19 juillet 2026, **revue
   annuelle obligatoire** (prochaine : juillet 2027). C'est ce document qu'on
   référence dans les questionnaires de sécurité (Plaid, stores).
+- **[ACCESS_CONTROL_POLICY.md](ACCESS_CONTROL_POLICY.md)** : politique de
+  contrôle d'accès dédiée (rôles, moindre privilège, octroi/retrait,
+  revue trimestrielle des accès) — c'est ce document précis qu'on référence
+  pour la **question 3 du questionnaire de sécurité Plaid** (contrôle
+  d'accès aux données).
 
 ### 🔧 MFA sur les accès internes (obligatoire — voir politique §1)
 
