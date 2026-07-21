@@ -30,7 +30,14 @@ class _MfaEnrollScreenState extends State<MfaEnrollScreen> {
   String? _qrCodeUrl;
   bool _preparing = true;
   bool _submitting = false;
-  String? _error;
+
+  /// Erreur de génération de la clé TOTP (étape de préparation, avant même
+  /// d'afficher un code QR) — distincte de [_codeError] pour ne pas afficher
+  /// un message de préparation sous le champ de saisie du code.
+  String? _prepareError;
+
+  /// Erreur liée à la saisie/soumission du code à 6 chiffres.
+  String? _codeError;
 
   AppLocalizations get _l10n => AppLocalizations.of(context)!;
 
@@ -47,10 +54,15 @@ class _MfaEnrollScreenState extends State<MfaEnrollScreen> {
   }
 
   /// Génère la clé TOTP côté Firebase et l'URL `otpauth://` du code QR.
+  ///
+  /// Peut échouer sur un jeton d'authentification pas encore à jour (p. ex.
+  /// juste après une vérification de courriel très récente) — d'où le
+  /// bouton « Réessayer » affiché en cas d'échec plutôt qu'un blocage sans
+  /// issue (voir `_buildPrepareError`).
   Future<void> _prepareSecret() async {
     setState(() {
       _preparing = true;
-      _error = null;
+      _prepareError = null;
     });
 
     try {
@@ -73,7 +85,7 @@ class _MfaEnrollScreenState extends State<MfaEnrollScreen> {
       if (!mounted) return;
       setState(() {
         _preparing = false;
-        _error = _l10n.mfaSecretError;
+        _prepareError = _l10n.mfaSecretError;
       });
     }
   }
@@ -95,17 +107,17 @@ class _MfaEnrollScreenState extends State<MfaEnrollScreen> {
     if (secret == null) return;
 
     if (code.isEmpty) {
-      setState(() => _error = l10n.mfaCodeRequired);
+      setState(() => _codeError = l10n.mfaCodeRequired);
       return;
     }
     if (!RegExp(r'^[0-9]{6}$').hasMatch(code)) {
-      setState(() => _error = l10n.mfaCodeInvalidFormat);
+      setState(() => _codeError = l10n.mfaCodeInvalidFormat);
       return;
     }
 
     setState(() {
       _submitting = true;
-      _error = null;
+      _codeError = null;
     });
 
     try {
@@ -133,7 +145,7 @@ class _MfaEnrollScreenState extends State<MfaEnrollScreen> {
       debugPrint('Erreur d\'enrôlement MFA: ${e.code} ${e.message}');
       if (!mounted) return;
       setState(() {
-        _error = switch (e.code) {
+        _codeError = switch (e.code) {
           'invalid-verification-code' ||
           'invalid-otp' =>
             l10n.mfaCodeRejected,
@@ -144,7 +156,7 @@ class _MfaEnrollScreenState extends State<MfaEnrollScreen> {
     } catch (e) {
       debugPrint('Erreur d\'enrôlement MFA: $e');
       if (!mounted) return;
-      setState(() => _error = l10n.mfaEnrollError);
+      setState(() => _codeError = l10n.mfaEnrollError);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -213,58 +225,105 @@ class _MfaEnrollScreenState extends State<MfaEnrollScreen> {
                             color: Colors.grey, fontSize: 13),
                       ),
                       const SizedBox(height: 24),
-                      _stepTitle(l10n.mfaStep2),
-                      const SizedBox(height: 12),
-                      if (_qrCodeUrl != null) _buildQrCode(_qrCodeUrl!),
-                      const SizedBox(height: 16),
-                      _buildManualKey(l10n),
-                      const SizedBox(height: 24),
-                      _stepTitle(l10n.mfaStep3),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _codeController,
-                        keyboardType: TextInputType.number,
-                        maxLength: 6,
-                        autofillHints: const [AutofillHints.oneTimeCode],
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          letterSpacing: 8,
-                          fontWeight: FontWeight.bold,
+                      if (_qrCodeUrl == null) ...[
+                        // La génération de la clé a échoué : les étapes 2 et
+                        // 3 sont inutilisables sans elle. On offre un
+                        // réessai plutôt qu'un écran bloqué sans issue.
+                        _buildPrepareError(l10n),
+                      ] else ...[
+                        _stepTitle(l10n.mfaStep2),
+                        const SizedBox(height: 12),
+                        _buildQrCode(_qrCodeUrl!),
+                        const SizedBox(height: 16),
+                        _buildManualKey(l10n),
+                        const SizedBox(height: 24),
+                        _stepTitle(l10n.mfaStep3),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _codeController,
+                          keyboardType: TextInputType.number,
+                          maxLength: 6,
+                          autofillHints: const [AutofillHints.oneTimeCode],
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            letterSpacing: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: l10n.mfaCodeLabel,
+                            border: const OutlineInputBorder(),
+                            counterText: '',
+                            errorText: _codeError,
+                          ),
+                          onSubmitted: (_) => _submitting ? null : _enroll(),
                         ),
-                        decoration: InputDecoration(
-                          labelText: l10n.mfaCodeLabel,
-                          border: const OutlineInputBorder(),
-                          counterText: '',
-                          errorText: _error,
-                        ),
-                        onSubmitted: (_) => _submitting ? null : _enroll(),
-                      ),
-                      const SizedBox(height: 16),
-                      _submitting
-                          ? const Center(child: CircularProgressIndicator())
-                          : ElevatedButton(
-                              onPressed: _enroll,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                              ),
-                              child: Text(
-                                l10n.mfaActivate,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                        const SizedBox(height: 16),
+                        _submitting
+                            ? const Center(child: CircularProgressIndicator())
+                            : ElevatedButton(
+                                onPressed: _enroll,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 16),
+                                ),
+                                child: Text(
+                                  l10n.mfaActivate,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                      const SizedBox(height: 24),
-                      _buildBackupWarning(l10n),
+                        const SizedBox(height: 24),
+                        _buildBackupWarning(l10n),
+                      ],
                     ],
                   ),
                 ),
               ),
             ),
+    );
+  }
+
+  /// Affiché quand `_prepareSecret()` a échoué (p. ex. jeton d'authentification
+  /// pas encore à jour) : un bouton « Réessayer » plutôt qu'un écran bloqué,
+  /// puisque le bouton « Activer » ne peut rien faire sans clé générée.
+  Widget _buildPrepareError(AppLocalizations l10n) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.redAccent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.redAccent),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.error_outline,
+                  color: Colors.redAccent, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _prepareError ?? l10n.mfaSecretError,
+                  style: const TextStyle(color: Colors.redAccent),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: _prepareSecret,
+            style:
+                ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: Text(l10n.retry),
+          ),
+        ],
+      ),
     );
   }
 
