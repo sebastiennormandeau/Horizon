@@ -100,6 +100,20 @@ pouvoir de réinitialisation est volontairement **hors de l'application**
   à la prochaine connexion.**
 - 🔧 Personnaliser les gabarits de courriels **en français** :
   Console Firebase → Authentication → Templates (vérification, réinitialisation).
+- 🔧🐛 **Problème confirmé le 19 juillet 2026 : courriel de vérification non
+  livré aux adresses @icloud.com** (ni boîte de réception, ni indésirables).
+  Diagnostic : le domaine d'envoi par défaut de Firebase
+  (`noreply@<projet>.firebaseapp.com`) est partagé par des milliers de
+  projets et a une réputation inégale ; les serveurs iCloud rejettent
+  silencieusement plutôt que de mettre en indésirables. Ce n'est pas un bug
+  du code — `sendEmailVerification()` est bien appelé et ne lève aucune
+  erreur. Solution durable (à faire avant le lancement, pas seulement en
+  prod — peut se faire dès maintenant avec un sous-domaine) : configurer un
+  **SMTP personnalisé** dans Console Firebase → Authentication → Templates
+  → paramètres SMTP, avec un fournisseur (SendGrid, Postmark, Mailgun) et
+  les enregistrements SPF/DKIM sur un domaine possédé. Isoler la cause :
+  tester avec une adresse Gmail/Outlook (si elle reçoit normalement, le
+  diagnostic iCloud est confirmé).
 
 ### ✅ Rate limiting (fait)
 Limites par utilisateur (fenêtre glissante, Firestore `rate_limits`) :
@@ -157,8 +171,9 @@ Le code est prêt ; il faut activer les attestations réelles :
       → `MfaChallengeScreen` encore non exercé. Se déconnecter puis se
       reconnecter pour le valider (le code enrôlé sert de test).
 - [ ] 🧪 Enrôler le second compte du foyer (conjointe) — même parcours
-- [ ] 🧪 Tester la réception réelle du courriel de vérification (vérifier les
-      indésirables ; personnaliser le gabarit d'abord)
+- [x] 🧪 Tester la réception réelle du courriel de vérification — **problème
+      trouvé** (@icloud.com non livré, voir §1 ci-dessus). À revalider avec
+      Gmail/Outlook, puis une fois le SMTP personnalisé configuré.
 - [ ] 🧪 Tester « Mot de passe oublié » de bout en bout (envoi → lien → nouveau
       mot de passe → reconnexion). ⚠️ Vérifier que le défi MFA s'applique
       bien **après** la réinitialisation : un mot de passe seul ne doit
