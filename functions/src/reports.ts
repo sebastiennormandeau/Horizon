@@ -79,6 +79,20 @@ interface TxRow {
   createdAt: Date;
 }
 
+/** Date au format `AAAA-MM-JJ`, tel que Plaid l'inscrit dans `date`. */
+function isoDay(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Transactions d'une période, bornées par la **date réelle** de l'opération.
+ *
+ * ⚠️ Surtout pas par `created_at`, qui est l'instant de l'import : relier une
+ * banque rapatrie jusqu'à deux ans d'historique d'un coup, et le bilan du
+ * mois additionnait alors des années de dépenses. Les chaînes `AAAA-MM-JJ`
+ * se comparent correctement dans l'ordre lexicographique, ce qui rend la
+ * requête de plage valide sans conversion.
+ */
 async function fetchTransactions(
   householdId: string,
   from: Date,
@@ -87,9 +101,9 @@ async function fetchTransactions(
   const snap = await db
     .collection("transactions")
     .where("household_id", "==", householdId)
-    .where("created_at", ">=", Timestamp.fromDate(from))
-    .where("created_at", "<", Timestamp.fromDate(to))
-    .orderBy("created_at", "desc")
+    .where("date", ">=", isoDay(from))
+    .where("date", "<", isoDay(to))
+    .orderBy("date", "desc")
     .limit(3000)
     .get();
 
