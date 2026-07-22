@@ -408,15 +408,28 @@ firebase deploy --only hosting --project horizon-dbba0
 
 ---
 
-## 7. Sauvegardes de la base de données 🔧🧪
+## 7. Sauvegardes de la base de données ✅🧪
 
-⚠️ **Devenu urgent le 22 juillet 2026** : `horizon-dbba0` héberge maintenant
-de vraies données bancaires (§5 bis). Exécuter les commandes ci-dessous en
-remplaçant `horizon-prod` par **`horizon-dbba0`** dès maintenant, puis de
-nouveau sur le projet de production le jour où il existera.
-
+### ✅ Activé sur horizon-dbba0 le 22 juillet 2026
 Firestore est répliqué, mais **répliqué ≠ sauvegardé** (une suppression se
-réplique aussi). Deux protections à activer :
+réplique aussi). Trois protections sont maintenant actives :
+
+| Protection | État | Détail |
+| --- | --- | --- |
+| Récupération à un instant passé (PITR) | ✅ `POINT_IN_TIME_RECOVERY_ENABLED` | rétention 7 jours (604 800 s) |
+| Sauvegardes planifiées quotidiennes | ✅ créées | rétention 14 semaines (8 467 200 s) |
+| Protection contre la suppression de la base | ✅ `DELETE_PROTECTION_ENABLED` | empêche un `databases delete` accidentel |
+
+Vérifier l'état à tout moment :
+```
+gcloud firestore databases describe --database="(default)" --project=horizon-dbba0
+gcloud firestore backups schedules list --database="(default)" --project=horizon-dbba0
+```
+- 💲 Les sauvegardes planifiées sont facturées au Go stocké. À l'échelle
+  d'un foyer, c'est négligeable ; à revoir si la base grossit.
+- 🔧 **À refaire sur le projet de production** le jour où il existera.
+
+### Commandes de référence (pour le futur projet de production)
 
 1. **PITR** (récupération à un instant dans le passé, 7 jours) :
    ```

@@ -155,13 +155,13 @@ réexécutée sur les comptes concernés dans le cadre de la procédure de
 rétablissement.
 
 > **État au 22 juillet 2026** : l'environnement `horizon-dbba0` est passé en
-> **pilote restreint** et héberge désormais de vraies données bancaires pour
-> un nombre fermé de comptes nommés (accès production limité accordé par
-> Plaid). Les sauvegardes décrites ci-dessus doivent donc y être actives :
-> voir PRODUCTION_CHECKLIST.md §7 pour l'état d'activation. Tant qu'elles ne
-> le sont pas, la seule protection contre une suppression accidentelle est la
-> réplication Firestore, qui **ne protège pas** contre un effacement (il se
-> réplique aussi).
+> **pilote restreint** et héberge de vraies données bancaires pour un nombre
+> fermé de comptes nommés (accès production limité accordé par Plaid). Les
+> deux mécanismes ci-dessus **y sont actifs** depuis cette date
+> (`POINT_IN_TIME_RECOVERY_ENABLED`, rétention 7 jours ; sauvegardes
+> quotidiennes planifiées, rétention 14 semaines), ainsi que la protection
+> contre la suppression de la base. Ils devront être réactivés sur le projet
+> de production le jour où il sera créé.
 
 ## 5. Fondement légal
 
