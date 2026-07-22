@@ -411,10 +411,19 @@ export const generatePlaidLinkToken = functions
         // uniquement quand l'institution les supporte : celles qui ne les
         // offrent pas restent sélectionnables (contrairement à `products`,
         // qui filtrerait la liste des banques).
+        //
+        // Piloté par une variable d'environnement, car le produit doit être
+        // activé sur le compte Plaid : le demander sans y avoir droit fait
+        // échouer `linkTokenCreate` pour **toutes** les institutions, y
+        // compris celles qui marchaient. Mettre PLAID_ENABLE_LIABILITIES=false
+        // rétablit le comportement précédent sans redéployer de code.
+        //
         // ⚠️ En production, chaque produit est facturé dès l'initialisation
         // du Item et ne peut plus en être retiré : seule la suppression du
         // Item (`/item/remove`) arrête les frais.
-        required_if_supported_products: [Products.Liabilities],
+        ...(process.env.PLAID_ENABLE_LIABILITIES === "true"
+          ? { required_if_supported_products: [Products.Liabilities] }
+          : {}),
         country_codes: [CountryCode.Us, CountryCode.Ca],
         language,
         webhook: webhookUrl,
