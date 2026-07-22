@@ -468,11 +468,17 @@ Le code est prêt (fonction `generateCoachAdvice`, écran Bilan). À faire :
   (obligation Loi 25) : **Sébastien Normandeau**, contact indiqué dans la
   politique de confidentialité (§5) — le placeholder a été remplacé.
 - ✅ **Politique publiée sur une URL publique** (exigence Plaid) :
-  https://horizon-dbba0.web.app/privacy (+ /terms, /privacy-en, /terms-en),
-  servie par Firebase Hosting (`hosting/`, déployée via
-  `firebase deploy --only hosting`). ⚠️ Toute modification de
-  `assets/legal/*.md` doit être répercutée dans `hosting/*.html` (et
-  vice-versa), puis redéployée. Quand le domaine réel existera (§6),
+  https://horizon-dbba0.web.app/privacy (+ /terms, /privacy-en, /terms-en).
+  Depuis le 22 juillet 2026, Firebase Hosting sert **l'application elle-même**
+  (`build/web`) ; les pages légales vivent dans `web/` pour que
+  `flutter build web` les recopie dans le bundle. ⚠️ Toute modification de
+  `assets/legal/*.md` doit être répercutée dans `web/*.html` (et
+  vice-versa). **Déploiement en deux temps obligatoire** — sans le build,
+  on republie l'ancien bundle :
+  ```
+  flutter build web
+  firebase deploy --only hosting --project horizon-dbba0
+  ``` Quand le domaine réel existera (§6),
   mettre à jour l'URL dans les politiques et sur le dashboard Plaid.
 - [ ] 🔧 Remplacer le courriel personnel par une adresse dédiée
       (ex. confidentialite@horizonapp.ca) quand le domaine existera.

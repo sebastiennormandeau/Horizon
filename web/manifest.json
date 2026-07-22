@@ -1,11 +1,13 @@
 {
-    "name": "horizon",
-    "short_name": "horizon",
+    "name": "Horizon — Budget de foyer",
+    "short_name": "Horizon",
+    "lang": "fr-CA",
     "start_url": ".",
+    "scope": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0B1120",
+    "theme_color": "#12A181",
+    "description": "Le budget à base zéro, simplifié pour les foyers.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,12 +18,20 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Horizon — le budget à base zéro, simplifié pour les foyers du Québec. Zero-based budgeting made simple for households.">
 
-  <!-- iOS meta tags & icons -->
+  <!-- Couleur de la barre du navigateur, accordée au thème actif de l'app. -->
+  <meta name="theme-color" content="#F6F8FB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0B1120" media="(prefers-color-scheme: dark)">
+
+  <!-- iOS : l'app s'ajoute à l'écran d'accueil et s'ouvre en plein écran.
+       C'est le seul mode d'installation disponible sur iPhone sans compte
+       Apple Developer. -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="horizon">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Horizon">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
@@ -32,7 +40,7 @@
   <!-- Plaid Link Support -->
   <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
 
-  <title>horizon</title>
+  <title>Horizon</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
