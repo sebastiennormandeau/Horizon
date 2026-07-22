@@ -1765,6 +1765,36 @@ abstract class AppLocalizations {
   /// **'Dernière synchronisation : {date}'**
   String bankLastSync(String date);
 
+  /// No description provided for @bankJointLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compte conjoint'**
+  String get bankJointLabel;
+
+  /// No description provided for @bankJointHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les dépenses communes payées depuis ce compte ne créeront aucune dette entre vous : l\'argent sort d\'un compte que vous alimentez tous les deux.'**
+  String get bankJointHint;
+
+  /// No description provided for @bankPersonalHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les dépenses communes payées depuis ce compte seront notées comme une avance faite à votre partenaire.'**
+  String get bankPersonalHint;
+
+  /// No description provided for @bankJointUpdated.
+  ///
+  /// In fr, this message translates to:
+  /// **'Type de compte mis à jour.'**
+  String get bankJointUpdated;
+
+  /// No description provided for @bankJointDebtNote.
+  ///
+  /// In fr, this message translates to:
+  /// **'La dette déjà calculée n\'est pas recalculée. Utilisez « Régler » sur l\'accueil pour repartir de zéro.'**
+  String get bankJointDebtNote;
+
   /// No description provided for @bankDisconnect.
   ///
   /// In fr, this message translates to:

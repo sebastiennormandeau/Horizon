@@ -57,6 +57,8 @@ interface BankConnection {
   household_id: string;
   sync_cursor?: string;
   institution_name?: string | null;
+  /** Compte conjoint : ses dépenses communes ne créent pas de dette interne. */
+  is_joint?: boolean;
 }
 
 /**
@@ -299,6 +301,10 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
         // sans exposer `bank_connections`, interdite de lecture cliente.
         institution_name: conn.institution_name ?? null,
         account_id: t.account_id ?? null,
+        item_id: itemId,
+        // Copié sur la transaction plutôt que lu au vol : le déclencheur du
+        // grand livre ne dispose que du document de transaction.
+        is_joint_account: conn.is_joint === true,
         // Les mouvements internes sont classés d'office : ils ne doivent ni
         // encombrer la file de tri, ni toucher aux cagnottes. Les dépenses
         // des mois révolus sont écartées du tri mais restent dans les bilans.
@@ -654,6 +660,7 @@ export const listBankConnections = functions.https.onCall(
         return {
           item_id: d.id,
           institution_name: c.institution_name ?? null,
+          is_joint: c.is_joint === true,
           // Permet à l'app de distinguer ses propres comptes de ceux du
           // partenaire, sans exposer d'identifiant utilisable autrement.
           is_mine: c.user_id === uid,
@@ -783,6 +790,72 @@ export const syncBankConnections = functions
 
     return { success: true, imported, connections: snap.size };
   });
+
+/**
+ * Marque une connexion comme conjointe ou personnelle.
+ *
+ * Le drapeau est recopié sur les transactions existantes de la connexion :
+ * le déclencheur du grand livre ne lit que le document de transaction.
+ *
+ * ⚠️ La dette interne **déjà calculée** n'est pas recalculée — il faudrait
+ * rejouer tout l'historique des assignations. Le solde existant se remet à
+ * zéro avec « Régler la dette » (`settleDebt`), qui en consigne la trace.
+ */
+export const setBankConnectionJoint = functions.https.onCall(
+  async (data, context) => {
+    const uid = requireAuth(context);
+    await enforceRateLimit("setBankConnectionJoint", uid, 20, 3600);
+
+    const itemId = assertString(data?.item_id, "item_id", {
+      maxLength: 128,
+      pattern: ITEM_ID_PATTERN,
+    });
+    if (typeof data?.is_joint !== "boolean") {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Paramètre invalide: is_joint"
+      );
+    }
+    const isJoint = data.is_joint as boolean;
+
+    const ref = db.collection("bank_connections").doc(itemId);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "Cette connexion bancaire n'existe pas."
+      );
+    }
+    const conn = snap.data() as BankConnection;
+
+    // Tout membre du foyer peut qualifier un compte de conjoint : c'est une
+    // description de la réalité du couple, pas un privilège.
+    const userSnap = await db.collection("users").doc(uid).get();
+    if (userSnap.data()?.household_id !== conn.household_id) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Cette connexion n'appartient pas à votre foyer."
+      );
+    }
+
+    await ref.update({ is_joint: isJoint });
+
+    const tx = await db
+      .collection("transactions")
+      .where("item_id", "==", itemId)
+      .get();
+    const chunk = 400;
+    for (let i = 0; i < tx.docs.length; i += chunk) {
+      const batch = db.batch();
+      tx.docs
+        .slice(i, i + chunk)
+        .forEach((d) => batch.update(d.ref, { is_joint_account: isJoint }));
+      await batch.commit();
+    }
+
+    return { success: true, transactions_updated: tx.size };
+  }
+);
 
 /**
  * Écarte de la file de tri les transactions non classées des mois révolus.

@@ -42,13 +42,24 @@ export const onTransactionAssigned = functions.firestore
       const ratioA = (household.split_ratio_user_A ?? 50) / 100;
       const ratioB = (household.split_ratio_user_B ?? 50) / 100;
 
+      // Compte conjoint : personne n'avance quoi que ce soit, l'argent sort
+      // d'un compte que les deux alimentent. Sans cette exception, la dette
+      // interne grossirait chaque mois au profit du membre sous lequel la
+      // connexion bancaire a été établie — une illusion comptable, puisque
+      // Plaid attribue toutes les transactions d'un compte à un seul
+      // identifiant.
+      const isJointAccount = after.is_joint_account === true;
+
       // sign = +1 pour appliquer l'effet d'un bucket, -1 pour l'annuler.
       const apply = (bucket: string, sign: number) => {
         if (!VALID_BUCKETS.includes(bucket)) return;
         if (bucket === "Common") {
           common -= sign * amount;
           // Le payeur avance la part de l'autre : dette positive = B doit à A.
-          internalDebt += sign * (isUserA ? amount * ratioB : -(amount * ratioA));
+          if (!isJointAccount) {
+            internalDebt +=
+              sign * (isUserA ? amount * ratioB : -(amount * ratioA));
+          }
         } else if (bucket === "Solo_A") {
           soloA -= sign * amount;
         } else if (bucket === "Solo_B") {

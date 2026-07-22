@@ -932,6 +932,24 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get bankJointLabel => 'Joint account';
+
+  @override
+  String get bankJointHint =>
+      'Shared expenses paid from this account will not create any debt between you: the money leaves an account you both fund.';
+
+  @override
+  String get bankPersonalHint =>
+      'Shared expenses paid from this account will be recorded as money you fronted for your partner.';
+
+  @override
+  String get bankJointUpdated => 'Account type updated.';
+
+  @override
+  String get bankJointDebtNote =>
+      'Debt already calculated is not recomputed. Use “Settle” on the home screen to start from zero.';
+
+  @override
   String get bankDisconnect => 'Disconnect';
 
   @override

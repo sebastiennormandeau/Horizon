@@ -938,6 +938,24 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get bankJointLabel => 'Compte conjoint';
+
+  @override
+  String get bankJointHint =>
+      'Les dépenses communes payées depuis ce compte ne créeront aucune dette entre vous : l\'argent sort d\'un compte que vous alimentez tous les deux.';
+
+  @override
+  String get bankPersonalHint =>
+      'Les dépenses communes payées depuis ce compte seront notées comme une avance faite à votre partenaire.';
+
+  @override
+  String get bankJointUpdated => 'Type de compte mis à jour.';
+
+  @override
+  String get bankJointDebtNote =>
+      'La dette déjà calculée n\'est pas recalculée. Utilisez « Régler » sur l\'accueil pour repartir de zéro.';
+
+  @override
   String get bankDisconnect => 'Déconnecter';
 
   @override

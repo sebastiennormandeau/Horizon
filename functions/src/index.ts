@@ -18,6 +18,7 @@ export {
   removeBankConnection,
   syncBankConnections,
   archivePastTransactions,
+  setBankConnectionJoint,
 } from "./plaid";
 export { onTransactionAssigned, settleDebt } from "./ledger";
 export { createHousehold, joinHousehold } from "./households";

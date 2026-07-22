@@ -311,6 +311,12 @@
       "date": { "type": "String" }
     }
   },
+  "bankJointLabel": "Joint account",
+  "bankJointHint": "Shared expenses paid from this account will not create any debt between you: the money leaves an account you both fund.",
+  "bankPersonalHint": "Shared expenses paid from this account will be recorded as money you fronted for your partner.",
+  "bankJointUpdated": "Account type updated.",
+  "bankJointDebtNote": "Debt already calculated is not recomputed. Use “Settle” on the home screen to start from zero.",
+
   "bankDisconnect": "Disconnect",
   "bankDisconnectTitle": "Disconnect this bank?",
   "bankDisconnectBody": "Horizon's access to this account will be revoked with Plaid and no new transactions will be imported.\n\nYour already-sorted transactions are kept: they are part of your history and your pot balances.",

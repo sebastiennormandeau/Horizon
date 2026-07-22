@@ -130,6 +130,36 @@ class _BankConnectionsScreenState extends State<BankConnectionsScreen> {
     }
   }
 
+  /// Marque un compte comme conjoint ou personnel.
+  ///
+  /// Sans ce réglage, un compte conjoint relié par une seule personne ferait
+  /// grossir la dette interne indéfiniment : Plaid attribue toutes ses
+  /// transactions à l'identifiant qui a établi la connexion.
+  Future<void> _setJoint(Map<String, dynamic> connection, bool isJoint) async {
+    setState(() => _busy = true);
+    try {
+      final callable =
+          FirebaseFunctions.instance.httpsCallable('setBankConnectionJoint');
+      await callable.call({
+        'item_id': connection['item_id'],
+        'is_joint': isJoint,
+      });
+      // La bascule ne rejoue pas l'historique des assignations : on le dit
+      // plutôt que de laisser croire à une correction rétroactive.
+      _snack(isJoint
+          ? '${_l10n.bankJointUpdated} ${_l10n.bankJointDebtNote}'
+          : _l10n.bankJointUpdated);
+      await _load();
+    } on FirebaseFunctionsException catch (e) {
+      _snack(e.message ?? _l10n.householdActionError);
+    } catch (e) {
+      debugPrint('Erreur setBankConnectionJoint: $e');
+      _snack(_l10n.householdActionError);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _addBank() async {
     try {
       await PlaidService.open();
@@ -236,8 +266,10 @@ class _BankConnectionsScreenState extends State<BankConnectionsScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: context.borderColor),
       ),
-      child: Row(
+      child: Column(
         children: [
+          Row(
+            children: [
           Container(
             width: 42,
             height: 42,
@@ -286,6 +318,27 @@ class _BankConnectionsScreenState extends State<BankConnectionsScreen> {
               icon: Icon(Icons.link_off, color: context.palette.danger),
               onPressed: () => _disconnect(connection),
             ),
+            ],
+          ),
+          const Divider(height: 20),
+          // Réglage central en couple : il décide si les dépenses communes
+          // payées depuis ce compte créent une dette entre les partenaires.
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            value: connection['is_joint'] == true,
+            onChanged: (v) => _setJoint(connection, v),
+            title: Text(
+              l10n.bankJointLabel,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              connection['is_joint'] == true
+                  ? l10n.bankJointHint
+                  : l10n.bankPersonalHint,
+              style: TextStyle(fontSize: 12, color: context.mutedColor),
+            ),
+          ),
         ],
       ),
     );
