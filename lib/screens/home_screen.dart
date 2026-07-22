@@ -292,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
           return Column(
             children: [
               _buildBucketsOverview(household, uid),
-              _buildAlertBanner(household),
+              _buildAlertBanner(household, uid),
               // En solo : ni invitation, ni dette interne — il n'y a
               // personne à inviter ni avec qui s'équilibrer.
               if (!household.isSolo) ...[
@@ -328,8 +328,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final isA = household.isUserA(uid);
 
     // En solo, la cagnotte du partenaire n'existe pas : deux cartes
-    // (« Perso » et « Essentiel ») au lieu de trois.
+    // (« Perso » et « Essentiel ») au lieu de trois. On lit la cagnotte du
+    // siège réellement occupé — après une séparation, ce n'est pas
+    // forcément le siège A.
     if (household.isSolo) {
+      final mine = household.mySoloBalance(uid);
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Row(
@@ -337,8 +340,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: _buildBucketCard(
                 l10n.bucketPersonal,
-                household.safeToSpendSoloA,
-                alert: household.alertLevel(household.safeToSpendSoloA),
+                mine,
+                alert: household.alertLevel(mine),
               ),
             ),
             const SizedBox(width: 8),
@@ -389,16 +392,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Bannière d'avertissement quand une cagnotte est basse ou dans le négatif.
-  Widget _buildAlertBanner(Household household) {
-    // En solo, la cagnotte du partenaire reste à zéro : l'inclure
-    // déclencherait une alerte « sous le seuil » permanente et trompeuse.
-    final levels = [
-      household.alertLevel(household.safeToSpendSoloA),
-      household.alertLevel(household.safeToSpendCommon),
-      if (!household.isSolo)
-        household.alertLevel(household.safeToSpendSoloB),
-    ];
-    final worst = levels.reduce((a, b) => a > b ? a : b);
+  Widget _buildAlertBanner(Household household, String uid) {
+    final worst = household.worstAlertLevel(uid);
     if (worst == 0) return const SizedBox.shrink();
 
     final isNegative = worst == 2;

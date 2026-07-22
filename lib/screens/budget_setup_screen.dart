@@ -30,6 +30,16 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
   /// Foyer solo : pas de second revenu ni de répartition à négocier —
   /// l'utilisateur assume 100 % des dépenses essentielles.
   bool _isSolo = false;
+
+  /// En solo, siège réellement occupé. Après une séparation où c'est le
+  /// membre A qui est parti, la personne restée occupe le siège B : lui
+  /// attribuer 100 % via `split_ratio_user_A` créerait une dette fantôme,
+  /// le grand livre calculant sa part du commun avec le ratio de l'autre.
+  bool _soloOnSeatA = true;
+
+  /// Champ de revenu du siège occupé (affiché seul en mode solo).
+  TextEditingController get _mySoloIncomeController =>
+      _soloOnSeatA ? _incomeAController : _incomeBController;
   final _alertThresholdController = TextEditingController(text: '100');
   bool _isLoading = false;
   bool _isInitializing = true;
@@ -186,16 +196,29 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
           final householdData = householdDoc.data();
           final threshold =
               (householdData?['alert_threshold'] as num?)?.toDouble();
-          final isSolo = (householdData?['household_mode'] as String?) == 'solo'
-              && householdData?['user_B_id'] == null;
+          // On teste les deux sièges : après une séparation, le siège libéré
+          // peut être le A comme le B (voir Household.isSolo).
+          final userAId =
+              (householdData?['user_A_id'] ?? householdData?['created_by'])
+                  as String?;
+          final isSolo =
+              (householdData?['household_mode'] as String?) == 'solo' &&
+                  (userAId == null || householdData?['user_B_id'] == null);
+          final onSeatA = userAId == user.uid;
           if (mounted) {
             setState(() {
               if (threshold != null) {
                 _alertThresholdController.text = threshold.toStringAsFixed(0);
               }
               _isSolo = isSolo;
-              // En solo, toutes les dépenses essentielles sont à sa charge.
-              if (isSolo) _splitRatioA = 100;
+              _soloOnSeatA = onSeatA;
+              if (isSolo) {
+                // Toutes les dépenses essentielles sont à sa charge, sur le
+                // siège qu'il occupe réellement.
+                _splitRatioA = onSeatA ? 100 : 0;
+                // Le revenu de l'ancien partenaire ne doit plus compter.
+                (onSeatA ? _incomeBController : _incomeAController).text = '0';
+              }
             });
           }
         }
@@ -590,7 +613,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   // En solo : un seul revenu, sans mention « A ».
                   if (_isSolo)
                     TextField(
-                      controller: _incomeAController,
+                      controller: _mySoloIncomeController,
                       keyboardType: const TextInputType.numberWithOptions(
                           decimal: true),
                       decoration: InputDecoration(

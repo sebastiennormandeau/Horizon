@@ -1650,6 +1650,252 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Le code doit contenir 6 lettres ou chiffres.'**
   String get vJoinCodeInvalid;
+
+  /// No description provided for @householdSection.
+  ///
+  /// In fr, this message translates to:
+  /// **'Foyer'**
+  String get householdSection;
+
+  /// No description provided for @householdManageTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Gérer mon foyer'**
+  String get householdManageTitle;
+
+  /// No description provided for @householdManageSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mode, invitation, séparation'**
+  String get householdManageSubtitle;
+
+  /// No description provided for @householdStatusSolo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous utilisez Horizon seul(e).'**
+  String get householdStatusSolo;
+
+  /// No description provided for @householdStatusWaiting.
+  ///
+  /// In fr, this message translates to:
+  /// **'En attente d\'un second membre.'**
+  String get householdStatusWaiting;
+
+  /// No description provided for @householdStatusCouple.
+  ///
+  /// In fr, this message translates to:
+  /// **'Foyer partagé avec {name}.'**
+  String householdStatusCouple(String name);
+
+  /// No description provided for @invitePartnerTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Inviter un partenaire'**
+  String get invitePartnerTitle;
+
+  /// No description provided for @invitePartnerBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre foyer passera en mode couple : une cagnotte personnelle pour chacun, une cagnotte commune, et le suivi des avances entre vous. Les dépenses communes seront partagées 50/50 par défaut — vous pourrez ajuster la répartition dans la configuration du budget.'**
+  String get invitePartnerBody;
+
+  /// No description provided for @invitePartnerAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Passer en mode couple'**
+  String get invitePartnerAction;
+
+  /// No description provided for @invitePartnerDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mode couple activé.'**
+  String get invitePartnerDone;
+
+  /// No description provided for @shareCodeTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code d\'invitation'**
+  String get shareCodeTitle;
+
+  /// No description provided for @shareCodeBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre partenaire crée son compte Horizon, puis choisit « Rejoindre un foyer » et saisit ce code.'**
+  String get shareCodeBody;
+
+  /// No description provided for @copyCode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Copier le code'**
+  String get copyCode;
+
+  /// No description provided for @codeCopied.
+  ///
+  /// In fr, this message translates to:
+  /// **'Code copié.'**
+  String get codeCopied;
+
+  /// No description provided for @backToSoloTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Revenir en mode solo'**
+  String get backToSoloTitle;
+
+  /// No description provided for @backToSoloBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le code d\'invitation sera annulé et vous assumerez de nouveau seul(e) les dépenses communes. Possible tant que personne n\'a rejoint votre foyer.'**
+  String get backToSoloBody;
+
+  /// No description provided for @backToSoloAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Revenir en solo'**
+  String get backToSoloAction;
+
+  /// No description provided for @backToSoloDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mode solo réactivé.'**
+  String get backToSoloDone;
+
+  /// No description provided for @leaveHouseholdTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quitter le foyer'**
+  String get leaveHouseholdTitle;
+
+  /// No description provided for @leaveHouseholdSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'En cas de séparation'**
+  String get leaveHouseholdSubtitle;
+
+  /// No description provided for @leaveHouseholdBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette action est IRRÉVERSIBLE :\n\n• Vos connexions bancaires seront révoquées\n• Vos transactions seront supprimées de ce foyer\n• Les bilans du foyer seront effacés (ils mêlent vos dépenses)\n• La dette interne sera annulée — réglez-la avant si nécessaire\n• {name} se retrouvera seul(e) dans le foyer\n\nVotre compte Horizon est conservé : vous pourrez créer un nouveau foyer.\n\nTapez {keyword} pour confirmer :'**
+  String leaveHouseholdBody(String name, String keyword);
+
+  /// No description provided for @leaveKeyword.
+  ///
+  /// In fr, this message translates to:
+  /// **'QUITTER'**
+  String get leaveKeyword;
+
+  /// No description provided for @leaveHouseholdAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quitter définitivement'**
+  String get leaveHouseholdAction;
+
+  /// No description provided for @leaveHouseholdDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous avez quitté le foyer.'**
+  String get leaveHouseholdDone;
+
+  /// No description provided for @leaveDebtWarning.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dette interne en cours : {amount}. Elle sera annulée sans compensation.'**
+  String leaveDebtWarning(String amount);
+
+  /// No description provided for @cannotRemovePartner.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous ne pouvez pas retirer votre partenaire : il doit quitter le foyer lui-même, depuis son propre appareil.'**
+  String get cannotRemovePartner;
+
+  /// No description provided for @householdActionError.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'opération a échoué. Réessayez.'**
+  String get householdActionError;
+
+  /// No description provided for @resetDataTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réinitialiser les données du foyer'**
+  String get resetDataTitle;
+
+  /// No description provided for @resetDataSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Repartir à zéro sans supprimer les comptes'**
+  String get resetDataSubtitle;
+
+  /// No description provided for @resetDataBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout l\'historique financier du foyer sera effacé :\n\n• Connexions bancaires révoquées\n• Toutes les transactions supprimées\n• Budgets, règlements et bilans effacés\n• Cagnottes et dette remises à zéro\n\nLes comptes, le foyer et votre double authentification sont conservés.\n\nTapez {keyword} pour confirmer :'**
+  String resetDataBody(String keyword);
+
+  /// No description provided for @resetKeyword.
+  ///
+  /// In fr, this message translates to:
+  /// **'REINITIALISER'**
+  String get resetKeyword;
+
+  /// No description provided for @resetDataAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout réinitialiser'**
+  String get resetDataAction;
+
+  /// No description provided for @resetDataDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} transaction(s) supprimée(s). Le foyer repart à zéro.'**
+  String resetDataDone(int count);
+
+  /// No description provided for @resetDataOwnerOnly.
+  ///
+  /// In fr, this message translates to:
+  /// **'Seul le membre qui a créé le foyer peut réinitialiser ses données.'**
+  String get resetDataOwnerOnly;
+
+  /// No description provided for @transitionAdviceCta.
+  ///
+  /// In fr, this message translates to:
+  /// **'Conseils du coach pour cette étape'**
+  String get transitionAdviceCta;
+
+  /// No description provided for @transitionToCoupleTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Passage en mode couple'**
+  String get transitionToCoupleTitle;
+
+  /// No description provided for @transitionToSoloTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retour en mode solo'**
+  String get transitionToSoloTitle;
+
+  /// No description provided for @transitionAdviceIntro.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un changement de situation bouscule un budget. Le coach vous propose des bonnes pratiques pour aborder cette étape sereinement.'**
+  String get transitionAdviceIntro;
+
+  /// No description provided for @transitionAdviceGenerate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Obtenir mes conseils'**
+  String get transitionAdviceGenerate;
+
+  /// No description provided for @transitionAdviceLoading.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le coach rédige vos conseils...'**
+  String get transitionAdviceLoading;
+
+  /// No description provided for @transitionAdviceError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de générer les conseils pour le moment.'**
+  String get transitionAdviceError;
 }
 
 class _AppLocalizationsDelegate

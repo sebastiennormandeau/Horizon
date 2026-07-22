@@ -66,9 +66,16 @@ class Household {
     );
   }
 
-  /// Foyer utilisé par une seule personne : pas de partenaire, donc pas de
-  /// cagnotte Solo B, pas de dette interne, pas d'invitation.
-  bool get isSolo => householdMode == 'solo' && userBId == null;
+  /// Foyer utilisé par une seule personne : pas de seconde cagnotte solo,
+  /// pas de dette interne, pas d'invitation.
+  ///
+  /// On teste les deux sièges plutôt que le seul siège B : après une
+  /// séparation, c'est parfois le membre **A** qui part et le membre B qui
+  /// reste seul. Promouvoir B en A aurait exigé de réécrire le bucket de
+  /// toutes ses transactions (`Solo_B` → `Solo_A`), donc de refaire passer le
+  /// grand livre — laisser chacun sur son siège est plus sûr.
+  bool get isSolo =>
+      householdMode == 'solo' && (userAId == null || userBId == null);
 
   /// État d'alerte d'une cagnotte : 0 = ok, 1 = sous le seuil, 2 = négatif.
   int alertLevel(double balance) {
@@ -113,10 +120,12 @@ class Household {
   /// ce qui préserve la logique ZBB dépenses fixes / argent personnel.
   String bucketLabel(String bucket, AppLocalizations l10n) {
     switch (bucket) {
+      // En solo les deux cagnottes personnelles portent le même libellé :
+      // une seule est alimentée, celle du siège occupé.
       case 'Solo_A':
         return isSolo ? l10n.bucketPersonal : 'Solo $nameA';
       case 'Solo_B':
-        return 'Solo $nameB';
+        return isSolo ? l10n.bucketPersonal : 'Solo $nameB';
       case 'Common':
         return isSolo ? l10n.bucketEssential : l10n.bucketCommon;
       default:
@@ -124,6 +133,34 @@ class Household {
     }
   }
 
-  /// Le foyer attend encore son second membre.
-  bool get awaitingPartner => userBId == null;
+  /// Un siège est libre : le foyer peut accueillir quelqu'un.
+  ///
+  /// On teste les deux sièges pour la même raison que [isSolo] : après une
+  /// séparation, le siège libéré peut être le A comme le B.
+  bool get awaitingPartner => userAId == null || userBId == null;
+
+  /// Solde de la cagnotte personnelle de l'utilisateur connecté.
+  double mySoloBalance(String uid) => bucketBalance(soloBucketFor(uid));
+
+  /// Cagnottes qui existent réellement pour ce foyer, dans l'ordre
+  /// d'affichage. En solo il n'y en a que deux, et la personnelle est celle
+  /// du siège occupé — pas forcément `Solo_A`.
+  List<String> visibleBuckets(String uid) => isSolo
+      ? [soloBucketFor(uid), 'Common']
+      : const ['Solo_A', 'Common', 'Solo_B'];
+
+  /// Niveau d'alerte le plus grave parmi les cagnottes qui existent vraiment.
+  ///
+  /// En solo, la cagnotte du siège vide reste à zéro : l'inclure
+  /// déclencherait une alerte « sous le seuil » permanente et trompeuse.
+  int worstAlertLevel(String uid) {
+    final levels = isSolo
+        ? [alertLevel(mySoloBalance(uid)), alertLevel(safeToSpendCommon)]
+        : [
+            alertLevel(safeToSpendSoloA),
+            alertLevel(safeToSpendCommon),
+            alertLevel(safeToSpendSoloB),
+          ];
+    return levels.reduce((a, b) => a > b ? a : b);
+  }
 }

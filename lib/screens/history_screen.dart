@@ -36,7 +36,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           return Column(
             children: [
               if (!household.isPremium) _buildFreePlanBanner(context),
-              _buildFilterChips(household),
+              _buildFilterChips(household, uid),
               Expanded(child: _buildList(household, uid)),
             ],
           );
@@ -79,15 +79,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildFilterChips(Household household) {
+  Widget _buildFilterChips(Household household, String uid) {
     final l10n = _l10n;
     // En solo, la cagnotte du partenaire n'existe pas : pas de filtre pour
     // elle.
     final filters = <String, String>{
       'all': l10n.filterAll,
-      'Solo_A': household.bucketLabel('Solo_A', l10n),
-      'Common': household.bucketLabel('Common', l10n),
-      if (!household.isSolo) 'Solo_B': household.bucketLabel('Solo_B', l10n),
+      for (final bucket in household.visibleBuckets(uid))
+        bucket: household.bucketLabel(bucket, l10n),
     };
 
     return Padding(
@@ -199,7 +198,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 itemCount: transactions.length,
                 itemBuilder: (context, index) {
                   final t = transactions[index];
-                  return _buildTransactionTile(t, household);
+                  return _buildTransactionTile(t, household, uid);
                 },
               ),
             ),
@@ -281,7 +280,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     });
   }
 
-  Widget _buildTransactionTile(AppTransaction t, Household household) {
+  Widget _buildTransactionTile(AppTransaction t, Household household, String uid) {
     final l10n = _l10n;
     final isCommon = t.assignedToBucket == 'Common';
     final chipColor = isCommon ? AppColors.primary : AppColors.solo;
@@ -355,9 +354,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   }
                 },
                 itemBuilder: (context) => [
-                  for (final bucket in (household.isSolo
-                      ? const ['Solo_A', 'Common']
-                      : const ['Solo_A', 'Common', 'Solo_B']))
+                  for (final bucket in household.visibleBuckets(uid))
                     if (bucket != t.assignedToBucket)
                       PopupMenuItem(
                         value: bucket,

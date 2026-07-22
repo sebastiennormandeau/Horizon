@@ -272,5 +272,75 @@
   "vPasswordMismatch": "The passwords do not match.",
   "vNameTooShort": "Please enter your first name (2 letters min.).",
   "vNameTooLong": "First name too long (40 characters max.).",
-  "vJoinCodeInvalid": "The code must contain 6 letters or digits."
+  "vJoinCodeInvalid": "The code must contain 6 letters or digits.",
+
+  "householdSection": "Household",
+  "householdManageTitle": "Manage my household",
+  "householdManageSubtitle": "Mode, invitation, separation",
+  "householdStatusSolo": "You are using Horizon on your own.",
+  "householdStatusWaiting": "Waiting for a second member.",
+  "householdStatusCouple": "Household shared with {name}.",
+  "@householdStatusCouple": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "invitePartnerTitle": "Invite a partner",
+  "invitePartnerBody": "Your household will switch to couple mode: a personal pot for each of you, a shared pot, and tracking of who fronted what. Shared expenses will be split 50/50 by default — you can adjust the split in the budget settings.",
+  "invitePartnerAction": "Switch to couple mode",
+  "invitePartnerDone": "Couple mode enabled.",
+  "shareCodeTitle": "Invitation code",
+  "shareCodeBody": "Your partner creates their Horizon account, then picks “Join a household” and enters this code.",
+  "copyCode": "Copy the code",
+  "codeCopied": "Code copied.",
+  "backToSoloTitle": "Switch back to solo mode",
+  "backToSoloBody": "The invitation code will be cancelled and you will again cover shared expenses on your own. Available as long as nobody has joined your household.",
+  "backToSoloAction": "Back to solo",
+  "backToSoloDone": "Solo mode re-enabled.",
+  "leaveHouseholdTitle": "Leave the household",
+  "leaveHouseholdSubtitle": "In case of separation",
+  "leaveHouseholdBody": "This action is IRREVERSIBLE:\n\n• Your bank connections will be revoked\n• Your transactions will be deleted from this household\n• The household reports will be erased (they mix both your expenses)\n• The internal debt will be cancelled — settle it first if needed\n• {name} will be left alone in the household\n\nYour Horizon account is kept: you will be able to create a new household.\n\nType {keyword} to confirm:",
+  "@leaveHouseholdBody": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "keyword": { "type": "String" }
+    }
+  },
+  "leaveKeyword": "LEAVE",
+  "leaveHouseholdAction": "Leave permanently",
+  "leaveHouseholdDone": "You have left the household.",
+  "leaveDebtWarning": "Outstanding internal debt: {amount}. It will be cancelled with no compensation.",
+  "@leaveDebtWarning": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "cannotRemovePartner": "You cannot remove your partner: they must leave the household themselves, from their own device.",
+  "householdActionError": "The operation failed. Please try again.",
+
+  "resetDataTitle": "Reset household data",
+  "resetDataSubtitle": "Start fresh without deleting accounts",
+  "resetDataBody": "The household's entire financial history will be erased:\n\n• Bank connections revoked\n• All transactions deleted\n• Budgets, settlements and reports erased\n• Pots and debt reset to zero\n\nAccounts, the household itself and your two-factor authentication are kept.\n\nType {keyword} to confirm:",
+  "@resetDataBody": {
+    "placeholders": {
+      "keyword": { "type": "String" }
+    }
+  },
+  "resetKeyword": "RESET",
+  "resetDataAction": "Reset everything",
+  "resetDataDone": "{count} transaction(s) deleted. The household starts fresh.",
+  "@resetDataDone": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "resetDataOwnerOnly": "Only the member who created the household can reset its data.",
+
+  "transitionAdviceCta": "Coach advice for this step",
+  "transitionToCoupleTitle": "Switching to couple mode",
+  "transitionToSoloTitle": "Back to solo mode",
+  "transitionAdviceIntro": "A change in circumstances shakes up a budget. The coach offers best practices to navigate this step calmly.",
+  "transitionAdviceGenerate": "Get my advice",
+  "transitionAdviceLoading": "The coach is writing your advice...",
+  "transitionAdviceError": "Unable to generate advice right now."
 }

@@ -414,5 +414,75 @@
   "vPasswordMismatch": "Les mots de passe ne correspondent pas.",
   "vNameTooShort": "Veuillez entrer votre prénom (2 lettres min.).",
   "vNameTooLong": "Prénom trop long (40 caractères max.).",
-  "vJoinCodeInvalid": "Le code doit contenir 6 lettres ou chiffres."
+  "vJoinCodeInvalid": "Le code doit contenir 6 lettres ou chiffres.",
+
+  "householdSection": "Foyer",
+  "householdManageTitle": "Gérer mon foyer",
+  "householdManageSubtitle": "Mode, invitation, séparation",
+  "householdStatusSolo": "Vous utilisez Horizon seul(e).",
+  "householdStatusWaiting": "En attente d'un second membre.",
+  "householdStatusCouple": "Foyer partagé avec {name}.",
+  "@householdStatusCouple": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "invitePartnerTitle": "Inviter un partenaire",
+  "invitePartnerBody": "Votre foyer passera en mode couple : une cagnotte personnelle pour chacun, une cagnotte commune, et le suivi des avances entre vous. Les dépenses communes seront partagées 50/50 par défaut — vous pourrez ajuster la répartition dans la configuration du budget.",
+  "invitePartnerAction": "Passer en mode couple",
+  "invitePartnerDone": "Mode couple activé.",
+  "shareCodeTitle": "Code d'invitation",
+  "shareCodeBody": "Votre partenaire crée son compte Horizon, puis choisit « Rejoindre un foyer » et saisit ce code.",
+  "copyCode": "Copier le code",
+  "codeCopied": "Code copié.",
+  "backToSoloTitle": "Revenir en mode solo",
+  "backToSoloBody": "Le code d'invitation sera annulé et vous assumerez de nouveau seul(e) les dépenses communes. Possible tant que personne n'a rejoint votre foyer.",
+  "backToSoloAction": "Revenir en solo",
+  "backToSoloDone": "Mode solo réactivé.",
+  "leaveHouseholdTitle": "Quitter le foyer",
+  "leaveHouseholdSubtitle": "En cas de séparation",
+  "leaveHouseholdBody": "Cette action est IRRÉVERSIBLE :\n\n• Vos connexions bancaires seront révoquées\n• Vos transactions seront supprimées de ce foyer\n• Les bilans du foyer seront effacés (ils mêlent vos dépenses)\n• La dette interne sera annulée — réglez-la avant si nécessaire\n• {name} se retrouvera seul(e) dans le foyer\n\nVotre compte Horizon est conservé : vous pourrez créer un nouveau foyer.\n\nTapez {keyword} pour confirmer :",
+  "@leaveHouseholdBody": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "keyword": { "type": "String" }
+    }
+  },
+  "leaveKeyword": "QUITTER",
+  "leaveHouseholdAction": "Quitter définitivement",
+  "leaveHouseholdDone": "Vous avez quitté le foyer.",
+  "leaveDebtWarning": "Dette interne en cours : {amount}. Elle sera annulée sans compensation.",
+  "@leaveDebtWarning": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "cannotRemovePartner": "Vous ne pouvez pas retirer votre partenaire : il doit quitter le foyer lui-même, depuis son propre appareil.",
+  "householdActionError": "L'opération a échoué. Réessayez.",
+
+  "resetDataTitle": "Réinitialiser les données du foyer",
+  "resetDataSubtitle": "Repartir à zéro sans supprimer les comptes",
+  "resetDataBody": "Tout l'historique financier du foyer sera effacé :\n\n• Connexions bancaires révoquées\n• Toutes les transactions supprimées\n• Budgets, règlements et bilans effacés\n• Cagnottes et dette remises à zéro\n\nLes comptes, le foyer et votre double authentification sont conservés.\n\nTapez {keyword} pour confirmer :",
+  "@resetDataBody": {
+    "placeholders": {
+      "keyword": { "type": "String" }
+    }
+  },
+  "resetKeyword": "REINITIALISER",
+  "resetDataAction": "Tout réinitialiser",
+  "resetDataDone": "{count} transaction(s) supprimée(s). Le foyer repart à zéro.",
+  "@resetDataDone": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "resetDataOwnerOnly": "Seul le membre qui a créé le foyer peut réinitialiser ses données.",
+
+  "transitionAdviceCta": "Conseils du coach pour cette étape",
+  "transitionToCoupleTitle": "Passage en mode couple",
+  "transitionToSoloTitle": "Retour en mode solo",
+  "transitionAdviceIntro": "Un changement de situation bouscule un budget. Le coach vous propose des bonnes pratiques pour aborder cette étape sereinement.",
+  "transitionAdviceGenerate": "Obtenir mes conseils",
+  "transitionAdviceLoading": "Le coach rédige vos conseils...",
+  "transitionAdviceError": "Impossible de générer les conseils pour le moment."
 }

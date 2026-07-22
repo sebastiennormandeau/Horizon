@@ -13,6 +13,7 @@ import '../utils/locale_controller.dart';
 import '../utils/validators.dart';
 import '../widgets/household_loader.dart';
 import '../widgets/legal_documents.dart';
+import 'household_manage_screen.dart';
 import 'paywall_screen.dart';
 
 /// Réglages : profil, langue, abonnement, données personnelles
@@ -269,6 +270,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           user?.emailVerified == true
                               ? l10n.emailVerified
                               : l10n.emailNotVerified,
+                        ),
+                      ),
+                    ]),
+                    const SizedBox(height: 16),
+                    _sectionTitle(l10n.householdSection),
+                    _card([
+                      ListTile(
+                        leading: Icon(
+                          household.isSolo ? Icons.person : Icons.people,
+                          color: AppColors.primary,
+                        ),
+                        title: Text(l10n.householdManageTitle),
+                        subtitle: Text(l10n.householdManageSubtitle),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HouseholdManageScreen(),
+                          ),
                         ),
                       ),
                     ]),

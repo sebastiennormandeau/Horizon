@@ -8,7 +8,7 @@ import {
   JOIN_CODE_PATTERN,
 } from "./security";
 
-function generateJoinCode(): string {
+export function generateJoinCode(): string {
   // Sans I, O, 0, 1 pour éviter les confusions à la saisie.
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let result = "";
@@ -154,11 +154,20 @@ export const joinHousehold = functions.https.onCall(async (data, context) => {
     householdId = householdDoc.id;
     // Un foyer qui accueille un second membre n'est plus solo, quel que
     // soit le mode choisi à sa création.
-    tx.update(householdDoc.ref, {
+    const update: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
       user_B_id: uid,
       user_B_name: name,
       household_mode: "couple",
-    });
+    };
+    // Filet de sécurité : un foyer resté en répartition solo (100/0)
+    // ferait payer la totalité du commun à une seule personne. On revient
+    // au partage égal, que le budget permet ensuite d'ajuster.
+    const ratioA = (household.split_ratio_user_A as number | undefined) ?? 50;
+    if (ratioA === 0 || ratioA === 100) {
+      update.split_ratio_user_A = 50;
+      update.split_ratio_user_B = 50;
+    }
+    tx.update(householdDoc.ref, update);
     tx.set(
       userRef,
       {

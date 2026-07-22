@@ -81,6 +81,77 @@ Strict rules:
 - NEVER recommend financial products, investments, credit, or specific institutions. You give budget-organization and financial-literacy advice, not professional investment advice.
 - If the data is too thin (few transactions), say so simply and give a starter tip suited to their situation.`;
 
+/**
+ * Persona de transition : le coach n'analyse pas une période, il accompagne
+ * un changement de situation (mise en couple, séparation). Les chiffres du
+ * foyer restent limités à ce que le JSON contient.
+ */
+const TRANSITION_PROMPT_FR = `Tu es « Coach Horizon », planificateur financier chevronné auprès de ménages québécois, spécialiste de la budgétisation à base zéro et de la psychologie de l'argent dans le couple.
+
+L'utilisateur vient de changer de situation. Le champ « transition » du JSON te dit laquelle :
+- « to_couple » : il ouvre son foyer à un partenaire. Sujets à couvrir : se parler d'argent sans tabou avant de tout fusionner, choisir une répartition des dépenses communes qui reflète les revenus de chacun plutôt qu'un 50/50 automatique, garder une cagnotte personnelle pour chacun (c'est ce qui évite la majorité des frictions), convenir d'un seuil au-delà duquel on se consulte avant d'acheter, et régler les avances rapidement plutôt que de laisser une dette interne s'accumuler.
+- « to_solo » : il se retrouve seul, souvent après une séparation. Sujets à couvrir : refaire le budget sur un seul revenu sans attendre (c'est l'erreur la plus coûteuse), revoir les dépenses fixes qui étaient partagées et deviennent entières, reconstituer un coussin de sécurité même modeste, vérifier les abonnements et prélèvements automatiques restés au nom de l'autre, et se donner un ou deux mois d'ajustement sans culpabilité.
+
+Rédige en français québécois, chaleureux, en tutoyant, avec la rigueur d'un professionnel.
+
+Structure exacte (markdown) :
+## Ce qui change pour toi
+2 ou 3 phrases situant concrètement l'impact sur son budget, en t'appuyant sur les chiffres du JSON quand ils sont disponibles.
+
+## Les bonnes pratiques
+3 recommandations concrètes tirées des sujets ci-dessus, adaptées à sa situation.
+
+## Par où commencer cette semaine
+2 actions précises, réalisables en quelques jours.
+
+Règles strictes :
+- Les montants du foyer viennent UNIQUEMENT du JSON ; n'invente aucun chiffre. Si le JSON contient peu de données, reste sur les bonnes pratiques sans inventer de montants.
+- Maximum 300 mots.
+- Ne recommande JAMAIS de produits financiers, de placements, de crédits, d'institutions précises, ni de démarches juridiques (partage de biens, pension, avocat) : tu fais de l'organisation budgétaire, pas du droit ni du placement.
+- En « to_solo », reste sobre et digne : pas de compassion appuyée, pas de supposition sur les causes de la séparation.`;
+
+const TRANSITION_PROMPT_EN = `You are "Coach Horizon", a seasoned financial planner working with Quebec households, specialized in zero-based budgeting and the psychology of money in relationships.
+
+The user's situation has just changed. The JSON's "transition" field tells you which:
+- "to_couple": they are opening their household to a partner. Topics to cover: talking about money openly before merging anything, choosing a split of shared expenses that reflects each person's income rather than an automatic 50/50, keeping a personal pot for each partner (this is what prevents most friction), agreeing on a threshold above which you consult each other before buying, and settling who-fronted-what quickly instead of letting an internal debt pile up.
+- "to_solo": they are on their own again, often after a separation. Topics to cover: rebuilding the budget on a single income right away (the costliest mistake is waiting), revisiting fixed expenses that were shared and are now fully theirs, rebuilding even a modest safety cushion, checking subscriptions and pre-authorized payments still in the other person's name, and allowing a month or two of adjustment without guilt.
+
+Write in warm English, with the rigor of a professional.
+
+Exact structure (markdown):
+## What changes for you
+2 or 3 sentences framing the concrete impact on their budget, using the JSON's figures where available.
+
+## Best practices
+3 concrete recommendations drawn from the topics above, fitted to their situation.
+
+## Where to start this week
+2 precise actions, doable within a few days.
+
+Strict rules:
+- The household's amounts come ONLY from the JSON; never invent a number. If the JSON holds little data, stay on best practices without inventing amounts.
+- Maximum 300 words.
+- NEVER recommend financial products, investments, credit, specific institutions, or legal steps (division of assets, support payments, lawyers): you do budget organization, not law or investment advice.
+- In "to_solo", stay sober and dignified: no heavy sympathy, no assumptions about why the separation happened.`;
+
+/**
+ * Foyer utilisé par une seule personne. On teste les deux sièges : après une
+ * séparation, le siège libéré peut être le A comme le B.
+ */
+function isSoloHousehold(household: FirebaseFirestore.DocumentData): boolean {
+  return (
+    household.household_mode === "solo" &&
+    (!household.user_B_id || !(household.user_A_id ?? household.created_by))
+  );
+}
+
+/** Solde de l'unique cagnotte personnelle d'un foyer solo. */
+function soloBalanceOf(household: FirebaseFirestore.DocumentData): number {
+  return (household.user_A_id ?? household.created_by)
+    ? (household.safe_to_spend_solo_A ?? 0)
+    : (household.safe_to_spend_solo_B ?? 0);
+}
+
 function getAnthropicClient(): Anthropic {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey || apiKey === "REPLACE_ME") {
@@ -125,10 +196,10 @@ export const generateCoachAdvice = functions
     const householdRef = db.collection("households").doc(householdId);
     const householdSnap = await householdRef.get();
     const household = householdSnap.data() ?? {};
-    // Foyer utilisé seul : pas de partenaire, donc ni cagnotte Solo B ni
-    // dette interne à commenter.
-    const isSolo =
-      household.household_mode === "solo" && !household.user_B_id;
+    // Foyer utilisé seul : pas de partenaire, donc ni seconde cagnotte ni
+    // dette interne à commenter. On teste les deux sièges — après une
+    // séparation, c'est parfois le membre A qui est parti.
+    const isSolo = isSoloHousehold(household);
 
     // Gating Premium (désactivable en dev via functions/.env).
     const requirePremium = process.env.AI_COACH_REQUIRE_PREMIUM === "true";
@@ -184,7 +255,7 @@ export const generateCoachAdvice = functions
       // interne : elles n'existent pas et induiraient le coach en erreur.
       etat_cagnottes: isSolo
         ? {
-            perso: household.safe_to_spend_solo_A ?? 0,
+            perso: soloBalanceOf(household),
             essentiel: household.safe_to_spend_common ?? 0,
             seuil_alerte: household.alert_threshold ?? 100,
           }
@@ -252,6 +323,131 @@ export const generateCoachAdvice = functions
     } catch (error) {
       if (error instanceof functions.https.HttpsError) throw error;
       console.error("Erreur du coach IA:", error);
+      throw new functions.https.HttpsError(
+        "internal",
+        "Le coach IA est momentanément indisponible."
+      );
+    }
+  });
+
+/**
+ * Conseils de transition : mise en couple ou retour au solo.
+ *
+ * Distinct de `generateCoachAdvice`, qui analyse une période et exige un
+ * bilan existant. Ici il n'y a rien à analyser : la personne vient de changer
+ * de situation, et c'est justement le moment où un budget déraille. Le
+ * conseil est retourné à l'appelant sans être stocké — il concerne une
+ * personne, pas le foyer, et n'a pas à rester visible pour l'autre membre.
+ *
+ * Fonctionne aussi **sans foyer** : celui qui vient d'en quitter un n'en a
+ * plus, et c'est précisément lui qui a besoin du conseil. La charge utile est
+ * alors vide de chiffres et le coach s'en tient aux bonnes pratiques.
+ *
+ * Confidentialité : la charge utile est un sous-ensemble strict de celle de
+ * `generateCoachAdvice` (cagnottes et totaux budgétaires agrégés) — aucune
+ * extension de la politique de confidentialité n'est requise.
+ */
+export const generateTransitionAdvice = functions
+  .runWith({ secrets: ["ANTHROPIC_API_KEY"], timeoutSeconds: 120 })
+  .https.onCall(async (data, context) => {
+    const uid = requireAuth(context);
+    await enforceRateLimit("generateTransitionAdvice", uid, 3, 86400);
+
+    const transition = assertString(data?.transition, "transition", {
+      maxLength: 10,
+      pattern: /^(to_couple|to_solo)$/,
+    });
+    const language =
+      data?.language === undefined
+        ? "fr"
+        : assertString(data.language, "language", {
+            maxLength: 2,
+            pattern: /^(fr|en)$/,
+          });
+
+    const userSnap = await db.collection("users").doc(uid).get();
+    const householdId = userSnap.data()?.household_id as string | undefined;
+
+    // Contexte chiffré si un foyer existe encore ; sinon conseils généraux.
+    let contexte: Record<string, unknown> = {};
+    if (householdId) {
+      const householdRef = db.collection("households").doc(householdId);
+      const householdSnap = await householdRef.get();
+      const household = householdSnap.data() ?? {};
+
+      const requirePremium = process.env.AI_COACH_REQUIRE_PREMIUM === "true";
+      if (requirePremium && household.subscription_tier !== "premium") {
+        throw new functions.https.HttpsError(
+          "permission-denied",
+          "Le coach IA est réservé à Horizon Premium."
+        );
+      }
+
+      const monthId = new Date().toISOString().slice(0, 7);
+      const budgetSnap = await householdRef
+        .collection("monthly_budgets")
+        .doc(monthId)
+        .get();
+      const budget = budgetSnap.data() ?? {};
+      const sumAmounts = (items: unknown): number =>
+        Array.isArray(items)
+          ? items.reduce(
+              (acc: number, e) => acc + (Number((e as any)?.amount) || 0),
+              0
+            )
+          : 0;
+
+      contexte = {
+        cagnotte_personnelle: isSoloHousehold(household)
+          ? soloBalanceOf(household)
+          : null,
+        cagnotte_commune: household.safe_to_spend_common ?? 0,
+        dette_interne: household.internal_debt_balance ?? 0,
+        seuil_alerte: household.alert_threshold ?? 100,
+        revenus_totaux:
+          (Number(budget.income_A) || 0) + (Number(budget.income_B) || 0),
+        depenses_fixes_totales: sumAmounts(budget.fixed_expenses),
+      };
+    }
+
+    const anthropic = getAnthropicClient();
+
+    try {
+      const message = await anthropic.messages.create({
+        model: "claude-opus-4-8",
+        max_tokens: 4096,
+        thinking: { type: "adaptive" },
+        system:
+          language === "en" ? TRANSITION_PROMPT_EN : TRANSITION_PROMPT_FR,
+        messages: [
+          {
+            role: "user",
+            content:
+              (language === "en"
+                ? "Here is the household's situation. Write the transition advice."
+                : "Voici la situation du foyer. Rédige les conseils de transition.") +
+              `\n\n${JSON.stringify({ transition, contexte })}`,
+          },
+        ],
+      });
+
+      const advice = message.content
+        .filter((block) => block.type === "text")
+        .map((block) => (block as { text: string }).text)
+        .join("\n")
+        .trim();
+
+      if (!advice) {
+        throw new functions.https.HttpsError(
+          "internal",
+          "Le coach n'a pas pu générer de conseils. Réessayez."
+        );
+      }
+
+      return { success: true, advice };
+    } catch (error) {
+      if (error instanceof functions.https.HttpsError) throw error;
+      console.error("Erreur du coach IA (transition):", error);
       throw new functions.https.HttpsError(
         "internal",
         "Le coach IA est momentanément indisponible."

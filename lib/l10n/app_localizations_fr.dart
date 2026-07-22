@@ -871,4 +871,144 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get vJoinCodeInvalid => 'Le code doit contenir 6 lettres ou chiffres.';
+
+  @override
+  String get householdSection => 'Foyer';
+
+  @override
+  String get householdManageTitle => 'Gérer mon foyer';
+
+  @override
+  String get householdManageSubtitle => 'Mode, invitation, séparation';
+
+  @override
+  String get householdStatusSolo => 'Vous utilisez Horizon seul(e).';
+
+  @override
+  String get householdStatusWaiting => 'En attente d\'un second membre.';
+
+  @override
+  String householdStatusCouple(String name) {
+    return 'Foyer partagé avec $name.';
+  }
+
+  @override
+  String get invitePartnerTitle => 'Inviter un partenaire';
+
+  @override
+  String get invitePartnerBody =>
+      'Votre foyer passera en mode couple : une cagnotte personnelle pour chacun, une cagnotte commune, et le suivi des avances entre vous. Les dépenses communes seront partagées 50/50 par défaut — vous pourrez ajuster la répartition dans la configuration du budget.';
+
+  @override
+  String get invitePartnerAction => 'Passer en mode couple';
+
+  @override
+  String get invitePartnerDone => 'Mode couple activé.';
+
+  @override
+  String get shareCodeTitle => 'Code d\'invitation';
+
+  @override
+  String get shareCodeBody =>
+      'Votre partenaire crée son compte Horizon, puis choisit « Rejoindre un foyer » et saisit ce code.';
+
+  @override
+  String get copyCode => 'Copier le code';
+
+  @override
+  String get codeCopied => 'Code copié.';
+
+  @override
+  String get backToSoloTitle => 'Revenir en mode solo';
+
+  @override
+  String get backToSoloBody =>
+      'Le code d\'invitation sera annulé et vous assumerez de nouveau seul(e) les dépenses communes. Possible tant que personne n\'a rejoint votre foyer.';
+
+  @override
+  String get backToSoloAction => 'Revenir en solo';
+
+  @override
+  String get backToSoloDone => 'Mode solo réactivé.';
+
+  @override
+  String get leaveHouseholdTitle => 'Quitter le foyer';
+
+  @override
+  String get leaveHouseholdSubtitle => 'En cas de séparation';
+
+  @override
+  String leaveHouseholdBody(String name, String keyword) {
+    return 'Cette action est IRRÉVERSIBLE :\n\n• Vos connexions bancaires seront révoquées\n• Vos transactions seront supprimées de ce foyer\n• Les bilans du foyer seront effacés (ils mêlent vos dépenses)\n• La dette interne sera annulée — réglez-la avant si nécessaire\n• $name se retrouvera seul(e) dans le foyer\n\nVotre compte Horizon est conservé : vous pourrez créer un nouveau foyer.\n\nTapez $keyword pour confirmer :';
+  }
+
+  @override
+  String get leaveKeyword => 'QUITTER';
+
+  @override
+  String get leaveHouseholdAction => 'Quitter définitivement';
+
+  @override
+  String get leaveHouseholdDone => 'Vous avez quitté le foyer.';
+
+  @override
+  String leaveDebtWarning(String amount) {
+    return 'Dette interne en cours : $amount. Elle sera annulée sans compensation.';
+  }
+
+  @override
+  String get cannotRemovePartner =>
+      'Vous ne pouvez pas retirer votre partenaire : il doit quitter le foyer lui-même, depuis son propre appareil.';
+
+  @override
+  String get householdActionError => 'L\'opération a échoué. Réessayez.';
+
+  @override
+  String get resetDataTitle => 'Réinitialiser les données du foyer';
+
+  @override
+  String get resetDataSubtitle => 'Repartir à zéro sans supprimer les comptes';
+
+  @override
+  String resetDataBody(String keyword) {
+    return 'Tout l\'historique financier du foyer sera effacé :\n\n• Connexions bancaires révoquées\n• Toutes les transactions supprimées\n• Budgets, règlements et bilans effacés\n• Cagnottes et dette remises à zéro\n\nLes comptes, le foyer et votre double authentification sont conservés.\n\nTapez $keyword pour confirmer :';
+  }
+
+  @override
+  String get resetKeyword => 'REINITIALISER';
+
+  @override
+  String get resetDataAction => 'Tout réinitialiser';
+
+  @override
+  String resetDataDone(int count) {
+    return '$count transaction(s) supprimée(s). Le foyer repart à zéro.';
+  }
+
+  @override
+  String get resetDataOwnerOnly =>
+      'Seul le membre qui a créé le foyer peut réinitialiser ses données.';
+
+  @override
+  String get transitionAdviceCta => 'Conseils du coach pour cette étape';
+
+  @override
+  String get transitionToCoupleTitle => 'Passage en mode couple';
+
+  @override
+  String get transitionToSoloTitle => 'Retour en mode solo';
+
+  @override
+  String get transitionAdviceIntro =>
+      'Un changement de situation bouscule un budget. Le coach vous propose des bonnes pratiques pour aborder cette étape sereinement.';
+
+  @override
+  String get transitionAdviceGenerate => 'Obtenir mes conseils';
+
+  @override
+  String get transitionAdviceLoading => 'Le coach rédige vos conseils...';
+
+  @override
+  String get transitionAdviceError =>
+      'Impossible de générer les conseils pour le moment.';
 }

@@ -866,4 +866,143 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vJoinCodeInvalid => 'The code must contain 6 letters or digits.';
+
+  @override
+  String get householdSection => 'Household';
+
+  @override
+  String get householdManageTitle => 'Manage my household';
+
+  @override
+  String get householdManageSubtitle => 'Mode, invitation, separation';
+
+  @override
+  String get householdStatusSolo => 'You are using Horizon on your own.';
+
+  @override
+  String get householdStatusWaiting => 'Waiting for a second member.';
+
+  @override
+  String householdStatusCouple(String name) {
+    return 'Household shared with $name.';
+  }
+
+  @override
+  String get invitePartnerTitle => 'Invite a partner';
+
+  @override
+  String get invitePartnerBody =>
+      'Your household will switch to couple mode: a personal pot for each of you, a shared pot, and tracking of who fronted what. Shared expenses will be split 50/50 by default — you can adjust the split in the budget settings.';
+
+  @override
+  String get invitePartnerAction => 'Switch to couple mode';
+
+  @override
+  String get invitePartnerDone => 'Couple mode enabled.';
+
+  @override
+  String get shareCodeTitle => 'Invitation code';
+
+  @override
+  String get shareCodeBody =>
+      'Your partner creates their Horizon account, then picks “Join a household” and enters this code.';
+
+  @override
+  String get copyCode => 'Copy the code';
+
+  @override
+  String get codeCopied => 'Code copied.';
+
+  @override
+  String get backToSoloTitle => 'Switch back to solo mode';
+
+  @override
+  String get backToSoloBody =>
+      'The invitation code will be cancelled and you will again cover shared expenses on your own. Available as long as nobody has joined your household.';
+
+  @override
+  String get backToSoloAction => 'Back to solo';
+
+  @override
+  String get backToSoloDone => 'Solo mode re-enabled.';
+
+  @override
+  String get leaveHouseholdTitle => 'Leave the household';
+
+  @override
+  String get leaveHouseholdSubtitle => 'In case of separation';
+
+  @override
+  String leaveHouseholdBody(String name, String keyword) {
+    return 'This action is IRREVERSIBLE:\n\n• Your bank connections will be revoked\n• Your transactions will be deleted from this household\n• The household reports will be erased (they mix both your expenses)\n• The internal debt will be cancelled — settle it first if needed\n• $name will be left alone in the household\n\nYour Horizon account is kept: you will be able to create a new household.\n\nType $keyword to confirm:';
+  }
+
+  @override
+  String get leaveKeyword => 'LEAVE';
+
+  @override
+  String get leaveHouseholdAction => 'Leave permanently';
+
+  @override
+  String get leaveHouseholdDone => 'You have left the household.';
+
+  @override
+  String leaveDebtWarning(String amount) {
+    return 'Outstanding internal debt: $amount. It will be cancelled with no compensation.';
+  }
+
+  @override
+  String get cannotRemovePartner =>
+      'You cannot remove your partner: they must leave the household themselves, from their own device.';
+
+  @override
+  String get householdActionError => 'The operation failed. Please try again.';
+
+  @override
+  String get resetDataTitle => 'Reset household data';
+
+  @override
+  String get resetDataSubtitle => 'Start fresh without deleting accounts';
+
+  @override
+  String resetDataBody(String keyword) {
+    return 'The household\'s entire financial history will be erased:\n\n• Bank connections revoked\n• All transactions deleted\n• Budgets, settlements and reports erased\n• Pots and debt reset to zero\n\nAccounts, the household itself and your two-factor authentication are kept.\n\nType $keyword to confirm:';
+  }
+
+  @override
+  String get resetKeyword => 'RESET';
+
+  @override
+  String get resetDataAction => 'Reset everything';
+
+  @override
+  String resetDataDone(int count) {
+    return '$count transaction(s) deleted. The household starts fresh.';
+  }
+
+  @override
+  String get resetDataOwnerOnly =>
+      'Only the member who created the household can reset its data.';
+
+  @override
+  String get transitionAdviceCta => 'Coach advice for this step';
+
+  @override
+  String get transitionToCoupleTitle => 'Switching to couple mode';
+
+  @override
+  String get transitionToSoloTitle => 'Back to solo mode';
+
+  @override
+  String get transitionAdviceIntro =>
+      'A change in circumstances shakes up a budget. The coach offers best practices to navigate this step calmly.';
+
+  @override
+  String get transitionAdviceGenerate => 'Get my advice';
+
+  @override
+  String get transitionAdviceLoading => 'The coach is writing your advice...';
+
+  @override
+  String get transitionAdviceError => 'Unable to generate advice right now.';
 }

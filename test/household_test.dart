@@ -6,6 +6,7 @@ import 'package:horizon/models/household.dart';
 /// Construit un foyer de test. `mode` : 'solo' ou 'couple'.
 Household buildHousehold({
   String mode = 'couple',
+  String? userAId = 'uidA',
   String? userBId,
   double soloA = 0,
   double common = 0,
@@ -14,9 +15,9 @@ Household buildHousehold({
 }) {
   return Household(
     id: 'h1',
-    userAId: 'uidA',
+    userAId: userAId,
     userBId: userBId,
-    userAName: 'Seb',
+    userAName: userAId == null ? null : 'Seb',
     userBName: userBId == null ? null : 'Marie',
     safeToSpendCommon: common,
     safeToSpendSoloA: soloA,
@@ -49,6 +50,13 @@ void main() {
       expect(h.isSolo, isFalse);
     });
 
+    test('vrai quand c\'est le siège A qui a été libéré (séparation)', () {
+      // Quand le membre A quitte le foyer, c'est B qui reste seul. Tester
+      // uniquement userBId aurait laissé l'app en affichage « couple ».
+      final h = buildHousehold(mode: 'solo', userAId: null, userBId: 'uidB');
+      expect(h.isSolo, isTrue);
+    });
+
     test('les foyers sans le champ mode sont traités comme couple', () {
       // Rétrocompatibilité : householdMode vaut 'couple' par défaut dans
       // fromSnapshot pour les foyers créés avant l'ajout de l'option.
@@ -78,6 +86,56 @@ void main() {
       final en = AppLocalizationsEn();
       expect(h.bucketLabel('Solo_A', en), 'Personal');
       expect(h.bucketLabel('Common', en), 'Essentials');
+    });
+  });
+
+  group('Household.visibleBuckets et mySoloBalance', () {
+    test('en couple : les trois cagnottes, dans l\'ordre d\'affichage', () {
+      final h = buildHousehold(userBId: 'uidB');
+      expect(h.visibleBuckets('uidA'), ['Solo_A', 'Common', 'Solo_B']);
+    });
+
+    test('en solo sur le siège A : sa cagnotte et le commun', () {
+      final h = buildHousehold(mode: 'solo', soloA: 40);
+      expect(h.visibleBuckets('uidA'), ['Solo_A', 'Common']);
+      expect(h.mySoloBalance('uidA'), 40);
+    });
+
+    test('en solo sur le siège B : c\'est Solo_B qui est visible', () {
+      // Cas issu d'une séparation où le membre A est parti. Afficher Solo_A
+      // montrerait une cagnotte vide à la place de la vraie.
+      final h = buildHousehold(
+        mode: 'solo',
+        userAId: null,
+        userBId: 'uidB',
+        soloB: 75,
+      );
+      expect(h.visibleBuckets('uidB'), ['Solo_B', 'Common']);
+      expect(h.mySoloBalance('uidB'), 75);
+    });
+  });
+
+  group('Household.worstAlertLevel', () {
+    test('en solo, la cagnotte du siège vide est ignorée', () {
+      // Solo_B reste à zéro donc « sous le seuil » : l'inclure afficherait
+      // une alerte orange permanente et trompeuse.
+      final h = buildHousehold(mode: 'solo', soloA: 500, common: 500);
+      expect(h.worstAlertLevel('uidA'), 0);
+    });
+
+    test('en couple, une cagnotte vide déclenche bien l\'alerte', () {
+      final h = buildHousehold(userBId: 'uidB', soloA: 500, common: 500);
+      expect(h.worstAlertLevel('uidA'), 1);
+    });
+
+    test('le négatif prime sur le simple dépassement de seuil', () {
+      final h = buildHousehold(
+        userBId: 'uidB',
+        soloA: 10,
+        common: 500,
+        soloB: -5,
+      );
+      expect(h.worstAlertLevel('uidA'), 2);
     });
   });
 
