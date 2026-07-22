@@ -311,6 +311,14 @@
       "date": { "type": "String" }
     }
   },
+  "searchHint": "Search a merchant, a category...",
+  "sortTooltip": "Sort",
+  "sortDateDesc": "Date — newest first",
+  "sortDateAsc": "Date — oldest first",
+  "sortAmountDesc": "Amount — highest first",
+  "sortAmountAsc": "Amount — lowest first",
+  "noSearchResults": "No transaction matches your search.",
+
   "tutorialSkip": "Skip",
   "tutorialNext": "Next",
   "tutorialDone": "Get started",

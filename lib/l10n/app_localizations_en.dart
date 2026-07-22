@@ -932,6 +932,27 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get searchHint => 'Search a merchant, a category...';
+
+  @override
+  String get sortTooltip => 'Sort';
+
+  @override
+  String get sortDateDesc => 'Date — newest first';
+
+  @override
+  String get sortDateAsc => 'Date — oldest first';
+
+  @override
+  String get sortAmountDesc => 'Amount — highest first';
+
+  @override
+  String get sortAmountAsc => 'Amount — lowest first';
+
+  @override
+  String get noSearchResults => 'No transaction matches your search.';
+
+  @override
   String get tutorialSkip => 'Skip';
 
   @override

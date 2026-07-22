@@ -24,8 +24,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
   String _filter = 'all';
   String _categoryFilter = 'all';
 
+  /// Recherche et tri s'appliquent côté client, sur la page déjà chargée.
+  /// Firestore ne sait pas chercher un fragment de texte, et la page est
+  /// bornée à 200 documents : trier côté serveur n'apporterait rien.
+  final _searchController = TextEditingController();
+  String _search = '';
+  String _sort = 'date_desc';
+
   AppLocalizations get _l10n => AppLocalizations.of(context)!;
   String get _lang => Localizations.localeOf(context).languageCode;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  /// Clé de tri chronologique : la date réelle de l'opération, avec repli sur
+  /// la date d'import pour les transactions saisies sans date.
+  String _dateKey(AppTransaction t) =>
+      t.date ?? (t.createdAt?.toIso8601String().substring(0, 10) ?? '');
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +54,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           return Column(
             children: [
               if (!household.isPremium) _buildFreePlanBanner(context),
+              _buildSearchAndSort(),
               _buildFilterChips(household, uid),
               Expanded(child: _buildList(household, uid)),
             ],
@@ -111,6 +130,65 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  /// Barre de recherche et choix du tri.
+  Widget _buildSearchAndSort() {
+    final l10n = _l10n;
+    const options = {
+      'date_desc': 'sortDateDesc',
+      'date_asc': 'sortDateAsc',
+      'amount_desc': 'sortAmountDesc',
+      'amount_asc': 'sortAmountAsc',
+    };
+    String label(String key) => switch (key) {
+          'date_asc' => l10n.sortDateAsc,
+          'amount_desc' => l10n.sortAmountDesc,
+          'amount_asc' => l10n.sortAmountAsc,
+          _ => l10n.sortDateDesc,
+        };
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: (v) => setState(() => _search = v.trim().toLowerCase()),
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: l10n.searchHint,
+                hintStyle: const TextStyle(fontSize: 13),
+                prefixIcon: const Icon(Icons.search, size: 20),
+                suffixIcon: _search.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _search = '');
+                        },
+                      ),
+                isDense: true,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              ),
+            ),
+          ),
+          PopupMenuButton<String>(
+            tooltip: l10n.sortTooltip,
+            icon: const Icon(Icons.swap_vert),
+            initialValue: _sort,
+            onSelected: (v) => setState(() => _sort = v),
+            itemBuilder: (context) => [
+              for (final key in options.keys)
+                PopupMenuItem(value: key, child: Text(label(key))),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildList(Household household, String uid) {
     Query query = FirebaseFirestore.instance
         .collection('transactions')
@@ -157,6 +235,39 @@ class _HistoryScreenState extends State<HistoryScreen> {
           transactions = transactions
               .where((t) => t.category == _categoryFilter)
               .toList();
+        }
+
+        if (_search.isNotEmpty) {
+          // Cherche dans le commerçant, le libellé traduit de la catégorie et
+          // l'institution : c'est ce que l'utilisateur a sous les yeux.
+          transactions = transactions.where((t) {
+            final haystack = [
+              t.merchantName,
+              categoryOf(t.category).labelFor(_lang),
+              t.institutionName ?? '',
+            ].join(' ').toLowerCase();
+            return haystack.contains(_search);
+          }).toList();
+        }
+
+        transactions.sort((a, b) => switch (_sort) {
+              'date_asc' => _dateKey(a).compareTo(_dateKey(b)),
+              'amount_desc' => b.amount.compareTo(a.amount),
+              'amount_asc' => a.amount.compareTo(b.amount),
+              _ => _dateKey(b).compareTo(_dateKey(a)),
+            });
+
+        if (transactions.isEmpty && _search.isNotEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Text(
+                _l10n.noSearchResults,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: context.mutedColor),
+              ),
+            ),
+          );
         }
 
         if (transactions.isEmpty && _categoryFilter == 'all') {

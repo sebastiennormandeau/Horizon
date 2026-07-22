@@ -453,6 +453,14 @@
       "date": { "type": "String" }
     }
   },
+  "searchHint": "Rechercher un commerçant, une catégorie...",
+  "sortTooltip": "Trier",
+  "sortDateDesc": "Date — du plus récent",
+  "sortDateAsc": "Date — du plus ancien",
+  "sortAmountDesc": "Montant — du plus élevé",
+  "sortAmountAsc": "Montant — du plus faible",
+  "noSearchResults": "Aucune transaction ne correspond à votre recherche.",
+
   "tutorialSkip": "Passer",
   "tutorialNext": "Suivant",
   "tutorialDone": "Commencer",

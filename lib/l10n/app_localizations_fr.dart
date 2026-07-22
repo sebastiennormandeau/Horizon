@@ -938,6 +938,28 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get searchHint => 'Rechercher un commerçant, une catégorie...';
+
+  @override
+  String get sortTooltip => 'Trier';
+
+  @override
+  String get sortDateDesc => 'Date — du plus récent';
+
+  @override
+  String get sortDateAsc => 'Date — du plus ancien';
+
+  @override
+  String get sortAmountDesc => 'Montant — du plus élevé';
+
+  @override
+  String get sortAmountAsc => 'Montant — du plus faible';
+
+  @override
+  String get noSearchResults =>
+      'Aucune transaction ne correspond à votre recherche.';
+
+  @override
   String get tutorialSkip => 'Passer';
 
   @override

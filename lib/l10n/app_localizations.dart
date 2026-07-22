@@ -1765,6 +1765,48 @@ abstract class AppLocalizations {
   /// **'Dernière synchronisation : {date}'**
   String bankLastSync(String date);
 
+  /// No description provided for @searchHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rechercher un commerçant, une catégorie...'**
+  String get searchHint;
+
+  /// No description provided for @sortTooltip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Trier'**
+  String get sortTooltip;
+
+  /// No description provided for @sortDateDesc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Date — du plus récent'**
+  String get sortDateDesc;
+
+  /// No description provided for @sortDateAsc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Date — du plus ancien'**
+  String get sortDateAsc;
+
+  /// No description provided for @sortAmountDesc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Montant — du plus élevé'**
+  String get sortAmountDesc;
+
+  /// No description provided for @sortAmountAsc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Montant — du plus faible'**
+  String get sortAmountAsc;
+
+  /// No description provided for @noSearchResults.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune transaction ne correspond à votre recherche.'**
+  String get noSearchResults;
+
   /// No description provided for @tutorialSkip.
   ///
   /// In fr, this message translates to:
