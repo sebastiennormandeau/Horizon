@@ -170,6 +170,18 @@ abstract class AppLocalizations {
   /// **'Commun'**
   String get bucketCommon;
 
+  /// No description provided for @bucketEssential.
+  ///
+  /// In fr, this message translates to:
+  /// **'Essentiel'**
+  String get bucketEssential;
+
+  /// No description provided for @bucketPersonal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Perso'**
+  String get bucketPersonal;
+
   /// No description provided for @bucketToSort.
   ///
   /// In fr, this message translates to:
@@ -605,14 +617,62 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeBody.
   ///
   /// In fr, this message translates to:
-  /// **'L\'application est conçue autour du Foyer. Voulez-vous créer le vôtre ou rejoindre votre partenaire ?'**
+  /// **'Comment comptez-vous utiliser Horizon ?'**
   String get welcomeBody;
+
+  /// No description provided for @modeSoloTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Seul(e)'**
+  String get modeSoloTitle;
+
+  /// No description provided for @modeSoloDescription.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos dépenses essentielles et votre argent personnel, gérés pour vous seul(e).'**
+  String get modeSoloDescription;
+
+  /// No description provided for @modeCoupleTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'En couple'**
+  String get modeCoupleTitle;
+
+  /// No description provided for @modeCoupleDescription.
+  ///
+  /// In fr, this message translates to:
+  /// **'Deux personnes, un budget partagé : dépenses communes, argent perso de chacun et équilibre entre vous.'**
+  String get modeCoupleDescription;
+
+  /// No description provided for @modeChangeNote.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous pourrez inviter un partenaire plus tard.'**
+  String get modeChangeNote;
+
+  /// No description provided for @joinExistingTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre partenaire a déjà créé un foyer ?'**
+  String get joinExistingTitle;
 
   /// No description provided for @createHouseholdButton.
   ///
   /// In fr, this message translates to:
   /// **'Créer un nouveau foyer'**
   String get createHouseholdButton;
+
+  /// No description provided for @householdCreatedSolo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre foyer est prêt !'**
+  String get householdCreatedSolo;
+
+  /// No description provided for @householdCreatedSoloBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous pouvez commencer à configurer votre budget et connecter votre banque.'**
+  String get householdCreatedSoloBody;
 
   /// No description provided for @orSeparator.
   ///
@@ -1176,6 +1236,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Revenu B'**
   String get incomeBLabel;
+
+  /// No description provided for @incomeSoloLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mon revenu'**
+  String get incomeSoloLabel;
+
+  /// No description provided for @netEssentialExpenses.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dépenses essentielles nettes :'**
+  String get netEssentialExpenses;
 
   /// No description provided for @payFrequencyLabel.
   ///

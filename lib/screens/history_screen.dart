@@ -81,11 +81,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Widget _buildFilterChips(Household household) {
     final l10n = _l10n;
+    // En solo, la cagnotte du partenaire n'existe pas : pas de filtre pour
+    // elle.
     final filters = <String, String>{
       'all': l10n.filterAll,
       'Solo_A': household.bucketLabel('Solo_A', l10n),
       'Common': household.bucketLabel('Common', l10n),
-      'Solo_B': household.bucketLabel('Solo_B', l10n),
+      if (!household.isSolo) 'Solo_B': household.bucketLabel('Solo_B', l10n),
     };
 
     return Padding(
@@ -353,7 +355,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   }
                 },
                 itemBuilder: (context) => [
-                  for (final bucket in const ['Solo_A', 'Common', 'Solo_B'])
+                  for (final bucket in (household.isSolo
+                      ? const ['Solo_A', 'Common']
+                      : const ['Solo_A', 'Common', 'Solo_B']))
                     if (bucket != t.assignedToBucket)
                       PopupMenuItem(
                         value: bucket,

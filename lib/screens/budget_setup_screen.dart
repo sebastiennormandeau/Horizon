@@ -26,6 +26,10 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
   List<Map<String, dynamic>> _categoryBudgets = [];
 
   double _splitRatioA = 60.0;
+
+  /// Foyer solo : pas de second revenu ni de répartition à négocier —
+  /// l'utilisateur assume 100 % des dépenses essentielles.
+  bool _isSolo = false;
   final _alertThresholdController = TextEditingController(text: '100');
   bool _isLoading = false;
   bool _isInitializing = true;
@@ -174,16 +178,25 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
             });
           }
 
-          // Seuil d'alerte des cagnottes (document du foyer).
+          // Seuil d'alerte et mode d'utilisation (document du foyer).
           final householdDoc = await FirebaseFirestore.instance
               .collection('households')
               .doc(householdId)
               .get();
+          final householdData = householdDoc.data();
           final threshold =
-              (householdDoc.data()?['alert_threshold'] as num?)?.toDouble();
-          if (threshold != null && mounted) {
-            setState(() =>
-                _alertThresholdController.text = threshold.toStringAsFixed(0));
+              (householdData?['alert_threshold'] as num?)?.toDouble();
+          final isSolo = (householdData?['household_mode'] as String?) == 'solo'
+              && householdData?['user_B_id'] == null;
+          if (mounted) {
+            setState(() {
+              if (threshold != null) {
+                _alertThresholdController.text = threshold.toStringAsFixed(0);
+              }
+              _isSolo = isSolo;
+              // En solo, toutes les dépenses essentielles sont à sa charge.
+              if (isSolo) _splitRatioA = 100;
+            });
           }
         }
       }
@@ -574,31 +587,43 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _incomeAController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          decoration: InputDecoration(
-                            labelText: l10n.incomeALabel,
-                            border: const OutlineInputBorder(),
+                  // En solo : un seul revenu, sans mention « A ».
+                  if (_isSolo)
+                    TextField(
+                      controller: _incomeAController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      decoration: InputDecoration(
+                        labelText: l10n.incomeSoloLabel,
+                        border: const OutlineInputBorder(),
+                      ),
+                    )
+                  else
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _incomeAController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            decoration: InputDecoration(
+                              labelText: l10n.incomeALabel,
+                              border: const OutlineInputBorder(),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: _incomeBController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          decoration: InputDecoration(
-                            labelText: l10n.incomeBLabel,
-                            border: const OutlineInputBorder(),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _incomeBController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            decoration: InputDecoration(
+                              labelText: l10n.incomeBLabel,
+                              border: const OutlineInputBorder(),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     initialValue: _payFrequency,
@@ -680,29 +705,32 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // SLIDER RATIO
-                  Text(
-                    l10n.proRataTitle,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  // SLIDER RATIO — sans objet en solo (100 % à sa charge).
+                  if (!_isSolo) ...[
+                    Text(
+                      l10n.proRataTitle,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(l10n.userAShare('${_splitRatioA.round()}')),
-                      Text(l10n.userBShare('${(100 - _splitRatioA).round()}')),
-                    ],
-                  ),
-                  Slider(
-                    value: _splitRatioA,
-                    min: 0,
-                    max: 100,
-                    activeColor: AppColors.primary,
-                    onChanged: (val) => setState(() => _splitRatioA = val),
-                  ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(l10n.userAShare('${_splitRatioA.round()}')),
+                        Text(
+                            l10n.userBShare('${(100 - _splitRatioA).round()}')),
+                      ],
+                    ),
+                    Slider(
+                      value: _splitRatioA,
+                      min: 0,
+                      max: 100,
+                      activeColor: AppColors.primary,
+                      onChanged: (val) => setState(() => _splitRatioA = val),
+                    ),
+                  ],
                   const SizedBox(height: 140), // Espace pour la bottom bar
                 ],
               ),
@@ -720,7 +748,9 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  _l10n.netCommonExpenses,
+                  _isSolo
+                      ? _l10n.netEssentialExpenses
+                      : _l10n.netCommonExpenses,
                   style: const TextStyle(color: Colors.grey),
                 ),
                 Text(
@@ -729,26 +759,30 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _l10n.aPays(formatCurrency(_contributionA)),
-                  style: const TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
+            // En solo, la répartition A/B n'a pas lieu d'être : tout est
+            // à la charge de l'utilisateur.
+            if (!_isSolo) ...[
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _l10n.aPays(formatCurrency(_contributionA)),
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                Text(
-                  _l10n.bPays(formatCurrency(_contributionB)),
-                  style: const TextStyle(
-                    color: Colors.orange,
-                    fontWeight: FontWeight.bold,
+                  Text(
+                    _l10n.bPays(formatCurrency(_contributionB)),
+                    style: const TextStyle(
+                      color: Colors.orange,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,

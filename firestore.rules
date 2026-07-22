@@ -42,7 +42,7 @@ service cloud.firestore {
       allow update: if isUserInHousehold(householdId)
         && !request.resource.data.diff(resource.data).affectedKeys()
              .hasAny(['join_code', 'user_A_id', 'user_B_id', 'created_by',
-                      'created_at', 'subscription_tier']);
+                      'created_at', 'subscription_tier', 'household_mode']);
       allow create, delete: if false;
 
       match /monthly_budgets/{budgetId} {

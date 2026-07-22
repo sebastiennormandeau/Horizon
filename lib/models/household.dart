@@ -19,6 +19,11 @@ class Household {
   final String subscriptionTier;
   final double alertThreshold;
 
+  /// Mode d'utilisation : `solo` (une seule personne) ou `couple`.
+  /// Les foyers créés avant l'ajout de cette option n'ont pas le champ et
+  /// sont traités comme `couple` (comportement historique).
+  final String householdMode;
+
   const Household({
     required this.id,
     required this.userAId,
@@ -34,6 +39,7 @@ class Household {
     required this.joinCode,
     required this.subscriptionTier,
     required this.alertThreshold,
+    required this.householdMode,
   });
 
   factory Household.fromSnapshot(DocumentSnapshot snapshot) {
@@ -56,8 +62,13 @@ class Household {
       joinCode: data['join_code'] as String?,
       subscriptionTier: (data['subscription_tier'] as String?) ?? 'free',
       alertThreshold: (data['alert_threshold'] as num?)?.toDouble() ?? 100.0,
+      householdMode: (data['household_mode'] as String?) ?? 'couple',
     );
   }
+
+  /// Foyer utilisé par une seule personne : pas de partenaire, donc pas de
+  /// cagnotte Solo B, pas de dette interne, pas d'invitation.
+  bool get isSolo => householdMode == 'solo' && userBId == null;
 
   /// État d'alerte d'une cagnotte : 0 = ok, 1 = sous le seuil, 2 = négatif.
   int alertLevel(double balance) {
@@ -96,14 +107,18 @@ class Household {
       (userBName?.trim().isNotEmpty ?? false) ? userBName!.trim() : 'B';
 
   /// Libellé d'un bucket pour affichage, dans la langue active.
+  ///
+  /// En solo, « Commun » n'a pas de sens (commun avec qui ?) : la cagnotte
+  /// garde la même valeur stockée (`Common`) mais s'affiche « Essentiel »,
+  /// ce qui préserve la logique ZBB dépenses fixes / argent personnel.
   String bucketLabel(String bucket, AppLocalizations l10n) {
     switch (bucket) {
       case 'Solo_A':
-        return 'Solo $nameA';
+        return isSolo ? l10n.bucketPersonal : 'Solo $nameA';
       case 'Solo_B':
         return 'Solo $nameB';
       case 'Common':
-        return l10n.bucketCommon;
+        return isSolo ? l10n.bucketEssential : l10n.bucketCommon;
       default:
         return l10n.bucketToSort;
     }

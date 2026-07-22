@@ -293,9 +293,13 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               _buildBucketsOverview(household, uid),
               _buildAlertBanner(household),
-              if (household.awaitingPartner && household.joinCode != null)
-                _buildInviteCard(household.joinCode!),
-              _buildDebtBanner(household),
+              // En solo : ni invitation, ni dette interne — il n'y a
+              // personne à inviter ni avec qui s'équilibrer.
+              if (!household.isSolo) ...[
+                if (household.awaitingPartner && household.joinCode != null)
+                  _buildInviteCard(household.joinCode!),
+                _buildDebtBanner(household),
+              ],
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Align(
@@ -322,6 +326,35 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildBucketsOverview(Household household, String uid) {
     final l10n = _l10n;
     final isA = household.isUserA(uid);
+
+    // En solo, la cagnotte du partenaire n'existe pas : deux cartes
+    // (« Perso » et « Essentiel ») au lieu de trois.
+    if (household.isSolo) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildBucketCard(
+                l10n.bucketPersonal,
+                household.safeToSpendSoloA,
+                alert: household.alertLevel(household.safeToSpendSoloA),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildBucketCard(
+                l10n.bucketEssential,
+                household.safeToSpendCommon,
+                color: AppColors.primary,
+                alert: household.alertLevel(household.safeToSpendCommon),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
@@ -357,10 +390,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Bannière d'avertissement quand une cagnotte est basse ou dans le négatif.
   Widget _buildAlertBanner(Household household) {
+    // En solo, la cagnotte du partenaire reste à zéro : l'inclure
+    // déclencherait une alerte « sous le seuil » permanente et trompeuse.
     final levels = [
       household.alertLevel(household.safeToSpendSoloA),
       household.alertLevel(household.safeToSpendCommon),
-      household.alertLevel(household.safeToSpendSoloB),
+      if (!household.isSolo)
+        household.alertLevel(household.safeToSpendSoloB),
     ];
     final worst = levels.reduce((a, b) => a > b ? a : b);
     if (worst == 0) return const SizedBox.shrink();
@@ -591,8 +627,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 secondaryBackground: _buildSwipeBackground(
                   AppColors.primary,
-                  Icons.people,
-                  l10n.bucketCommon,
+                  // En solo, la cagnotte « Commun » devient « Essentiel » :
+                  // une icône de dépenses parle mieux que deux personnes.
+                  household.isSolo ? Icons.receipt_long : Icons.people,
+                  household.bucketLabel('Common', l10n),
                   Alignment.centerRight,
                 ),
                 confirmDismiss: (direction) {

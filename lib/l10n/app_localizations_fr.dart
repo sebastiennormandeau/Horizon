@@ -45,6 +45,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get bucketCommon => 'Commun';
 
   @override
+  String get bucketEssential => 'Essentiel';
+
+  @override
+  String get bucketPersonal => 'Perso';
+
+  @override
   String get bucketToSort => 'À trier';
 
   @override
@@ -287,11 +293,37 @@ class AppLocalizationsFr extends AppLocalizations {
   String get welcomeTitle => 'Bienvenue sur Horizon';
 
   @override
-  String get welcomeBody =>
-      'L\'application est conçue autour du Foyer. Voulez-vous créer le vôtre ou rejoindre votre partenaire ?';
+  String get welcomeBody => 'Comment comptez-vous utiliser Horizon ?';
+
+  @override
+  String get modeSoloTitle => 'Seul(e)';
+
+  @override
+  String get modeSoloDescription =>
+      'Vos dépenses essentielles et votre argent personnel, gérés pour vous seul(e).';
+
+  @override
+  String get modeCoupleTitle => 'En couple';
+
+  @override
+  String get modeCoupleDescription =>
+      'Deux personnes, un budget partagé : dépenses communes, argent perso de chacun et équilibre entre vous.';
+
+  @override
+  String get modeChangeNote => 'Vous pourrez inviter un partenaire plus tard.';
+
+  @override
+  String get joinExistingTitle => 'Votre partenaire a déjà créé un foyer ?';
 
   @override
   String get createHouseholdButton => 'Créer un nouveau foyer';
+
+  @override
+  String get householdCreatedSolo => 'Votre foyer est prêt !';
+
+  @override
+  String get householdCreatedSoloBody =>
+      'Vous pouvez commencer à configurer votre budget et connecter votre banque.';
 
   @override
   String get orSeparator => 'OU';
@@ -614,6 +646,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get incomeBLabel => 'Revenu B';
+
+  @override
+  String get incomeSoloLabel => 'Mon revenu';
+
+  @override
+  String get netEssentialExpenses => 'Dépenses essentielles nettes :';
 
   @override
   String get payFrequencyLabel => 'Fréquence de paie';

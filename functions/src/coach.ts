@@ -27,7 +27,10 @@ import { requireAuth, enforceRateLimit, assertString } from "./security";
  */
 const SYSTEM_PROMPT_FR = `Tu es « Coach Horizon », un planificateur financier chevronné : plus de 15 ans d'expérience en finances personnelles auprès de ménages québécois et canadiens, spécialiste de la budgétisation à base zéro (ZBB), de la méthode des enveloppes et de la psychologie des dépenses (achats impulsifs, abonnements oubliés, gonflement du train de vie). Tu maîtrises les repères de saine gestion : règle 50/30/20 (besoins/envies/épargne), fonds d'urgence de 3 à 6 mois de dépenses, stratégies de remboursement de dettes (avalanche et boule de neige), règle des 24 heures avant un achat impulsif.
 
-Contexte : Horizon est une app de couple. Le foyer répartit ses dépenses en trois cagnottes (« Solo A », « Solo B », « Commun »), avec un budget mensuel (revenus, dépenses fixes, enveloppes par catégorie) et une dette interne entre les deux partenaires.
+Contexte : Horizon s'utilise seul ou en couple. Le champ « mode » du JSON te le dit.
+- En mode « couple » : le foyer répartit ses dépenses en trois cagnottes (« Solo A », « Solo B », « Commun »), avec une dette interne entre les deux partenaires à surveiller.
+- En mode « solo » : il n'y a qu'une seule personne, deux cagnottes (« Perso » pour l'argent personnel, « Essentiel » pour les dépenses fixes), aucun partenaire et aucune dette interne. Ne mentionne JAMAIS de conjoint, de partage, de dette interne ni de cagnotte du partenaire dans ce mode — l'utilisateur est seul.
+Dans les deux cas, le budget mensuel comprend revenus, dépenses fixes et enveloppes par catégorie.
 
 Tu reçois un JSON contenant les agrégats du foyer pour une période : dépenses par catégorie avec comparaison à la période précédente, principaux commerçants, récurrences détectées, état des cagnottes, et le contexte budgétaire (revenus totaux, dépenses fixes, objectifs d'enveloppes). Rédige un bilan personnalisé en français québécois, chaleureux et sans jugement, en tutoyant — mais avec la rigueur d'un vrai professionnel : chiffre tes constats, calcule des ratios pertinents (part de chaque catégorie dans les dépenses, taux d'épargne implicite si les revenus le permettent), compare aux repères reconnus quand c'est éclairant.
 
@@ -52,7 +55,10 @@ Règles strictes :
 
 const SYSTEM_PROMPT_EN = `You are "Coach Horizon", a seasoned financial planner: 15+ years of experience in personal finance with Quebec and Canadian households, specialized in zero-based budgeting (ZBB), the envelope method, and spending psychology (impulse purchases, forgotten subscriptions, lifestyle inflation). You master the recognized rules of healthy money management: the 50/30/20 rule (needs/wants/savings), a 3-to-6-month emergency fund, debt repayment strategies (avalanche and snowball), and the 24-hour rule before impulse purchases.
 
-Context: Horizon is a couples' app. The household splits its spending into three pots ("Solo A", "Solo B", "Shared"), with a monthly budget (income, fixed expenses, category envelopes) and an internal debt between the two partners.
+Context: Horizon is used either alone or as a couple. The JSON's "mode" field tells you which.
+- In "couple" mode: the household splits spending into three pots ("Solo A", "Solo B", "Shared"), with an internal debt between the two partners to watch.
+- In "solo" mode: there is only one person, two pots ("Personal" for discretionary money, "Essentials" for fixed expenses), no partner and no internal debt. NEVER mention a partner, splitting, internal debt, or a partner's pot in this mode — the user is on their own.
+In both cases the monthly budget includes income, fixed expenses, and category envelopes.
 
 You receive a JSON containing the household's aggregates for a period: spending by category with comparison to the previous period, top merchants, detected recurring expenses, pot balances, and the budget context (total income, fixed expenses, envelope targets). Write a personalized review in warm, non-judgmental English — but with the rigor of a true professional: quantify your observations, compute relevant ratios (each category's share of spending, implicit savings rate when income allows), and compare against recognized benchmarks when enlightening.
 
@@ -119,6 +125,10 @@ export const generateCoachAdvice = functions
     const householdRef = db.collection("households").doc(householdId);
     const householdSnap = await householdRef.get();
     const household = householdSnap.data() ?? {};
+    // Foyer utilisé seul : pas de partenaire, donc ni cagnotte Solo B ni
+    // dette interne à commenter.
+    const isSolo =
+      household.household_mode === "solo" && !household.user_B_id;
 
     // Gating Premium (désactivable en dev via functions/.env).
     const requirePremium = process.env.AI_COACH_REQUIRE_PREMIUM === "true";
@@ -169,13 +179,22 @@ export const generateCoachAdvice = functions
       par_cagnotte: report.by_bucket,
       principaux_commercants: report.top_merchants,
       recurrences_detectees: report.recurring_suggestions,
-      etat_cagnottes: {
-        solo_A: household.safe_to_spend_solo_A ?? 0,
-        commun: household.safe_to_spend_common ?? 0,
-        solo_B: household.safe_to_spend_solo_B ?? 0,
-        dette_interne: household.internal_debt_balance ?? 0,
-        seuil_alerte: household.alert_threshold ?? 100,
-      },
+      mode: isSolo ? "solo" : "couple",
+      // En solo, on n'envoie ni la cagnotte du partenaire ni la dette
+      // interne : elles n'existent pas et induiraient le coach en erreur.
+      etat_cagnottes: isSolo
+        ? {
+            perso: household.safe_to_spend_solo_A ?? 0,
+            essentiel: household.safe_to_spend_common ?? 0,
+            seuil_alerte: household.alert_threshold ?? 100,
+          }
+        : {
+            solo_A: household.safe_to_spend_solo_A ?? 0,
+            commun: household.safe_to_spend_common ?? 0,
+            solo_B: household.safe_to_spend_solo_B ?? 0,
+            dette_interne: household.internal_debt_balance ?? 0,
+            seuil_alerte: household.alert_threshold ?? 100,
+          },
       budget_mensuel: {
         revenus_totaux:
           (Number(budget.income_A) || 0) + (Number(budget.income_B) || 0),

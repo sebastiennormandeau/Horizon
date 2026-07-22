@@ -25,10 +25,24 @@ async function displayNameOf(uid: string, fallback: string): Promise<string> {
   return name && name.length > 0 ? name.slice(0, 40) : fallback;
 }
 
+/** Modes d'utilisation d'un foyer : seul, ou à deux. */
+export const HOUSEHOLD_MODE_PATTERN = /^(solo|couple)$/;
+
 export const createHousehold = functions.https.onCall(
   async (data, context) => {
     const uid = requireAuth(context);
     await enforceRateLimit("createHousehold", uid, 5, 3600);
+
+    // Mode choisi à la création. Les foyers antérieurs à cette option n'ont
+    // pas le champ : le client les traite comme "couple" (comportement
+    // historique).
+    const mode =
+      data?.mode === undefined
+        ? "couple"
+        : assertString(data.mode, "mode", {
+            maxLength: 6,
+            pattern: HOUSEHOLD_MODE_PATTERN,
+          });
 
     const userRef = db.collection("users").doc(uid);
     const userSnap = await userRef.get();
@@ -39,20 +53,27 @@ export const createHousehold = functions.https.onCall(
       );
     }
 
+    // Le code d'invitation est généré même en solo : il n'est simplement pas
+    // affiché, ce qui permet d'inviter un partenaire plus tard sans
+    // migration de données.
     const joinCode = generateJoinCode();
     const name = await displayNameOf(uid, "Membre A");
+
+    // En solo, l'utilisateur assume seul les dépenses communes.
+    const ratioA = mode === "solo" ? 100 : 50;
 
     const householdRef = await db.collection("households").add({
       created_by: uid,
       created_at: FieldValue.serverTimestamp(),
+      household_mode: mode,
       join_code: joinCode,
       user_A_id: uid,
       user_B_id: null,
       user_A_name: name,
       user_B_name: null,
       subscription_tier: "free",
-      split_ratio_user_A: 50,
-      split_ratio_user_B: 50,
+      split_ratio_user_A: ratioA,
+      split_ratio_user_B: 100 - ratioA,
       safe_to_spend_common: 0,
       safe_to_spend_solo_A: 0,
       safe_to_spend_solo_B: 0,
@@ -67,7 +88,12 @@ export const createHousehold = functions.https.onCall(
       { merge: true }
     );
 
-    return { success: true, household_id: householdRef.id, join_code: joinCode };
+    return {
+      success: true,
+      household_id: householdRef.id,
+      join_code: joinCode,
+      mode,
+    };
   }
 );
 
@@ -126,9 +152,12 @@ export const joinHousehold = functions.https.onCall(async (data, context) => {
     }
 
     householdId = householdDoc.id;
+    // Un foyer qui accueille un second membre n'est plus solo, quel que
+    // soit le mode choisi à sa création.
     tx.update(householdDoc.ref, {
       user_B_id: uid,
       user_B_name: name,
+      household_mode: "couple",
     });
     tx.set(
       userRef,

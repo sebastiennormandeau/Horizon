@@ -45,6 +45,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bucketCommon => 'Shared';
 
   @override
+  String get bucketEssential => 'Essentials';
+
+  @override
+  String get bucketPersonal => 'Personal';
+
+  @override
   String get bucketToSort => 'To sort';
 
   @override
@@ -284,11 +290,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeTitle => 'Welcome to Horizon';
 
   @override
-  String get welcomeBody =>
-      'The app is built around the Household. Do you want to create yours or join your partner?';
+  String get welcomeBody => 'How do you plan to use Horizon?';
+
+  @override
+  String get modeSoloTitle => 'On my own';
+
+  @override
+  String get modeSoloDescription =>
+      'Your essential expenses and personal spending money, managed just for you.';
+
+  @override
+  String get modeCoupleTitle => 'As a couple';
+
+  @override
+  String get modeCoupleDescription =>
+      'Two people, one shared budget: common expenses, each partner\'s personal money, and the balance between you.';
+
+  @override
+  String get modeChangeNote => 'You can invite a partner later.';
+
+  @override
+  String get joinExistingTitle =>
+      'Has your partner already created a household?';
 
   @override
   String get createHouseholdButton => 'Create a new household';
+
+  @override
+  String get householdCreatedSolo => 'Your household is ready!';
+
+  @override
+  String get householdCreatedSoloBody =>
+      'You can now set up your budget and connect your bank.';
 
   @override
   String get orSeparator => 'OR';
@@ -609,6 +642,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get incomeBLabel => 'Income B';
+
+  @override
+  String get incomeSoloLabel => 'My income';
+
+  @override
+  String get netEssentialExpenses => 'Net essential expenses:';
 
   @override
   String get payFrequencyLabel => 'Pay frequency';
