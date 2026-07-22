@@ -183,9 +183,22 @@ requêtes. Ne jamais passer `ENFORCE_APP_CHECK=true` avant l'étape 5.
 4. ✅ **Rebuild + redéploiement faits** ; présence de la clé confirmée dans
    le bundle en ligne.
 5. 🧪 **Vérifier AVANT d'appliquer** : Console Firebase → App Check →
-   onglet *Apps*, la colonne des requêtes vérifiées doit se remplir après
-   quelques minutes d'utilisation réelle de l'app. Tant qu'elle affiche des
-   requêtes non vérifiées, ne pas passer à l'étape 6.
+   onglet **API** (et non *Applications*, qui ne montre que l'enregistrement)
+   → cliquer sur un service (Cloud Firestore, Cloud Functions) pour voir la
+   répartition **vérifiées / non vérifiées / client obsolète**. Compter
+   quelques minutes d'utilisation réelle avant que les chiffres montent.
+   Tant que les requêtes ne sont pas vérifiées, ne pas passer à l'étape 6.
+
+   ℹ️ **Deux applications Web sont enregistrées** dans ce projet, et elles
+   n'ont pas le même fournisseur :
+   | Console | App ID | Fournisseur | Utilisée par |
+   | --- | --- | --- | --- |
+   | `horizon (web)` | `…web:60a5b6a6cc4d4ffdc4c07e` | reCAPTCHA v3 | **le build navigateur** (`DefaultFirebaseOptions.web`) |
+   | `horizon (windows)` | `…web:a05a014b7556d039c4c07e` | reCAPTCHA Enterprise | cible Windows de bureau, jamais compilée |
+
+   C'est bien la première qui compte. L'app iOS native n'est pas enregistrée,
+   ce qui est sans effet tant qu'on passe par le Web sur iPhone — à corriger
+   (App Attest) le jour où une vraie app iOS serait publiée.
 6. **Appliquer** : App Check → *Enforce* sur Firestore, Functions et Auth,
    puis `ENFORCE_APP_CHECK=true` dans `functions/.env` et redéployer les
    fonctions.
