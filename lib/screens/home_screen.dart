@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:plaid_flutter/plaid_flutter.dart';
@@ -71,11 +72,19 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     _eventSubscription = PlaidLink.onEvent.listen((event) {
-      debugPrint('Plaid Event: ${event.name}');
+      debugPrint('Plaid Event: ${event.name} — ${event.metadata.description()}');
+      // Mémorisé pour l'afficher si la session se termine mal : c'est cet
+      // événement qui nomme l'échec (institution indisponible, OAuth refusé),
+      // là où l'objet de sortie reste souvent muet.
+      final name = event.name.toLowerCase();
+      if (name.contains('error') || name.contains('failoauth')) {
+        _lastPlaidEvent = '${event.name} — ${event.metadata.description()}';
+      }
     });
 
     _exitSubscription = PlaidLink.onExit.listen((event) {
       debugPrint('Plaid Exit: ${event.error?.message ?? 'User cancelled'}');
+      _showPlaidExitDiagnostic(event);
     });
 
     if (kIsWeb) _resumePlaidOAuth();
@@ -87,6 +96,87 @@ class _HomeScreenState extends State<HomeScreen> {
     _eventSubscription?.cancel();
     _exitSubscription?.cancel();
     super.dispose();
+  }
+
+  /// Dernier événement Plaid en erreur, conservé pour le diagnostic.
+  String? _lastPlaidEvent;
+
+  /// Rend visible l'échec d'une session Plaid.
+  ///
+  /// Sans ça, une sortie en erreur ne laissait qu'une trace dans la console
+  /// de débogage : côté utilisateur, la fenêtre se fermait et « rien ne se
+  /// passait ». Les codes sont sélectionnables parce qu'ils servent à ouvrir
+  /// un billet chez Plaid — `linkSessionId` et `requestId` sont exactement ce
+  /// que leur soutien demande.
+  void _showPlaidExitDiagnostic(LinkExit event) {
+    if (!mounted) return;
+    final l10n = _l10n;
+    final error = event.error;
+    final meta = event.metadata;
+
+    // Abandon volontaire, sans erreur : une simple note suffit.
+    if (error == null && _lastPlaidEvent == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.plaidExitCancelled(meta.status ?? '—')),
+        ),
+      );
+      return;
+    }
+
+    final details = [
+      if (error != null) 'code: ${error.code}',
+      if (error != null) 'type: ${error.type}',
+      if (error != null) 'message: ${error.message}',
+      if (error?.displayMessage != null) 'display: ${error!.displayMessage}',
+      if (_lastPlaidEvent != null) 'event: $_lastPlaidEvent',
+      'status: ${meta.status ?? '—'}',
+      'institution: ${meta.institution?.name ?? '—'} (${meta.institution?.id ?? '—'})',
+      'linkSessionId: ${meta.linkSessionId ?? '—'}',
+      'requestId: ${meta.requestId ?? '—'}',
+    ].join('\n');
+    _lastPlaidEvent = null;
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.plaidExitTitle),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (error?.displayMessage != null) ...[
+                Text(error!.displayMessage!),
+                const SizedBox(height: 12),
+              ],
+              SelectableText(
+                details,
+                style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l10n.plaidExitHint,
+                style: TextStyle(fontSize: 12, color: context.mutedColor),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: details));
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: Text(l10n.copy),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.close),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Plateforme transmise au serveur : Plaid revient vers une URL sur le Web

@@ -1657,6 +1657,24 @@ abstract class AppLocalizations {
   /// **'Autres catégories'**
   String get chartOtherCategories;
 
+  /// No description provided for @plaidExitTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion bancaire interrompue'**
+  String get plaidExitTitle;
+
+  /// No description provided for @plaidExitCancelled.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion annulée à l\'étape : {status}'**
+  String plaidExitCancelled(String status);
+
+  /// No description provided for @plaidExitHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Transmettez ces informations au soutien si le problème persiste.'**
+  String get plaidExitHint;
+
   /// No description provided for @themeSection.
   ///
   /// In fr, this message translates to:

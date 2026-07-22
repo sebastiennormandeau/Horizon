@@ -276,6 +276,15 @@
 
   "chartOtherCategories": "Other categories",
 
+  "plaidExitTitle": "Bank connection interrupted",
+  "plaidExitCancelled": "Connection cancelled at step: {status}",
+  "@plaidExitCancelled": {
+    "placeholders": {
+      "status": { "type": "String" }
+    }
+  },
+  "plaidExitHint": "Share these details with support if the problem persists.",
+
   "themeSection": "Appearance",
   "themeLight": "Light",
   "themeDark": "Dark",

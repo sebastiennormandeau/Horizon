@@ -418,6 +418,15 @@
 
   "chartOtherCategories": "Autres catégories",
 
+  "plaidExitTitle": "Connexion bancaire interrompue",
+  "plaidExitCancelled": "Connexion annulée à l'étape : {status}",
+  "@plaidExitCancelled": {
+    "placeholders": {
+      "status": { "type": "String" }
+    }
+  },
+  "plaidExitHint": "Transmettez ces informations au soutien si le problème persiste.",
+
   "themeSection": "Apparence",
   "themeLight": "Clair",
   "themeDark": "Sombre",

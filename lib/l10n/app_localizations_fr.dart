@@ -876,6 +876,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get chartOtherCategories => 'Autres catégories';
 
   @override
+  String get plaidExitTitle => 'Connexion bancaire interrompue';
+
+  @override
+  String plaidExitCancelled(String status) {
+    return 'Connexion annulée à l\'étape : $status';
+  }
+
+  @override
+  String get plaidExitHint =>
+      'Transmettez ces informations au soutien si le problème persiste.';
+
+  @override
   String get themeSection => 'Apparence';
 
   @override
