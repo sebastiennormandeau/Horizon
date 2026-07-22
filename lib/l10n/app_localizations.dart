@@ -1765,6 +1765,78 @@ abstract class AppLocalizations {
   /// **'Dernière synchronisation : {date}'**
   String bankLastSync(String date);
 
+  /// No description provided for @tutorialSkip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Passer'**
+  String get tutorialSkip;
+
+  /// No description provided for @tutorialNext.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivant'**
+  String get tutorialNext;
+
+  /// No description provided for @tutorialDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Commencer'**
+  String get tutorialDone;
+
+  /// No description provided for @tutorialReplay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Revoir le guide de démarrage'**
+  String get tutorialReplay;
+
+  /// No description provided for @tutorial1Title.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaque dollar a une mission'**
+  String get tutorial1Title;
+
+  /// No description provided for @tutorial1Body.
+  ///
+  /// In fr, this message translates to:
+  /// **'Horizon répartit vos revenus en cagnottes avant que vous ne dépensiez. Vous savez ainsi, à tout moment, ce qu\'il vous reste réellement — pas seulement le solde de votre compte.'**
+  String get tutorial1Body;
+
+  /// No description provided for @tutorial2Title.
+  ///
+  /// In fr, this message translates to:
+  /// **'Deux natures de cagnottes'**
+  String get tutorial2Title;
+
+  /// No description provided for @tutorial2Body.
+  ///
+  /// In fr, this message translates to:
+  /// **'La cagnotte commune contient exactement de quoi payer vos charges du mois : loyer, électricité, assurances. Elle doit descendre vers zéro à mesure que les factures se paient.\n\nVos cagnottes personnelles, elles, sont votre argent libre : ce qu\'il vous reste une fois votre part des charges mise de côté.'**
+  String get tutorial2Body;
+
+  /// No description provided for @tutorial3Title.
+  ///
+  /// In fr, this message translates to:
+  /// **'Triez d\'un glissement'**
+  String get tutorial3Title;
+
+  /// No description provided for @tutorial3Body.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaque transaction importée attend d\'être classée. Glissez vers la gauche pour votre cagnotte personnelle, vers la droite pour la cagnotte commune.\n\nLa cagnotte se met à jour aussitôt, et vous pouvez annuler.'**
+  String get tutorial3Body;
+
+  /// No description provided for @tutorial4Title.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos comptes bancaires'**
+  String get tutorial4Title;
+
+  /// No description provided for @tutorial4Body.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reliez autant de comptes que nécessaire — chèque, épargne, carte de crédit.\n\nDeux réglages comptent : indiquez quels comptes sont conjoints, pour qu\'aucune dette ne s\'invente entre vous. Et sachez que les paiements de carte et les virements entre vos comptes sont écartés d\'office : une dépense se compte à l\'achat, jamais deux fois.'**
+  String get tutorial4Body;
+
   /// No description provided for @bankJointLabel.
   ///
   /// In fr, this message translates to:

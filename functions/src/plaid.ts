@@ -57,8 +57,35 @@ interface BankConnection {
   household_id: string;
   sync_cursor?: string;
   institution_name?: string | null;
-  /** Compte conjoint : ses dépenses communes ne créent pas de dette interne. */
-  is_joint?: boolean;
+  /** Comptes de l'institution, pour les afficher et les qualifier un à un. */
+  accounts?: { account_id: string; name: string; mask?: string | null }[];
+  /**
+   * Comptes conjoints de cette connexion : leurs dépenses communes ne créent
+   * pas de dette interne.
+   *
+   * Au niveau du **compte** et non de la connexion : une même banque héberge
+   * couramment le compte personnel et le compte conjoint, et les deux
+   * n'appellent pas le même traitement.
+   */
+  joint_account_ids?: string[];
+}
+
+/** Comptes rattachés à une connexion, pour affichage et qualification. */
+async function fetchAccounts(
+  client: PlaidApi,
+  accessToken: string
+): Promise<{ account_id: string; name: string; mask?: string | null }[]> {
+  try {
+    const resp = await client.accountsGet({ access_token: accessToken });
+    return resp.data.accounts.map((a) => ({
+      account_id: a.account_id,
+      name: a.official_name || a.name,
+      mask: a.mask ?? null,
+    }));
+  } catch (e) {
+    console.error("Récupération des comptes échouée:", e);
+    return [];
+  }
 }
 
 /**
@@ -161,7 +188,10 @@ async function backfillInstitutionNames(
 ): Promise<number> {
   if (!conn.institution_name) return 0;
 
-  const ids = new Set<string>();
+  // Le compte d'origine est indispensable pour qualifier chaque compte
+  // séparément : une même banque héberge souvent le compte personnel et le
+  // compte conjoint.
+  const accountOf = new Map<string, string>();
   let cursor: string | undefined = undefined;
   let hasMore = true;
   while (hasMore) {
@@ -169,13 +199,17 @@ async function backfillInstitutionNames(
       access_token: conn.access_token,
       cursor,
     });
-    resp.data.added.forEach((t) => ids.add(t.transaction_id));
-    resp.data.modified.forEach((t) => ids.add(t.transaction_id));
+    resp.data.added.forEach((t) => accountOf.set(t.transaction_id, t.account_id));
+    resp.data.modified.forEach((t) =>
+      accountOf.set(t.transaction_id, t.account_id)
+    );
     hasMore = resp.data.has_more;
     cursor = resp.data.next_cursor;
   }
 
-  const refs = [...ids].map((id) => db.collection("transactions").doc(id));
+  const refs = [...accountOf.keys()].map((id) =>
+    db.collection("transactions").doc(id)
+  );
   let updated = 0;
   const chunk = 400;
   for (let i = 0; i < refs.length; i += chunk) {
@@ -185,9 +219,14 @@ async function backfillInstitutionNames(
     let pending = 0;
     snaps.forEach((s) => {
       if (!s.exists || s.data()?.institution_name) return;
+      const accountId = accountOf.get(s.id) ?? null;
       batch.update(s.ref, {
         institution_name: conn.institution_name,
         item_id: itemId,
+        account_id: accountId,
+        is_joint_account: accountId
+          ? (conn.joint_account_ids ?? []).includes(accountId)
+          : false,
       });
       pending++;
     });
@@ -257,6 +296,7 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
   // quelques jours de retard reste bien à trier.
   const isInitialSync = !conn.sync_cursor;
   const monthStart = startOfCurrentMonth();
+  const jointIds = conn.joint_account_ids ?? [];
   let cursor = conn.sync_cursor;
   let added: PlaidTransaction[] = [];
   let modified: PlaidTransaction[] = [];
@@ -304,7 +344,7 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
         item_id: itemId,
         // Copié sur la transaction plutôt que lu au vol : le déclencheur du
         // grand livre ne dispose que du document de transaction.
-        is_joint_account: conn.is_joint === true,
+        is_joint_account: jointIds.includes(t.account_id),
         // Les mouvements internes sont classés d'office : ils ne doivent ni
         // encombrer la file de tri, ni toucher aux cagnottes. Les dépenses
         // des mois révolus sont écartées du tri mais restent dans les bilans.
@@ -607,6 +647,7 @@ export const exchangePublicToken = functions
       const itemId = exchangeResponse.data.item_id;
 
       const institution = await institutionNameOf(client, accessToken);
+      const accounts = await fetchAccounts(client, accessToken);
 
       // L'access_token ne quitte jamais le serveur : les règles Firestore
       // interdisent toute lecture client de bank_connections.
@@ -617,6 +658,8 @@ export const exchangePublicToken = functions
         item_id: itemId,
         institution_id: institution.id,
         institution_name: institution.name,
+        accounts,
+        joint_account_ids: [],
         created_at: FieldValue.serverTimestamp(),
       });
 
@@ -660,7 +703,8 @@ export const listBankConnections = functions.https.onCall(
         return {
           item_id: d.id,
           institution_name: c.institution_name ?? null,
-          is_joint: c.is_joint === true,
+          accounts: c.accounts ?? [],
+          joint_account_ids: c.joint_account_ids ?? [],
           // Permet à l'app de distinguer ses propres comptes de ceux du
           // partenaire, sans exposer d'identifiant utilisable autrement.
           is_mine: c.user_id === uid,
@@ -776,6 +820,15 @@ export const syncBankConnections = functions
         if (conn.institution_name && !conn.institution_backfilled) {
           await backfillInstitutionNames(getPlaidClient(), conn, doc.id);
         }
+        // Liste de comptes rafraîchie : elle alimente les interrupteurs
+        // « compte conjoint » et peut changer côté banque.
+        if (!conn.accounts || conn.accounts.length === 0) {
+          const accounts = await fetchAccounts(
+            getPlaidClient(),
+            conn.access_token
+          );
+          if (accounts.length > 0) await doc.ref.update({ accounts });
+        }
         imported += await syncTransactionsForItem(doc.id);
       } catch (e) {
         // Une connexion en erreur (jeton révoqué côté banque) ne doit pas
@@ -810,6 +863,10 @@ export const setBankConnectionJoint = functions.https.onCall(
       maxLength: 128,
       pattern: ITEM_ID_PATTERN,
     });
+    const accountId = assertString(data?.account_id, "account_id", {
+      maxLength: 128,
+      pattern: ITEM_ID_PATTERN,
+    });
     if (typeof data?.is_joint !== "boolean") {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -838,11 +895,17 @@ export const setBankConnectionJoint = functions.https.onCall(
       );
     }
 
-    await ref.update({ is_joint: isJoint });
+    const current = new Set(conn.joint_account_ids ?? []);
+    if (isJoint) {
+      current.add(accountId);
+    } else {
+      current.delete(accountId);
+    }
+    await ref.update({ joint_account_ids: [...current] });
 
     const tx = await db
       .collection("transactions")
-      .where("item_id", "==", itemId)
+      .where("account_id", "==", accountId)
       .get();
     const chunk = 400;
     for (let i = 0; i < tx.docs.length; i += chunk) {

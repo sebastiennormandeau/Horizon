@@ -135,13 +135,18 @@ class _BankConnectionsScreenState extends State<BankConnectionsScreen> {
   /// Sans ce réglage, un compte conjoint relié par une seule personne ferait
   /// grossir la dette interne indéfiniment : Plaid attribue toutes ses
   /// transactions à l'identifiant qui a établi la connexion.
-  Future<void> _setJoint(Map<String, dynamic> connection, bool isJoint) async {
+  Future<void> _setJoint(
+    Map<String, dynamic> connection,
+    String accountId,
+    bool isJoint,
+  ) async {
     setState(() => _busy = true);
     try {
       final callable =
           FirebaseFunctions.instance.httpsCallable('setBankConnectionJoint');
       await callable.call({
         'item_id': connection['item_id'],
+        'account_id': accountId,
         'is_joint': isJoint,
       });
       // La bascule ne rejoue pas l'historique des assignations : on le dit
@@ -320,27 +325,54 @@ class _BankConnectionsScreenState extends State<BankConnectionsScreen> {
             ),
             ],
           ),
-          const Divider(height: 20),
-          // Réglage central en couple : il décide si les dépenses communes
-          // payées depuis ce compte créent une dette entre les partenaires.
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            dense: true,
-            value: connection['is_joint'] == true,
-            onChanged: (v) => _setJoint(connection, v),
-            title: Text(
-              l10n.bankJointLabel,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-            subtitle: Text(
-              connection['is_joint'] == true
-                  ? l10n.bankJointHint
-                  : l10n.bankPersonalHint,
-              style: TextStyle(fontSize: 12, color: context.mutedColor),
-            ),
-          ),
+          // Réglage par COMPTE et non par connexion : une même banque héberge
+          // couramment le compte personnel et le compte conjoint, qui
+          // n'appellent pas le même traitement de la dette interne.
+          ..._buildAccountToggles(connection),
         ],
       ),
     );
+  }
+
+  List<Widget> _buildAccountToggles(Map<String, dynamic> connection) {
+    final l10n = _l10n;
+    final accounts = (connection['accounts'] as List?) ?? [];
+    if (accounts.isEmpty) return const [];
+    final jointIds =
+        ((connection['joint_account_ids'] as List?) ?? []).cast<String>();
+
+    return [
+      const Divider(height: 20),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Text(
+          l10n.bankJointLabel,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        ),
+      ),
+      for (final raw in accounts)
+        Builder(builder: (context) {
+          final a = Map<String, dynamic>.from(raw as Map);
+          final id = a['account_id'] as String? ?? '';
+          final isJoint = jointIds.contains(id);
+          final mask = a['mask'] as String?;
+          return SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            value: isJoint,
+            onChanged: (v) => _setJoint(connection, id, v),
+            title: Text(
+              mask == null || mask.isEmpty
+                  ? (a['name'] as String? ?? '—')
+                  : '${a['name'] ?? '—'} ••$mask',
+              style: const TextStyle(fontSize: 13.5),
+            ),
+            subtitle: Text(
+              isJoint ? l10n.bankJointHint : l10n.bankPersonalHint,
+              style: TextStyle(fontSize: 11.5, color: context.mutedColor),
+            ),
+          );
+        }),
+    ];
   }
 }

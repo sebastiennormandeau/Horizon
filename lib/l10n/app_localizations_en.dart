@@ -932,6 +932,46 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get tutorialSkip => 'Skip';
+
+  @override
+  String get tutorialNext => 'Next';
+
+  @override
+  String get tutorialDone => 'Get started';
+
+  @override
+  String get tutorialReplay => 'Replay the getting-started guide';
+
+  @override
+  String get tutorial1Title => 'Every dollar has a job';
+
+  @override
+  String get tutorial1Body =>
+      'Horizon splits your income into pots before you spend. That way you always know what you actually have left — not just your account balance.';
+
+  @override
+  String get tutorial2Title => 'Two kinds of pots';
+
+  @override
+  String get tutorial2Body =>
+      'The shared pot holds exactly what it takes to cover this month\'s fixed costs: rent, utilities, insurance. It should drift down to zero as the bills get paid.\n\nYour personal pots are your free money: what remains once your share of the fixed costs is set aside.';
+
+  @override
+  String get tutorial3Title => 'Sort with a swipe';
+
+  @override
+  String get tutorial3Body =>
+      'Each imported transaction waits to be filed. Swipe left for your personal pot, right for the shared pot.\n\nThe pot updates immediately, and you can undo.';
+
+  @override
+  String get tutorial4Title => 'Your bank accounts';
+
+  @override
+  String get tutorial4Body =>
+      'Link as many accounts as you need — chequing, savings, credit card.\n\nTwo settings matter: mark which accounts are joint, so no debt gets invented between you. And know that card payments and transfers between your own accounts are set aside automatically: an expense counts when you buy, never twice.';
+
+  @override
   String get bankJointLabel => 'Joint account';
 
   @override

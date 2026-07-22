@@ -17,6 +17,7 @@ import '../widgets/horizon_logo.dart';
 import '../widgets/household_loader.dart';
 import 'bank_connections_screen.dart';
 import 'bilan_screen.dart';
+import 'onboarding_screen.dart';
 import 'budget_setup_screen.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
@@ -89,6 +90,21 @@ class _HomeScreenState extends State<HomeScreen> {
     // Reprise d une connexion interrompue par un OAuth (Web) : c est ici,
     // et nulle part ailleurs, car la page a ete rechargee entre-temps.
     PlaidService.resumeOAuthIfNeeded();
+
+    // Guide de démarrage au premier lancement. Après le premier rendu :
+    // l'accueil doit exister derrière, sinon la fermeture du guide laisse
+    // un écran vide.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (await OnboardingScreen.shouldShow() && mounted) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const OnboardingScreen(),
+            fullscreenDialog: true,
+          ),
+        );
+      }
+    });
   }
 
   @override

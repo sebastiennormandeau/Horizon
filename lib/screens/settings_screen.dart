@@ -16,6 +16,7 @@ import '../widgets/household_loader.dart';
 import '../widgets/legal_documents.dart';
 import 'bank_connections_screen.dart';
 import 'household_manage_screen.dart';
+import 'onboarding_screen.dart';
 import 'paywall_screen.dart';
 
 /// Réglages : profil, langue, abonnement, données personnelles
@@ -357,6 +358,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         title: Text(l10n.exportMyData),
                         subtitle: Text(l10n.exportSubtitle),
                         onTap: _exportData,
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.school_outlined,
+                            color: AppColors.primary),
+                        title: Text(l10n.tutorialReplay),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const OnboardingScreen(),
+                            fullscreenDialog: true,
+                          ),
+                        ),
                       ),
                       ListTile(
                         leading: const Icon(Icons.description,

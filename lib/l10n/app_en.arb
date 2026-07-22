@@ -311,6 +311,19 @@
       "date": { "type": "String" }
     }
   },
+  "tutorialSkip": "Skip",
+  "tutorialNext": "Next",
+  "tutorialDone": "Get started",
+  "tutorialReplay": "Replay the getting-started guide",
+  "tutorial1Title": "Every dollar has a job",
+  "tutorial1Body": "Horizon splits your income into pots before you spend. That way you always know what you actually have left — not just your account balance.",
+  "tutorial2Title": "Two kinds of pots",
+  "tutorial2Body": "The shared pot holds exactly what it takes to cover this month's fixed costs: rent, utilities, insurance. It should drift down to zero as the bills get paid.\n\nYour personal pots are your free money: what remains once your share of the fixed costs is set aside.",
+  "tutorial3Title": "Sort with a swipe",
+  "tutorial3Body": "Each imported transaction waits to be filed. Swipe left for your personal pot, right for the shared pot.\n\nThe pot updates immediately, and you can undo.",
+  "tutorial4Title": "Your bank accounts",
+  "tutorial4Body": "Link as many accounts as you need — chequing, savings, credit card.\n\nTwo settings matter: mark which accounts are joint, so no debt gets invented between you. And know that card payments and transfers between your own accounts are set aside automatically: an expense counts when you buy, never twice.",
+
   "bankJointLabel": "Joint account",
   "bankJointHint": "Shared expenses paid from this account will not create any debt between you: the money leaves an account you both fund.",
   "bankPersonalHint": "Shared expenses paid from this account will be recorded as money you fronted for your partner.",

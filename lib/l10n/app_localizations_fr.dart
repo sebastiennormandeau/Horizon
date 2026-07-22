@@ -938,6 +938,46 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get tutorialSkip => 'Passer';
+
+  @override
+  String get tutorialNext => 'Suivant';
+
+  @override
+  String get tutorialDone => 'Commencer';
+
+  @override
+  String get tutorialReplay => 'Revoir le guide de démarrage';
+
+  @override
+  String get tutorial1Title => 'Chaque dollar a une mission';
+
+  @override
+  String get tutorial1Body =>
+      'Horizon répartit vos revenus en cagnottes avant que vous ne dépensiez. Vous savez ainsi, à tout moment, ce qu\'il vous reste réellement — pas seulement le solde de votre compte.';
+
+  @override
+  String get tutorial2Title => 'Deux natures de cagnottes';
+
+  @override
+  String get tutorial2Body =>
+      'La cagnotte commune contient exactement de quoi payer vos charges du mois : loyer, électricité, assurances. Elle doit descendre vers zéro à mesure que les factures se paient.\n\nVos cagnottes personnelles, elles, sont votre argent libre : ce qu\'il vous reste une fois votre part des charges mise de côté.';
+
+  @override
+  String get tutorial3Title => 'Triez d\'un glissement';
+
+  @override
+  String get tutorial3Body =>
+      'Chaque transaction importée attend d\'être classée. Glissez vers la gauche pour votre cagnotte personnelle, vers la droite pour la cagnotte commune.\n\nLa cagnotte se met à jour aussitôt, et vous pouvez annuler.';
+
+  @override
+  String get tutorial4Title => 'Vos comptes bancaires';
+
+  @override
+  String get tutorial4Body =>
+      'Reliez autant de comptes que nécessaire — chèque, épargne, carte de crédit.\n\nDeux réglages comptent : indiquez quels comptes sont conjoints, pour qu\'aucune dette ne s\'invente entre vous. Et sachez que les paiements de carte et les virements entre vos comptes sont écartés d\'office : une dépense se compte à l\'achat, jamais deux fois.';
+
+  @override
   String get bankJointLabel => 'Compte conjoint';
 
   @override
