@@ -13,11 +13,20 @@ class AppEnv {
 
   static bool get isProd => name == 'prod';
 
-  /// Clé de site reCAPTCHA v3 pour App Check sur le Web.
-  /// À fournir en production via --dart-define=RECAPTCHA_SITE_KEY=...
+  /// Clé de **site** reCAPTCHA v3 pour App Check sur le Web.
+  ///
+  /// Ce n'est pas un secret : une clé de site est visible dans le HTML de
+  /// tout site qui utilise reCAPTCHA, et c'est la clé **secrète** — déposée
+  /// dans la console Firebase, jamais ici — qui protège la vérification.
+  /// Elle est donc en valeur par défaut plutôt qu'en `--dart-define` : un
+  /// seul `flutter build web` qui oublierait le paramètre casserait
+  /// l'attestation en silence, sans erreur visible.
+  ///
+  /// Le futur projet de production aura sa propre clé, à passer par
+  /// `--dart-define=RECAPTCHA_SITE_KEY=...` avec `APP_ENV=prod`.
   static const String recaptchaSiteKey = String.fromEnvironment(
     'RECAPTCHA_SITE_KEY',
-    defaultValue: 'dummy-key-for-now',
+    defaultValue: '6Ld42l8tAAAAACKeHK_OpdxUC2jJ7NMnJyDGzy62',
   );
 
   /// Clés SDK publiques RevenueCat (ce ne sont pas des secrets, mais on les

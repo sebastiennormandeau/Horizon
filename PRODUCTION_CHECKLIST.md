@@ -174,14 +174,14 @@ requêtes. Ne jamais passer `ENFORCE_APP_CHECK=true` avant l'étape 5.
      et une **clé secrète** (va dans Firebase, jamais dans le dépôt).
 2. **Console Firebase → App Check → Apps → l'app Web** → fournisseur
    **reCAPTCHA v3** → coller la **clé secrète**.
-3. **Poser la clé de site** dans `lib/config/app_env.dart`
+3. ✅ **Clé de site posée** le 22 juillet 2026 dans `lib/config/app_env.dart`
    (`recaptchaSiteKey`). Ce n'est pas un secret : elle est visible dans le
-   HTML de tout site qui utilise reCAPTCHA. La mettre en valeur par défaut
-   plutôt qu'en `--dart-define` évite qu'un build l'oublie et casse
+   HTML de tout site qui utilise reCAPTCHA. Elle est en valeur par défaut
+   plutôt qu'en `--dart-define` pour éviter qu'un build l'oublie et casse
    silencieusement l'attestation. Le `--dart-define` reste disponible pour
    surcharger avec la clé du futur projet de production.
-4. **Rebuild + redéploiement** : `flutter build web` puis
-   `firebase deploy --only hosting --project horizon-dbba0`.
+4. ✅ **Rebuild + redéploiement faits** ; présence de la clé confirmée dans
+   le bundle en ligne.
 5. 🧪 **Vérifier AVANT d'appliquer** : Console Firebase → App Check →
    onglet *Apps*, la colonne des requêtes vérifiées doit se remplir après
    quelques minutes d'utilisation réelle de l'app. Tant qu'elle affiche des
