@@ -395,6 +395,35 @@ sandbox :
   ⚠️ **Non testé de bout en bout** — impossible sans clés de production et
   sans app hébergée. À valider au premier parcours réel.
 
+### Data Transparency Messaging (obligatoire) 🔧
+
+Rencontré le 22 juillet 2026 au premier essai réel (Tangerine, `ins_40`) :
+
+```
+code: INVALID_LINK_CUSTOMIZATION   type: INVALID_INPUT
+At least one Data Transparency Messaging use case is required to be configured.
+```
+
+Depuis la v5, Plaid exige que le **cas d'usage** des données soit déclaré
+pour être affiché à l'utilisateur avant son consentement. Sans ça, toute
+institution OAuth refuse de s'ouvrir. Ce n'est ni un bogue ni une limite
+d'institution.
+
+1. https://dashboard.plaid.com/link/data-transparency-v5 → configurer au
+   moins un cas d'usage. Pour Horizon, c'est la gestion et le suivi de
+   budget personnel — **pas** de paiement, ni de crédit, ni de vérification
+   d'identité : ne cocher que ce que l'app fait réellement, c'est le sens
+   même de la déclaration.
+2. Si le tableau de bord impose de créer une personnalisation **nommée**
+   plutôt que de modifier celle par défaut, renseigner son nom dans
+   `functions/.env` :
+   ```
+   PLAID_LINK_CUSTOMIZATION=<nom exact>
+   ```
+   puis redéployer `generatePlaidLinkToken`. À vide (cas normal), c'est la
+   personnalisation par défaut qui s'applique et aucun changement de code
+   n'est nécessaire.
+
 ### Vérifications 🧪
 - [ ] Le webhook est bien celui de `linkTokenCreate`
       (`https://us-central1-horizon-dbba0.cloudfunctions.net/plaidWebhookHandler`)

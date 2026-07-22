@@ -306,6 +306,13 @@ export const generatePlaidLinkToken = functions
           ? { redirect_uri: redirectUri }
           : {};
 
+    // Personnalisation Link. Plaid impose (Data Transparency Messaging v5)
+    // qu'au moins un « cas d'usage » soit déclaré, sinon l'ouverture d'une
+    // institution OAuth échoue avec INVALID_LINK_CUSTOMIZATION.
+    // Inutile si la personnalisation *par défaut* est configurée dans le
+    // tableau de bord ; à renseigner seulement si on en crée une nommée.
+    const customization = process.env.PLAID_LINK_CUSTOMIZATION;
+
     try {
       const response = await client.linkTokenCreate({
         user: {
@@ -317,6 +324,9 @@ export const generatePlaidLinkToken = functions
         language,
         webhook: webhookUrl,
         ...oauth,
+        ...(customization
+          ? { link_customization_name: customization }
+          : {}),
       });
       return { link_token: response.data.link_token };
     } catch (error) {
