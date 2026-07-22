@@ -334,16 +334,28 @@ vide, le comportement actuel est inchangé.
 
 | Plateforme | Variable à définir | À enregistrer dans le tableau de bord Plaid |
 | --- | --- | --- |
-| Android | `PLAID_ANDROID_PACKAGE=com.vibecodingmind.horizon` | Team Settings → API → *Allowed Android package names* |
-| Web / iOS | `PLAID_REDIRECT_URI=https://…` | Team Settings → API → *Allowed redirect URIs* |
+| **Web / iOS** (retenu) | `PLAID_REDIRECT_URI=https://horizon-dbba0.web.app/` | Team Settings → API → *Allowed redirect URIs* |
+| Android natif (non retenu) | `PLAID_ANDROID_PACKAGE=com.vibecodingmind.horizon` | Team Settings → API → *Allowed Android package names* |
 
-- **Android est le chemin le plus simple** : pas d'URL à héberger, le SDK
-  gère le retour. C'est la voie recommandée pour le pilote.
-- **Le Web impose d'héberger l'app** : Plaid refuse `localhost` comme URL de
-  redirection, donc `flutter run -d chrome --web-port=5050` ne peut pas
-  terminer un parcours OAuth. Il faut publier le build web (par exemple sur
-  `https://horizon-dbba0.web.app`, où seules les pages légales sont servies
-  aujourd'hui) et enregistrer cette URL exacte.
+**Décision du 22 juillet 2026 : ce sera le Web**, pour les deux membres du
+foyer. Motif : un iPhone sans compte Apple Developer (99 $ US/an) ne peut pas
+installer d'app native ; le Web s'ajoute à l'écran d'accueil et s'ouvre en
+plein écran. L'app est donc hébergée (§6) sur https://horizon-dbba0.web.app.
+
+⚠️ **`flutter run -d chrome` ne pourra jamais terminer un parcours OAuth** :
+Plaid refuse `localhost`. Pour tester une vraie banque, il faut passer par
+l'URL hébergée. Le développement local reste possible pour tout le reste.
+
+**Ordre impératif** — Plaid rejette `link/token/create` si l'URL de
+redirection n'est pas déjà dans l'allowlist. Définir `PLAID_REDIRECT_URI`
+avant de l'enregistrer casserait **toute** connexion bancaire, y compris en
+sandbox :
+1. Tableau de bord Plaid → Team Settings → API → *Allowed redirect URIs* →
+   ajouter exactement `https://horizon-dbba0.web.app/` (barre oblique finale
+   comprise).
+2. Seulement ensuite, ajouter dans `functions/.env` :
+   `PLAID_REDIRECT_URI=https://horizon-dbba0.web.app/`
+3. Redéployer `generatePlaidLinkToken`.
 - Côté client, la reprise après redirection est implémentée
   (`_resumePlaidOAuth` dans `home_screen.dart` : le jeton est mis de côté
   avant l'ouverture et Link est rouvert avec `receivedRedirectUri`).
@@ -364,12 +376,30 @@ vide, le comportement actuel est inchangé.
 
 ---
 
-## 6. SSL et domaine réel 🔧🧪
+## 6. Hébergement, SSL et domaine réel ✅🔧🧪
 
-Firebase Hosting fournit et renouvelle le TLS automatiquement :
+### ✅ App web en ligne (22 juillet 2026)
+https://horizon-dbba0.web.app sert l'application Flutter, avec TLS fourni et
+renouvelé automatiquement par Firebase. Les pages légales restent servies aux
+mêmes adresses (`/privacy`, `/terms`, `/privacy-en`, `/terms-en`).
+**Republier après toute modification du code :**
+```
+flutter build web
+firebase deploy --only hosting --project horizon-dbba0
+```
+- ⚠️ **L'inscription est désormais publique** : n'importe qui atteignant
+  l'URL peut créer un compte. Les protections en place restent le courriel
+  vérifié, le MFA obligatoire, le cloisonnement par foyer et le rate
+  limiting. C'est l'argument principal pour activer **App Check en
+  application réelle** (§1) maintenant que la base contient de vraies
+  données bancaires.
+- 🔧 Pour ajouter l'app à l'écran d'accueil d'un iPhone : Safari → Partager →
+  « Sur l'écran d'accueil ». Elle s'ouvre alors en plein écran, sans barre
+  d'adresse (metas iOS dans `web/index.html`).
+
+### 🔧 Domaine réel
 1. Acheter le domaine (ex. `horizonapp.ca`).
-2. `firebase init hosting` (dossier `build/web`), puis
-   `flutter build web --dart-define=APP_ENV=prod` et `firebase deploy --only hosting`.
+2. Builder en prod : `flutter build web --dart-define=APP_ENV=prod`.
 3. Console Firebase → Hosting → « Ajouter un domaine personnalisé » → suivre
    les enregistrements DNS (le certificat est émis en ~24 h).
 4. 🧪 Vérifier le cadenas + note A sur https://www.ssllabs.com/ssltest/
