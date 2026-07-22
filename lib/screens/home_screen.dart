@@ -757,7 +757,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       : 'Common';
                   _assignTransaction(transaction, bucket, household);
                 },
-                child: _buildTransactionCard(transaction, lang),
+                child: _buildTransactionCard(transaction, lang, household),
               ),
             );
           },
@@ -882,7 +882,11 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Carte d'une transaction à trier : pastille de catégorie, commerçant,
   /// montant. C'est l'objet que l'utilisateur manipule le plus — il porte
   /// donc la hiérarchie typographique la plus marquée de l'app.
-  Widget _buildTransactionCard(AppTransaction transaction, String lang) {
+  Widget _buildTransactionCard(
+    AppTransaction transaction,
+    String lang,
+    Household household,
+  ) {
     final cat = categoryOf(transaction.category);
 
     return Container(
@@ -948,6 +952,25 @@ class _HomeScreenState extends State<HomeScreen> {
               fontFeatures: const [FontFeature.tabularFigures()],
               color: context.colors.onSurface,
             ),
+          ),
+          // Le glissement ne propose que les cagnottes réelles. Un mouvement
+          // interne ou une dépense d'un mois révolu n'a pas de geste dédié :
+          // sans ce menu, rien ne permettait de les sortir de la file.
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, size: 18, color: context.mutedColor),
+            padding: EdgeInsets.zero,
+            onSelected: (bucket) =>
+                _assignTransaction(transaction, bucket, household),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'Transfer',
+                child: Text(_l10n.bucketTransfer),
+              ),
+              PopupMenuItem(
+                value: 'Archived',
+                child: Text(_l10n.bucketArchived),
+              ),
+            ],
           ),
         ],
       ),
