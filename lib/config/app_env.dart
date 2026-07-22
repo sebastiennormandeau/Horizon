@@ -13,7 +13,14 @@ class AppEnv {
 
   static bool get isProd => name == 'prod';
 
-  /// Clé de **site** reCAPTCHA v3 pour App Check sur le Web.
+  /// Clé de **site** reCAPTCHA **Enterprise** pour App Check sur le Web.
+  ///
+  /// ⚠️ Enterprise, pas v3 classique : les deux familles de clés commencent
+  /// par « 6L » et ne se distinguent pas visuellement. Pour trancher :
+  /// `gcloud recaptcha keys list --project=horizon-dbba0` ne liste que les
+  /// clés Enterprise. Le fournisseur dans `main.dart`
+  /// (`ReCaptchaEnterpriseProvider`) et l'enregistrement de l'app Web dans
+  /// la console Firebase doivent s'accorder avec cette clé.
   ///
   /// Ce n'est pas un secret : une clé de site est visible dans le HTML de
   /// tout site qui utilise reCAPTCHA, et c'est la clé **secrète** — déposée

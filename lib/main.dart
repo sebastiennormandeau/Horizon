@@ -38,7 +38,15 @@ void main() async {
     providerApple: kDebugMode
         ? const AppleDebugProvider()
         : const AppleAppAttestProvider(),
-    providerWeb: ReCaptchaV3Provider(AppEnv.recaptchaSiteKey),
+    // reCAPTCHA **Enterprise**, et non v3 classique : la clé du projet est
+    // une clé Enterprise (visible via `gcloud recaptcha keys list`). Les
+    // deux familles de clés commencent par « 6L » et sont indiscernables à
+    // l'œil, mais le fournisseur doit correspondre — sinon App Check
+    // n'échoue pas bruyamment, il classe simplement 100 % des requêtes en
+    // « non vérifiées ».
+    // L'enregistrement de l'app Web dans la console Firebase doit lui aussi
+    // être en reCAPTCHA Enterprise avec cette même clé.
+    providerWeb: ReCaptchaEnterpriseProvider(AppEnv.recaptchaSiteKey),
   );
 
   if (!kIsWeb) {
