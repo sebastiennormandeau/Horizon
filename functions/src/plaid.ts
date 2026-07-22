@@ -416,15 +416,22 @@ export const exchangePublicToken = functions
       .get();
     const tier = householdSnap.data()?.subscription_tier ?? "free";
     if (tier !== "premium") {
+      // Limite du plan gratuit, ajustable par FREE_PLAN_BANK_LIMIT.
+      // Elle existe pour la monétisation : pendant le pilote, où personne ne
+      // paie et où l'on veut réunir comptes bancaires et cartes de crédit au
+      // même endroit, on la relève plutôt que de marquer le foyer
+      // « premium » — ce champ n'est écrit que par le webhook RevenueCat et
+      // doit continuer de refléter un vrai abonnement.
+      const limit = Number(process.env.FREE_PLAN_BANK_LIMIT ?? "1");
       const existing = await db
         .collection("bank_connections")
         .where("household_id", "==", householdId)
-        .limit(1)
+        .count()
         .get();
-      if (!existing.empty) {
+      if (existing.data().count >= limit) {
         throw new functions.https.HttpsError(
           "resource-exhausted",
-          "Le plan gratuit permet un seul compte bancaire par foyer. Passez à Horizon Premium pour connecter des comptes illimités."
+          `Le plan gratuit permet ${limit} connexion(s) bancaire(s) par foyer. Passez à Horizon Premium pour connecter des comptes illimités.`
         );
       }
     }
