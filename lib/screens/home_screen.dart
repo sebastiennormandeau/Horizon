@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:plaid_flutter/plaid_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/app_transaction.dart';
@@ -73,6 +75,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _exitSubscription = PlaidLink.onExit.listen((event) {
       debugPrint('Plaid Exit: ${event.error?.message ?? 'User cancelled'}');
     });
+
+    if (kIsWeb) _resumePlaidOAuth();
   }
 
   @override
@@ -83,6 +87,43 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  /// Plateforme transmise au serveur : Plaid revient vers une URL sur le Web
+  /// et iOS, mais vers un nom de paquet sur Android.
+  static String get _plaidPlatform {
+    if (kIsWeb) return 'web';
+    return defaultTargetPlatform == TargetPlatform.android ? 'android' : 'ios';
+  }
+
+  /// Clé du jeton mis de côté le temps d'un aller-retour OAuth sur le Web.
+  static const _linkTokenKey = 'plaid_pending_link_token';
+
+  /// Reprend une connexion bancaire interrompue par une authentification
+  /// OAuth (Web uniquement).
+  ///
+  /// Les institutions canadiennes authentifient chez elles puis rechargent
+  /// l'app à l'URL de redirection avec un paramètre `oauth_state_id`. Plaid
+  /// exige alors de rouvrir Link avec le **même** jeton et l'URL reçue —
+  /// d'où la mise de côté du jeton avant l'ouverture.
+  Future<void> _resumePlaidOAuth() async {
+    final url = Uri.base;
+    if (!url.queryParameters.containsKey('oauth_state_id')) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(_linkTokenKey);
+    // Consommé dans tous les cas : un jeton périmé ne doit pas rouvrir Link
+    // au prochain démarrage.
+    await prefs.remove(_linkTokenKey);
+    if (token == null) return;
+
+    PlaidLink.create(
+      configuration: LinkTokenConfiguration(
+        token: token,
+        receivedRedirectUri: url.toString(),
+      ),
+    );
+    PlaidLink.open();
+  }
+
   Future<void> _openPlaid() async {
     try {
       final callable = FirebaseFunctions.instance.httpsCallable(
@@ -91,8 +132,15 @@ class _HomeScreenState extends State<HomeScreen> {
       // Plaid Link s'affiche dans la langue active de l'app.
       final result = await callable.call({
         'language': LocaleController.instance.effectiveLanguageCode,
+        'platform': _plaidPlatform,
       });
-      final linkToken = result.data['link_token'];
+      final linkToken = result.data['link_token'] as String;
+
+      if (kIsWeb) {
+        // Survit au rechargement de page provoqué par l'OAuth.
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_linkTokenKey, linkToken);
+      }
 
       final linkTokenConfiguration = LinkTokenConfiguration(token: linkToken);
 

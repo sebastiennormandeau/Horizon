@@ -4,7 +4,10 @@
 **Application** : Horizon (gestion de finances personnelles pour couples)
 **Responsable de la sécurité et de la protection des renseignements personnels** :
 Sébastien Normandeau — sebastiennormandeau@gmail.com
-**Version** : 1.0 — 21 juillet 2026 · **Prochaine revue** : juillet 2027 (revue annuelle obligatoire)
+**Version** : 1.1 — 22 juillet 2026 · **Prochaine revue** : juillet 2027 (revue annuelle obligatoire)
+*Journal : 1.1 — passage de `horizon-dbba0` en pilote restreint avec de
+vraies données bancaires (§4) ; ajout de la remise à zéro en libre-service et
+du départ d'un foyer à la section disposition (§3).*
 
 Cette politique précise, pour chaque catégorie de données traitée par
 Horizon, la durée de conservation, l'événement qui déclenche sa suppression
@@ -95,6 +98,29 @@ toutes les sessions et supprime le second facteur enrôlé.
 L'opération est **irréversible** et l'interface l'annonce explicitement
 avant confirmation.
 
+### Deux autres voies d'effacement en libre-service
+
+Outre la suppression du compte, l'application offre deux effacements ciblés,
+tous deux exécutés côté serveur avec confirmation forte par saisie d'un
+mot-clé (Réglages → « Gérer mon foyer ») :
+
+- **Départ d'un foyer** (`leaveHousehold`, en cas de séparation) : révocation
+  des items Plaid de la personne qui part puis effacement de ses connexions,
+  suppression de **ses** transactions, effacement des bilans du foyer — ce
+  sont des agrégats qui mêlent les dépenses des deux membres —, annulation de
+  la dette interne consignée dans `settlements`, et régénération du code
+  d'invitation pour que l'ancien code ne rouvre pas le foyer. Le compte de la
+  personne est conservé : elle peut créer un nouveau foyer.
+- **Remise à zéro du foyer** (`resetHouseholdData`) : efface connexions
+  bancaires, transactions, budgets, règlements et bilans, et remet les
+  cagnottes et la dette à zéro. Les comptes, le foyer et le second facteur
+  MFA sont conservés. Réservée au membre qui a créé le foyer lorsqu'ils sont
+  deux, l'effacement portant aussi sur les données de l'autre.
+
+Comme la suppression de compte, ces deux opérations effacent les documents
+des systèmes de production sans copie de sauvegarde applicative ; seules les
+sauvegardes d'infrastructure du §4 peuvent encore les contenir temporairement.
+
 ### Portabilité préalable
 
 Avant de supprimer son compte, l'utilisateur peut exporter l'intégralité de
@@ -128,10 +154,14 @@ réintroduire des données effacées : le cas échéant, la suppression est
 réexécutée sur les comptes concernés dans le cadre de la procédure de
 rétablissement.
 
-> **État au 21 juillet 2026** : ces mécanismes s'activent avec la création
-> du projet de production (PRODUCTION_CHECKLIST.md §5 et §7). L'environnement
-> de développement actuel n'héberge aucune donnée bancaire réelle — Plaid y
-> fonctionne en mode « sandbox ».
+> **État au 22 juillet 2026** : l'environnement `horizon-dbba0` est passé en
+> **pilote restreint** et héberge désormais de vraies données bancaires pour
+> un nombre fermé de comptes nommés (accès production limité accordé par
+> Plaid). Les sauvegardes décrites ci-dessus doivent donc y être actives :
+> voir PRODUCTION_CHECKLIST.md §7 pour l'état d'activation. Tant qu'elles ne
+> le sont pas, la seule protection contre une suppression accidentelle est la
+> réplication Firestore, qui **ne protège pas** contre un effacement (il se
+> réplique aussi).
 
 ## 5. Fondement légal
 

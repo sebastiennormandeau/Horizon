@@ -25,9 +25,15 @@
   déclencheur de suppression par catégorie de données, séquence réelle de
   `deleteAccount`, rétention des sauvegardes, fondement Loi 25) — document
   à référencer pour la **question 11 du questionnaire de sécurité Plaid**
-  (rétention et destruction des données). Une version PDF prête à
-  transmettre est générée à côté (`DATA_RETENTION_DISPOSAL_POLICY.pdf`) ;
-  la régénérer après toute modification du fichier Markdown.
+  (rétention et destruction des données).
+- **Versions PDF** prêtes à transmettre à côté de chaque politique
+  (`*.pdf`). **Les régénérer après toute modification du Markdown** :
+  ```
+  node tools/md2html.js SECURITY_POLICY.md "$env:TEMP\p.html"
+  & "C:\Program Files\Google\Chrome\Application\chrome.exe" --headless `
+    --disable-gpu --no-pdf-header-footer `
+    --print-to-pdf="SECURITY_POLICY.pdf" "file:///$($env:TEMP -replace '\\','/')/p.html"
+  ```
 
 ### 🔧 MFA sur les accès internes (obligatoire — voir politique §1)
 
@@ -274,14 +280,87 @@ Le code est prêt (`--dart-define=APP_ENV=prod` + `lib/firebase_options_prod.dar
    ```
 5. Déployer : `firebase deploy --project horizon-prod`
 6. Builds de prod : `flutter build <plateforme> --dart-define=APP_ENV=prod ...`
-7. Règle d'or : **horizon-dbba0 = dev/test uniquement** ; aucune vraie donnée
-   bancaire n'y transite (Plaid sandbox).
+7. ⚠️ **La règle d'or a changé le 22 juillet 2026.** Elle disait
+   « horizon-dbba0 = dev/test uniquement, aucune vraie donnée bancaire ».
+   Ce n'est plus vrai : voir §5 bis. Le projet `horizon-prod` reste requis
+   **avant toute ouverture au public**, et les données du pilote ne seront
+   pas migrées.
 
-### Plaid production 🔧
-- [ ] Demander l'accès Production sur https://dashboard.plaid.com
-  (questionnaire de sécurité — les réponses : chiffrement Firestore au repos,
-  tokens côté serveur uniquement, App Check, règles d'accès par foyer)
-- [ ] Vérifier le webhook configuré automatiquement par `linkTokenCreate`
+---
+
+## 5 bis. Pilote avec données bancaires réelles (horizon-dbba0) 🔧🧪
+
+Plaid a accordé un **accès production limité** (pas la production complète,
+dont le questionnaire est encore en revue). Objectif : valider l'app au
+quotidien à deux comptes nommés, avec de vraies transactions.
+
+**Conséquence assumée** : `horizon-dbba0` cesse d'être un bac à sable. Il
+devient un *environnement de pilote restreint* soumis à toutes les mesures de
+SECURITY_POLICY.md — laquelle a été mise à jour en conséquence (v1.2 §4),
+ainsi que DATA_RETENTION_DISPOSAL_POLICY.md (v1.1 §4). Ces deux documents
+étant transmis à Plaid, leur contenu doit rester exact.
+
+### Ordre des opérations (l'ordre compte)
+
+1. **Vider les données de test d'abord**, tant que Plaid est encore en
+   sandbox : app → Réglages → Gérer mon foyer → « Réinitialiser les données
+   du foyer » → taper `REINITIALISER`. La révocation des items sandbox
+   réussit tant qu'on n'a pas basculé ; après bascule elle échouerait (les
+   jetons sandbox n'existent pas en production) et l'erreur serait seulement
+   consignée. À faire **sur chaque foyer de test**.
+2. **Poser le secret de production Plaid** (le `client_id` est le même pour
+   tous les environnements, seul le **secret** diffère — le récupérer dans
+   https://dashboard.plaid.com → Developers → Keys → *Production*) :
+   ```
+   firebase functions:secrets:set PLAID_SECRET --project horizon-dbba0
+   ```
+   Coller la valeur au prompt. ⚠️ **Ne pas détruire l'ancienne version avant
+   d'avoir redéployé** (leçon du 19 juillet : une version détruite alors
+   qu'elle était encore liée casse les fonctions).
+3. **Basculer l'environnement** dans `functions/.env` : `PLAID_ENV=production`.
+4. **Redéployer** les fonctions qui utilisent Plaid :
+   ```
+   firebase deploy --only "functions:generatePlaidLinkToken,functions:exchangePublicToken,functions:plaidWebhookHandler,functions:deleteAccount,functions:leaveHousehold,functions:resetHouseholdData" --project horizon-dbba0
+   ```
+5. **Activer les sauvegardes** — obligatoire maintenant qu'il y a de vraies
+   données (voir §7, en remplaçant `horizon-prod` par `horizon-dbba0`).
+
+### OAuth : le point qui bloque en pratique 🔧
+
+En production, la quasi-totalité des institutions **canadiennes** impose
+l'OAuth : la banque authentifie chez elle puis renvoie vers l'app. Le code
+est prêt et piloté par deux variables facultatives de `functions/.env` — à
+vide, le comportement actuel est inchangé.
+
+| Plateforme | Variable à définir | À enregistrer dans le tableau de bord Plaid |
+| --- | --- | --- |
+| Android | `PLAID_ANDROID_PACKAGE=com.vibecodingmind.horizon` | Team Settings → API → *Allowed Android package names* |
+| Web / iOS | `PLAID_REDIRECT_URI=https://…` | Team Settings → API → *Allowed redirect URIs* |
+
+- **Android est le chemin le plus simple** : pas d'URL à héberger, le SDK
+  gère le retour. C'est la voie recommandée pour le pilote.
+- **Le Web impose d'héberger l'app** : Plaid refuse `localhost` comme URL de
+  redirection, donc `flutter run -d chrome --web-port=5050` ne peut pas
+  terminer un parcours OAuth. Il faut publier le build web (par exemple sur
+  `https://horizon-dbba0.web.app`, où seules les pages légales sont servies
+  aujourd'hui) et enregistrer cette URL exacte.
+- Côté client, la reprise après redirection est implémentée
+  (`_resumePlaidOAuth` dans `home_screen.dart` : le jeton est mis de côté
+  avant l'ouverture et Link est rouvert avec `receivedRedirectUri`).
+  ⚠️ **Non testé de bout en bout** — impossible sans clés de production et
+  sans app hébergée. À valider au premier parcours réel.
+
+### Vérifications 🧪
+- [ ] Le webhook est bien celui de `linkTokenCreate`
+      (`https://us-central1-horizon-dbba0.cloudfunctions.net/plaidWebhookHandler`)
+      et la signature JWT est vérifiée (`PLAID_SKIP_WEBHOOK_VERIFICATION=false`)
+- [ ] Une vraie banque se connecte et importe des transactions réelles
+- [ ] Le plan gratuit bloque bien la 2ᵉ connexion bancaire du foyer
+- [ ] La suppression de compte révoque réellement l'item côté Plaid
+      (vérifier dans le tableau de bord que l'item disparaît)
+- [ ] 🔧 Activer App Check en application réelle (§1) : avec de vraies
+      données bancaires, `ENFORCE_APP_CHECK=false` devient difficile à
+      justifier
 
 ---
 
@@ -300,6 +379,11 @@ Firebase Hosting fournit et renouvelle le TLS automatiquement :
 ---
 
 ## 7. Sauvegardes de la base de données 🔧🧪
+
+⚠️ **Devenu urgent le 22 juillet 2026** : `horizon-dbba0` héberge maintenant
+de vraies données bancaires (§5 bis). Exécuter les commandes ci-dessous en
+remplaçant `horizon-prod` par **`horizon-dbba0`** dès maintenant, puis de
+nouveau sur le projet de production le jour où il existera.
 
 Firestore est répliqué, mais **répliqué ≠ sauvegardé** (une suppression se
 réplique aussi). Deux protections à activer :

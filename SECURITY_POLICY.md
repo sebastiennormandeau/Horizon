@@ -4,9 +4,11 @@
 **Application** : Horizon (gestion de finances personnelles pour couples)
 **Responsable de la sécurité et de la protection des renseignements personnels** :
 Sébastien Normandeau — sebastiennormandeau@gmail.com
-**Version** : 1.1 — 19 juillet 2026 · **Prochaine revue** : juillet 2027 (revue annuelle obligatoire)
+**Version** : 1.2 — 22 juillet 2026 · **Prochaine revue** : juillet 2027 (revue annuelle obligatoire)
 *Journal : 1.1 — double authentification obligatoire pour tous les comptes
-utilisateurs et procédure de réinitialisation administrateur (§6 bis).*
+utilisateurs et procédure de réinitialisation administrateur (§6 bis).
+1.2 — `horizon-dbba0` devient un environnement de pilote restreint hébergeant
+de vraies données bancaires pour un nombre fermé de comptes nommés (§4).*
 
 Cette politique s'applique à l'ensemble des systèmes d'Horizon : application
 Flutter (Android, iOS, Web), Cloud Functions, bases de données Firestore,
@@ -69,9 +71,20 @@ utilisés pour le développement.
 
 ## 4. Sécurité du développement
 
-- **Environnements séparés** : projet de développement (`horizon-dbba0`,
-  Plaid sandbox — aucune vraie donnée bancaire) distinct du projet de
-  production. Bascule par `--dart-define=APP_ENV=prod`.
+- **Environnements** : `horizon-dbba0` est un **environnement de pilote
+  restreint**. Depuis le 22 juillet 2026, il est raccordé à Plaid en accès
+  production limité et héberge donc de vraies données bancaires, pour un
+  nombre fermé de comptes nommés appartenant au responsable et à son foyer.
+  Il n'est pas ouvert au public et aucune inscription externe n'y est
+  sollicitée. Les mesures de la présente politique — MFA obligatoire,
+  chiffrement, cloisonnement par foyer, jetons bancaires inaccessibles aux
+  clients — s'y appliquent intégralement, sans exception « parce que c'est du
+  développement ». Le projet de production distinct (`horizon-prod`,
+  `--dart-define=APP_ENV=prod`) reste prévu avant toute ouverture au public ;
+  les données du pilote ne seront pas migrées.
+  ⚠️ *Corollaire assumé* : cet environnement contenant désormais des données
+  réelles, ses sauvegardes (PITR et sauvegardes planifiées) doivent être
+  actives — voir PRODUCTION_CHECKLIST.md §7.
 - **Intégration continue** obligatoire sur chaque changement : analyse
   statique Flutter (0 avertissement toléré), tests unitaires, compilation
   TypeScript des fonctions et **audit des dépendances npm**.

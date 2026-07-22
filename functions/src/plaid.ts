@@ -270,11 +270,41 @@ export const generatePlaidLinkToken = functions
             pattern: /^(fr|en)$/,
           });
 
+    // Plateforme appelante : détermine comment Plaid revient vers l'app
+    // après une authentification OAuth.
+    const platform =
+      data?.platform === undefined
+        ? "web"
+        : assertString(data.platform, "platform", {
+            maxLength: 7,
+            pattern: /^(web|android|ios)$/,
+          });
+
     const client = getPlaidClient();
     const projectId = process.env.GCLOUD_PROJECT;
     const webhookUrl = projectId
       ? `https://us-central1-${projectId}.cloudfunctions.net/plaidWebhookHandler`
       : undefined;
+
+    // En production, la quasi-totalité des institutions canadiennes impose
+    // l'OAuth : la banque authentifie l'utilisateur chez elle puis renvoie
+    // vers nous. Sans ces paramètres — enregistrés au préalable dans le
+    // tableau de bord Plaid — ces institutions échouent.
+    //   - web et iOS : une URL https exacte (PLAID_REDIRECT_URI) ;
+    //     « localhost » est refusé, l'app web doit donc être hébergée.
+    //   - Android : le nom du paquet, jamais une URL.
+    // Les deux sont facultatifs : à vide, le comportement sandbox actuel est
+    // inchangé.
+    const redirectUri = process.env.PLAID_REDIRECT_URI;
+    const androidPackage = process.env.PLAID_ANDROID_PACKAGE;
+    const oauth =
+      platform === "android"
+        ? androidPackage
+          ? { android_package_name: androidPackage }
+          : {}
+        : redirectUri
+          ? { redirect_uri: redirectUri }
+          : {};
 
     try {
       const response = await client.linkTokenCreate({
@@ -286,6 +316,7 @@ export const generatePlaidLinkToken = functions
         country_codes: [CountryCode.Us, CountryCode.Ca],
         language,
         webhook: webhookUrl,
+        ...oauth,
       });
       return { link_token: response.data.link_token };
     } catch (error) {
