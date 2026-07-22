@@ -446,7 +446,7 @@ renouvelé automatiquement par Firebase. Les pages légales restent servies aux
 mêmes adresses (`/privacy`, `/terms`, `/privacy-en`, `/terms-en`).
 **Republier après toute modification du code :**
 ```
-flutter build web
+flutter build web --pwa-strategy=none
 firebase deploy --only hosting --project horizon-dbba0
 ```
 - ⚠️ **L'inscription est désormais publique** : n'importe qui atteignant

@@ -52,6 +52,19 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <script>
+    // Désinstalle tout service worker hérité des versions précédentes.
+    // Flutter en enregistrait un pour le fonctionnement hors ligne ; il
+    // continuait de servir un bundle périmé après un déploiement, obligeant
+    // à vider le cache à la main. L'app est désormais construite avec
+    // --pwa-strategy=none, mais celui déjà installé sur un appareil doit
+    // être retiré explicitement.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        for (var i = 0; i < regs.length; i++) regs[i].unregister();
+      });
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
