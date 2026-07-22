@@ -20,6 +20,14 @@
   revue trimestrielle des accès) — c'est ce document précis qu'on référence
   pour la **question 3 du questionnaire de sécurité Plaid** (contrôle
   d'accès aux données).
+- **[DATA_RETENTION_DISPOSAL_POLICY.md](DATA_RETENTION_DISPOSAL_POLICY.md)** :
+  politique de rétention et de disposition (durée de conservation et
+  déclencheur de suppression par catégorie de données, séquence réelle de
+  `deleteAccount`, rétention des sauvegardes, fondement Loi 25) — document
+  à référencer pour la **question 11 du questionnaire de sécurité Plaid**
+  (rétention et destruction des données). Une version PDF prête à
+  transmettre est générée à côté (`DATA_RETENTION_DISPOSAL_POLICY.pdf`) ;
+  la régénérer après toute modification du fichier Markdown.
 
 ### 🔧 MFA sur les accès internes (obligatoire — voir politique §1)
 
