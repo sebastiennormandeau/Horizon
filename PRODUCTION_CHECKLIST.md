@@ -158,19 +158,39 @@ Limites par utilisateur (fenêtre glissante, Firestore `rate_limits`) :
   (`assertString`, motifs regex pour join_code et public_token Plaid).
 
 ### 🔧 Protection anti-bot (App Check)
-Le code est prêt ; il faut activer les attestations réelles :
-1. Console Firebase → App Check → enregistrer les apps :
-   - Android : **Play Integrity**
-   - iOS : **App Attest**
-   - Web : **reCAPTCHA v3** → créer une clé sur
-     https://www.google.com/recaptcha/admin → passer la clé de site via
-     `--dart-define=RECAPTCHA_SITE_KEY=<clé>` au build web.
-2. Console Firebase → App Check → appliquer (« Enforce ») sur Firestore,
-   Functions et Auth.
-3. Dans `functions/.env` (ou `.env.<projet-prod>`) : `ENFORCE_APP_CHECK=true`
-   puis redéployer les fonctions.
-4. En dev, enregistrer les jetons de débogage affichés dans la console de
-   l'app (App Check → Debug tokens).
+
+⚠️ **L'ordre est critique** : activer l'application (« Enforce ») avant que
+le Web produise des jetons valides rend l'app **inutilisable pour toi
+aussi** — toutes les fonctions appelables rejetteraient tes propres
+requêtes. Ne jamais passer `ENFORCE_APP_CHECK=true` avant l'étape 5.
+
+1. **Créer la clé reCAPTCHA v3** sur
+   https://www.google.com/recaptcha/admin/create
+   - Type : **reCAPTCHA v3** (pas v2, pas Enterprise — le code utilise
+     `ReCaptchaV3Provider`)
+   - Domaines : `horizon-dbba0.web.app` **et** `localhost`
+     (sans `localhost`, `flutter run -d chrome` cesse de fonctionner)
+   - Elle produit deux clés : une **clé de site** (publique, va dans l'app)
+     et une **clé secrète** (va dans Firebase, jamais dans le dépôt).
+2. **Console Firebase → App Check → Apps → l'app Web** → fournisseur
+   **reCAPTCHA v3** → coller la **clé secrète**.
+3. **Poser la clé de site** dans `lib/config/app_env.dart`
+   (`recaptchaSiteKey`). Ce n'est pas un secret : elle est visible dans le
+   HTML de tout site qui utilise reCAPTCHA. La mettre en valeur par défaut
+   plutôt qu'en `--dart-define` évite qu'un build l'oublie et casse
+   silencieusement l'attestation. Le `--dart-define` reste disponible pour
+   surcharger avec la clé du futur projet de production.
+4. **Rebuild + redéploiement** : `flutter build web` puis
+   `firebase deploy --only hosting --project horizon-dbba0`.
+5. 🧪 **Vérifier AVANT d'appliquer** : Console Firebase → App Check →
+   onglet *Apps*, la colonne des requêtes vérifiées doit se remplir après
+   quelques minutes d'utilisation réelle de l'app. Tant qu'elle affiche des
+   requêtes non vérifiées, ne pas passer à l'étape 6.
+6. **Appliquer** : App Check → *Enforce* sur Firestore, Functions et Auth,
+   puis `ENFORCE_APP_CHECK=true` dans `functions/.env` et redéployer les
+   fonctions.
+7. En dev, enregistrer les jetons de débogage affichés dans la console du
+   navigateur (App Check → *Debug tokens*).
 
 ### ✅ Webhooks signés (fait)
 - Plaid : signature JWT ES256 vérifiée (clé récupérée via
