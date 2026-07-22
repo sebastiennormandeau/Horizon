@@ -141,6 +141,24 @@ export function isInternalTransfer(detailed?: string | null): boolean {
 }
 
 /**
+ * Paye régulière, déjà prise en compte dans le budget mensuel.
+ *
+ * Volontairement restreint au salaire : les autres entrées d'argent —
+ * remboursement, pige, dividende, remboursement d'impôt, cadeau — ne sont
+ * pas budgétées et doivent rester à classer, puisqu'elles augmentent
+ * réellement ce que le foyer peut dépenser. Les glisser vers une cagnotte
+ * l'augmente, ce qui est le comportement voulu.
+ *
+ * Un salaire, lui, financerait deux fois la même cagnotte : une fois par le
+ * budget, une fois par le glissement.
+ */
+const PAYROLL_DETAILED = new Set(["INCOME_WAGES", "INCOME_SALARY"]);
+
+export function isPayroll(detailed?: string | null): boolean {
+  return !!detailed && PAYROLL_DETAILED.has(detailed);
+}
+
+/**
  * Recalcule le nombre de connexions bancaires du foyer et l'inscrit sur son
  * document.
  *
@@ -350,7 +368,7 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
         // des mois révolus sont écartées du tri mais restent dans les bilans.
         assigned_to_bucket: isInternalTransfer(detailed)
           ? TRANSFER_BUCKET
-          : isOld
+          : isOld || isPayroll(detailed)
             ? ARCHIVED_BUCKET
             : "",
         status: "Posted",

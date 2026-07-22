@@ -32,7 +32,13 @@ const INTERNAL_TRANSFER_DETAILED = new Set([
   "TRANSFER_IN_ACCOUNT_TRANSFER",
 ]);
 
+// Paye régulière : déjà comptée dans le budget, la glisser vers une cagnotte
+// la financerait une seconde fois. Restreint au salaire — les autres entrées
+// (pige, remboursement, cadeau) ne sont pas budgétées et restent à classer.
+const PAYROLL_DETAILED = new Set(["INCOME_WAGES", "INCOME_SALARY"]);
+
 const TRANSFER_BUCKET = "Transfer";
+const ARCHIVED_BUCKET = "Archived";
 const BATCH_SIZE = 400; // limite Firestore : 500 écritures par lot
 
 const apply = process.argv.includes("--apply");
@@ -46,10 +52,14 @@ const db = getFirestore();
   const todo = [];
   for (const doc of snap.docs) {
     const t = doc.data();
-    if (!INTERNAL_TRANSFER_DETAILED.has(t.category_detailed)) continue;
-    if (t.assigned_to_bucket === TRANSFER_BUCKET) continue;
+    const isTransfer = INTERNAL_TRANSFER_DETAILED.has(t.category_detailed);
+    const isPayroll = PAYROLL_DETAILED.has(t.category_detailed);
+    if (!isTransfer && !isPayroll) continue;
+    const target = isTransfer ? TRANSFER_BUCKET : ARCHIVED_BUCKET;
+    if (t.assigned_to_bucket === target) continue;
     todo.push({
       ref: doc.ref,
+      target,
       from: t.assigned_to_bucket === "" ? "(à trier)" : t.assigned_to_bucket,
       amount: typeof t.amount === "number" ? t.amount : 0,
       merchant: t.merchant_name,
@@ -61,7 +71,7 @@ const db = getFirestore();
   const fromSorted = todo.filter((t) => t.from !== "(à trier)");
 
   console.log(`Transactions examinées : ${snap.size}`);
-  console.log(`À reclasser en « ${TRANSFER_BUCKET} » : ${todo.length}`);
+  console.log(`À reclasser (transfert interne ou paye) : ${todo.length}`);
   console.log(`  dont déjà triées dans une cagnotte : ${fromSorted.length}`);
   console.log(`  montant total retiré des dépenses : ${total.toFixed(2)} $`);
 
@@ -81,7 +91,7 @@ const db = getFirestore();
     const batch = db.batch();
     todo
       .slice(i, i + BATCH_SIZE)
-      .forEach((t) => batch.update(t.ref, { assigned_to_bucket: TRANSFER_BUCKET }));
+      .forEach((t) => batch.update(t.ref, { assigned_to_bucket: t.target }));
     await batch.commit();
   }
   console.log(`\n${todo.length} transaction(s) reclassée(s).`);
