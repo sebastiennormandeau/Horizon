@@ -114,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 8),
               Text(
                 l10n.appTagline,
-                style: const TextStyle(color: Colors.grey, fontSize: 16),
+                style: TextStyle(color: context.mutedColor, fontSize: 16),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 48),
@@ -145,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   : ElevatedButton(
                       onPressed: _login,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: Text(
@@ -161,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: _resetPassword,
                 child: Text(
                   l10n.forgotPassword,
-                  style: const TextStyle(color: Colors.grey),
+                  style: TextStyle(color: context.mutedColor),
                 ),
               ),
               const SizedBox(height: 8),

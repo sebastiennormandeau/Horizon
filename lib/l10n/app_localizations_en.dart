@@ -868,6 +868,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vJoinCodeInvalid => 'The code must contain 6 letters or digits.';
 
   @override
+  String get chartOtherCategories => 'Other categories';
+
+  @override
+  String get themeSection => 'Appearance';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get themeSystem => 'Automatic (system setting)';
+
+  @override
   String get householdSection => 'Household';
 
   @override

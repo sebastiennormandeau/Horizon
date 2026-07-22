@@ -198,7 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     : ElevatedButton(
                         onPressed: _register,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         child: Text(

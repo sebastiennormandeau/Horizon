@@ -187,7 +187,7 @@ class _MfaEnrollScreenState extends State<MfaEnrollScreen> {
                   const SizedBox(height: 16),
                   Text(
                     l10n.mfaPreparing,
-                    style: const TextStyle(color: Colors.grey),
+                    style: TextStyle(color: context.mutedColor),
                   ),
                 ],
               ),
@@ -214,15 +214,15 @@ class _MfaEnrollScreenState extends State<MfaEnrollScreen> {
                       const SizedBox(height: 8),
                       Text(
                         l10n.mfaEnrollIntro,
-                        style: const TextStyle(color: Colors.grey),
+                        style: TextStyle(color: context.mutedColor),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 28),
                       _stepTitle(l10n.mfaStep1),
                       Text(
                         l10n.mfaStep1Detail,
-                        style: const TextStyle(
-                            color: Colors.grey, fontSize: 13),
+                        style: TextStyle(
+                            color: context.mutedColor, fontSize: 13),
                       ),
                       const SizedBox(height: 24),
                       if (_qrCodeUrl == null) ...[
@@ -264,7 +264,7 @@ class _MfaEnrollScreenState extends State<MfaEnrollScreen> {
                             : ElevatedButton(
                                 onPressed: _enroll,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
+                                  
                                   padding: const EdgeInsets.symmetric(
                                       vertical: 16),
                                 ),
@@ -294,9 +294,9 @@ class _MfaEnrollScreenState extends State<MfaEnrollScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.redAccent.withValues(alpha: 0.1),
+        color: context.palette.danger.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.redAccent),
+        border: Border.all(color: context.palette.danger),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -304,13 +304,13 @@ class _MfaEnrollScreenState extends State<MfaEnrollScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.error_outline,
-                  color: Colors.redAccent, size: 20),
+              Icon(Icons.error_outline,
+                  color: context.palette.danger, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   _prepareError ?? l10n.mfaSecretError,
-                  style: const TextStyle(color: Colors.redAccent),
+                  style: TextStyle(color: context.palette.danger),
                 ),
               ),
             ],
@@ -319,7 +319,7 @@ class _MfaEnrollScreenState extends State<MfaEnrollScreen> {
           ElevatedButton(
             onPressed: _prepareSecret,
             style:
-                ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                ElevatedButton.styleFrom(),
             child: Text(l10n.retry),
           ),
         ],
@@ -372,16 +372,16 @@ class _MfaEnrollScreenState extends State<MfaEnrollScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: context.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             l10n.mfaStep2Manual,
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+            style: TextStyle(fontSize: 12, color: context.mutedColor),
           ),
           const SizedBox(height: 8),
           Row(
@@ -412,19 +412,19 @@ class _MfaEnrollScreenState extends State<MfaEnrollScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.12),
+        color: context.palette.warning.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange),
+        border: Border.all(color: context.palette.warning),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.warning_amber, color: Colors.orange, size: 20),
+          Icon(Icons.warning_amber, color: context.palette.warning, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               l10n.mfaBackupWarning,
-              style: const TextStyle(fontSize: 12, color: Colors.orange),
+              style: TextStyle(fontSize: 12, color: context.palette.warning),
             ),
           ),
         ],

@@ -163,7 +163,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           return Center(
             child: Text(
               _l10n.noCategorizedTransactions,
-              style: const TextStyle(color: Colors.grey),
+              style: TextStyle(color: context.mutedColor),
             ),
           );
         }
@@ -182,7 +182,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 children: [
                   Text(
                     _l10n.transactionCount('${transactions.length}'),
-                    style: const TextStyle(color: Colors.grey),
+                    style: TextStyle(color: context.mutedColor),
                   ),
                   Text(
                     _l10n.totalAmount(formatCurrency(total)),
@@ -250,7 +250,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final selected = await showDialog<String>(
       context: context,
       builder: (context) => SimpleDialog(
-        backgroundColor: AppColors.surface,
         title: Text(_l10n.changeCategory),
         children: kSelectableCategories.map((cat) {
           return SimpleDialogOption(
@@ -290,9 +289,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(color: context.borderColor),
         ),
         child: ListTile(
           title: Text(
@@ -328,7 +327,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 const SizedBox(width: 6),
                 Text(
                   t.date!,
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  style: TextStyle(fontSize: 11, color: context.mutedColor),
                 ),
               ],
             ],
@@ -344,8 +343,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ),
               ),
               PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, color: Colors.grey),
-                color: AppColors.surface,
+                icon: Icon(Icons.more_vert, color: context.mutedColor),
+                color: context.cardColor,
                 onSelected: (value) {
                   if (value == '__category__') {
                     _changeCategory(t);

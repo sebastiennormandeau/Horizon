@@ -1651,6 +1651,36 @@ abstract class AppLocalizations {
   /// **'Le code doit contenir 6 lettres ou chiffres.'**
   String get vJoinCodeInvalid;
 
+  /// No description provided for @chartOtherCategories.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autres catégories'**
+  String get chartOtherCategories;
+
+  /// No description provided for @themeSection.
+  ///
+  /// In fr, this message translates to:
+  /// **'Apparence'**
+  String get themeSection;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In fr, this message translates to:
+  /// **'Clair'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sombre'**
+  String get themeDark;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In fr, this message translates to:
+  /// **'Automatique (réglage du système)'**
+  String get themeSystem;
+
   /// No description provided for @householdSection.
   ///
   /// In fr, this message translates to:

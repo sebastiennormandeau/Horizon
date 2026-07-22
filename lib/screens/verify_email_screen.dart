@@ -122,7 +122,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               const SizedBox(height: 12),
               Text(
                 l10n.verificationBody(email),
-                style: const TextStyle(color: Colors.grey),
+                style: TextStyle(color: context.mutedColor),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
@@ -136,7 +136,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       : l10n.resendEmail,
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
                     vertical: 14,

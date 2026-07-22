@@ -88,7 +88,6 @@ class _MfaChallengeScreenState extends State<MfaChallengeScreen> {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
         title: Text(l10n.mfaLostAccessTitle),
         content: SelectableText(
           l10n.mfaLostAccessBody('sebastiennormandeau@gmail.com'),
@@ -96,7 +95,6 @@ class _MfaChallengeScreenState extends State<MfaChallengeScreen> {
         actions: [
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             child: Text(l10n.close),
           ),
         ],
@@ -132,7 +130,7 @@ class _MfaChallengeScreenState extends State<MfaChallengeScreen> {
                 const SizedBox(height: 8),
                 Text(
                   l10n.mfaChallengeIntro(widget.email),
-                  style: const TextStyle(color: Colors.grey),
+                  style: TextStyle(color: context.mutedColor),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 28),
@@ -162,7 +160,7 @@ class _MfaChallengeScreenState extends State<MfaChallengeScreen> {
                     : ElevatedButton(
                         onPressed: _verify,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         child: Text(
@@ -178,7 +176,7 @@ class _MfaChallengeScreenState extends State<MfaChallengeScreen> {
                   onPressed: _showLostAccessHelp,
                   child: Text(
                     l10n.mfaLostAccess,
-                    style: const TextStyle(color: Colors.grey, fontSize: 13),
+                    style: TextStyle(color: context.mutedColor, fontSize: 13),
                   ),
                 ),
               ],

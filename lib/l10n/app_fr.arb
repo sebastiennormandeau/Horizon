@@ -416,6 +416,13 @@
   "vNameTooLong": "Prénom trop long (40 caractères max.).",
   "vJoinCodeInvalid": "Le code doit contenir 6 lettres ou chiffres.",
 
+  "chartOtherCategories": "Autres catégories",
+
+  "themeSection": "Apparence",
+  "themeLight": "Clair",
+  "themeDark": "Sombre",
+  "themeSystem": "Automatique (réglage du système)",
+
   "householdSection": "Foyer",
   "householdManageTitle": "Gérer mon foyer",
   "householdManageSubtitle": "Mode, invitation, séparation",

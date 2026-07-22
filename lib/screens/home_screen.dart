@@ -13,6 +13,8 @@ import '../theme/app_colors.dart';
 import '../utils/categories.dart';
 import '../utils/formatters.dart';
 import '../utils/locale_controller.dart';
+import '../widgets/balance_card.dart';
+import '../widgets/horizon_logo.dart';
 import '../widgets/household_loader.dart';
 import 'bilan_screen.dart';
 import 'budget_setup_screen.dart';
@@ -198,10 +200,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
         title: Row(
           children: [
-            const Icon(Icons.warning_amber, color: Colors.orange),
+            Icon(Icons.warning_amber, color: context.palette.warning),
             const SizedBox(width: 8),
             Expanded(child: Text(l10n.negativeWarningTitle)),
           ],
@@ -221,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            style: ElevatedButton.styleFrom(backgroundColor: context.palette.warning),
             child: Text(l10n.assignAnyway),
           ),
         ],
@@ -239,7 +240,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
         title: Text(l10n.settleDebtTitle),
         content: Text(
           l10n.settleDebtBody(debtor, formatCurrency(debt.abs()), creditor),
@@ -251,7 +251,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             child: Text(l10n.confirmSettlement),
           ),
         ],
@@ -287,9 +286,20 @@ class _HomeScreenState extends State<HomeScreen> {
     final l10n = _l10n;
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Horizon',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const HorizonLogo(size: 26),
+            const SizedBox(width: 9),
+            Text(
+              'Horizon',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+                color: context.colors.onSurface,
+              ),
+            ),
+          ],
         ),
         centerTitle: true,
         actions: [
@@ -382,22 +392,24 @@ class _HomeScreenState extends State<HomeScreen> {
     if (household.isSolo) {
       final mine = household.mySoloBalance(uid);
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
         child: Row(
           children: [
             Expanded(
-              child: _buildBucketCard(
-                l10n.bucketPersonal,
-                mine,
+              child: BalanceCard(
+                title: l10n.bucketPersonal,
+                amount: mine,
+                accent: AppColors.solo,
                 alert: household.alertLevel(mine),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
-              child: _buildBucketCard(
-                l10n.bucketEssential,
-                household.safeToSpendCommon,
-                color: AppColors.primary,
+              child: BalanceCard(
+                title: l10n.bucketEssential,
+                amount: household.safeToSpendCommon,
+                accent: AppColors.primary,
+                featured: true,
                 alert: household.alertLevel(household.safeToSpendCommon),
               ),
             ),
@@ -407,30 +419,33 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Row(
         children: [
           Expanded(
-            child: _buildBucketCard(
-              isA ? l10n.bucketMe(household.nameA) : household.nameA,
-              household.safeToSpendSoloA,
+            child: BalanceCard(
+              title: isA ? l10n.bucketMe(household.nameA) : household.nameA,
+              amount: household.safeToSpendSoloA,
+              accent: isA ? AppColors.solo : AppColors.partner,
               alert: household.alertLevel(household.safeToSpendSoloA),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
-            child: _buildBucketCard(
-              l10n.bucketCommon,
-              household.safeToSpendCommon,
-              color: AppColors.primary,
+            child: BalanceCard(
+              title: l10n.bucketCommon,
+              amount: household.safeToSpendCommon,
+              accent: AppColors.primary,
+              featured: true,
               alert: household.alertLevel(household.safeToSpendCommon),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
-            child: _buildBucketCard(
-              !isA ? l10n.bucketMe(household.nameB) : household.nameB,
-              household.safeToSpendSoloB,
+            child: BalanceCard(
+              title: !isA ? l10n.bucketMe(household.nameB) : household.nameB,
+              amount: household.safeToSpendSoloB,
+              accent: !isA ? AppColors.solo : AppColors.partner,
               alert: household.alertLevel(household.safeToSpendSoloB),
             ),
           ),
@@ -445,7 +460,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (worst == 0) return const SizedBox.shrink();
 
     final isNegative = worst == 2;
-    final color = isNegative ? Colors.redAccent : Colors.orange;
+    final color = isNegative ? context.palette.danger : context.palette.warning;
     final text = isNegative
         ? _l10n.alertNegativeBanner
         : _l10n.alertLowBanner(formatCurrency(household.alertThreshold));
@@ -531,16 +546,16 @@ class _HomeScreenState extends State<HomeScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(color: context.borderColor),
         ),
         child: Row(
           children: [
-            const Icon(Icons.swap_horiz, color: Colors.grey, size: 20),
+            Icon(Icons.swap_horiz, color: context.mutedColor, size: 20),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(text, style: const TextStyle(color: Colors.grey)),
+              child: Text(text, style: TextStyle(color: context.mutedColor)),
             ),
             if (!isSettled)
               TextButton(
@@ -555,47 +570,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildBucketCard(String title, num amount,
-      {Color? color, int alert = 0}) {
-    // Le niveau d'alerte prime sur la couleur de base de la carte.
-    final Color? alertColor =
-        alert == 2 ? Colors.redAccent : (alert == 1 ? Colors.orange : null);
-    final borderColor = alertColor ?? color ?? Colors.white12;
-    final amountColor = alertColor ?? color ?? Colors.white;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-      decoration: BoxDecoration(
-        color: (alertColor ?? color)?.withValues(alpha: 0.15) ??
-            AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: borderColor,
-          width: (alertColor ?? color) != null ? 1.5 : 1.0,
-        ),
-      ),
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 14, color: Colors.grey),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            formatCurrency(amount),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: amountColor,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -624,27 +598,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (docs.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  l10n.noTransactionsToSort,
-                  style: const TextStyle(color: Colors.grey, fontSize: 18),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: _openPlaid,
-                  icon: const Icon(Icons.account_balance),
-                  label: Text(l10n.connectMyBank),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Opacity(opacity: 0.55, child: const HorizonLogo(size: 88)),
+                  const SizedBox(height: 28),
+                  Text(
+                    l10n.noTransactionsToSort,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: context.mutedColor,
+                      fontSize: 17,
+                      height: 1.4,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: _openPlaid,
+                    icon: const Icon(Icons.account_balance),
+                    label: Text(l10n.connectMyBank),
+                  ),
+                ],
+              ),
             ),
           );
         }
@@ -692,54 +669,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       : 'Common';
                   _assignTransaction(transaction, bucket, household);
                 },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white12),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
-                    title: Text(
-                      transaction.merchantName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                    subtitle: Builder(builder: (context) {
-                      final cat = categoryOf(transaction.category);
-                      return Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(cat.icon, size: 14, color: cat.color),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              cat.labelFor(lang),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: cat.color,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      );
-                    }),
-                    trailing: Text(
-                      '-${formatCurrency(transaction.amount)}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
+                child: _buildTransactionCard(transaction, lang),
               ),
             );
           },
@@ -748,29 +678,103 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Carte d'une transaction à trier : pastille de catégorie, commerçant,
+  /// montant. C'est l'objet que l'utilisateur manipule le plus — il porte
+  /// donc la hiérarchie typographique la plus marquée de l'app.
+  Widget _buildTransactionCard(AppTransaction transaction, String lang) {
+    final cat = categoryOf(transaction.category);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: context.borderColor),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: cat.color.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(cat.icon, size: 21, color: cat.color),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  transaction.merchantName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16.5,
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  cat.labelFor(lang),
+                  style: TextStyle(fontSize: 12.5, color: context.mutedColor),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            '-${formatCurrency(transaction.amount)}',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+              letterSpacing: -0.4,
+              fontFeatures: const [FontFeature.tabularFigures()],
+              color: context.colors.onSurface,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Fond révélé pendant le glissement, du côté de la cagnotte visée.
   Widget _buildSwipeBackground(
     Color color,
     IconData icon,
     String text,
     Alignment alignment,
   ) {
+    final toLeft = alignment == Alignment.centerLeft;
     return Container(
       decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [color.withValues(alpha: 0.85), color],
+          begin: toLeft ? Alignment.centerLeft : Alignment.centerRight,
+          end: toLeft ? Alignment.centerRight : Alignment.centerLeft,
+        ),
+        borderRadius: BorderRadius.circular(18),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 26),
       alignment: alignment,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: 32),
-          const SizedBox(height: 4),
+          Icon(icon, color: Colors.white, size: 30),
+          const SizedBox(height: 6),
           Text(
             text,
             style: const TextStyle(
               color: Colors.white,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
             ),
           ),
         ],

@@ -10,6 +10,7 @@ import '../l10n/app_localizations.dart';
 import '../models/household.dart';
 import '../theme/app_colors.dart';
 import '../utils/locale_controller.dart';
+import '../utils/theme_controller.dart';
 import '../utils/validators.dart';
 import '../widgets/household_loader.dart';
 import '../widgets/legal_documents.dart';
@@ -39,7 +40,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final newName = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
         title: Text(l10n.editMyName),
         content: TextField(
           controller: controller,
@@ -57,7 +57,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, controller.text.trim()),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             child: Text(l10n.save),
           ),
         ],
@@ -116,7 +115,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: AppColors.surface,
           title: Text(l10n.myDataJson),
           content: SizedBox(
             width: double.maxFinite,
@@ -143,7 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style:
-                  ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                  ElevatedButton.styleFrom(),
               child: Text(l10n.close),
             ),
           ],
@@ -173,7 +171,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
         title: Text(l10n.deleteAccountTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -198,7 +195,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ElevatedButton(
             onPressed: () =>
                 Navigator.pop(context, controller.text.trim() == keyword),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            style: ElevatedButton.styleFrom(backgroundColor: context.palette.danger),
             child: Text(l10n.deleteForever),
           ),
         ],
@@ -263,8 +260,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ? Icons.verified
                               : Icons.warning_amber,
                           color: user?.emailVerified == true
-                              ? Colors.green
-                              : Colors.orange,
+                              ? context.palette.success
+                              : context.palette.warning,
                         ),
                         title: Text(
                           user?.emailVerified == true
@@ -292,6 +289,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                     ]),
+                    const SizedBox(height: 16),
+                    _sectionTitle(l10n.themeSection),
+                    _buildThemeCard(),
                     const SizedBox(height: 16),
                     _sectionTitle(l10n.languageSection),
                     _buildLanguageCard(),
@@ -367,7 +367,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _sectionTitle(l10n.accountSection),
                     _card([
                       ListTile(
-                        leading: const Icon(Icons.logout, color: Colors.grey),
+                        leading: Icon(Icons.logout, color: context.mutedColor),
                         title: Text(l10n.signOut),
                         onTap: () async {
                           await FirebaseAuth.instance.signOut();
@@ -380,11 +380,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         },
                       ),
                       ListTile(
-                        leading: const Icon(Icons.delete_forever,
-                            color: Colors.redAccent),
+                        leading: Icon(Icons.delete_forever,
+                            color: context.palette.danger),
                         title: Text(
                           l10n.deleteAccountTitle,
-                          style: const TextStyle(color: Colors.redAccent),
+                          style: TextStyle(color: context.palette.danger),
                         ),
                         subtitle: Text(l10n.deleteAccountSubtitle),
                         onTap: _deleteAccount,
@@ -425,15 +425,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ]);
   }
 
+  /// Choix du mode d'affichage : clair, sombre, ou celui du système.
+  Widget _buildThemeCard() {
+    final l10n = _l10n;
+    final current = ThemeController.instance.value;
+
+    Widget option(ThemeMode mode, String label, IconData icon) {
+      final selected = current == mode;
+      return ListTile(
+        leading: Icon(
+          icon,
+          color: selected ? context.colors.primary : context.mutedColor,
+        ),
+        title: Text(label),
+        trailing: selected
+            ? Icon(Icons.check_circle, color: context.colors.primary, size: 20)
+            : null,
+        dense: true,
+        onTap: () async {
+          await ThemeController.instance.setThemeMode(mode);
+          if (mounted) setState(() {});
+        },
+      );
+    }
+
+    return _card([
+      option(ThemeMode.light, l10n.themeLight, Icons.light_mode),
+      option(ThemeMode.dark, l10n.themeDark, Icons.dark_mode),
+      option(ThemeMode.system, l10n.themeSystem, Icons.brightness_auto),
+    ]);
+  }
+
   Widget _sectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.bold,
-          color: Colors.grey,
+          color: context.mutedColor,
         ),
       ),
     );
@@ -442,9 +473,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _card(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: context.borderColor),
       ),
       child: Column(children: children),
     );

@@ -390,7 +390,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
         ),
         Text(
           l10n.envelopesSubtitle,
-          style: const TextStyle(color: Colors.grey, fontSize: 12),
+          style: TextStyle(color: context.mutedColor, fontSize: 12),
         ),
         const SizedBox(height: 8),
         ..._categoryBudgets.asMap().entries.map((entry) {
@@ -450,7 +450,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.redAccent),
+                  icon: Icon(Icons.delete, color: context.palette.danger),
                   onPressed: () =>
                       setState(() => _categoryBudgets.removeAt(idx)),
                 ),
@@ -475,9 +475,9 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: context.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,7 +489,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
           const SizedBox(height: 8),
           Text(
             l10n.magicMonthsSubtitle,
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
+            style: TextStyle(color: context.mutedColor, fontSize: 12),
           ),
           const SizedBox(height: 16),
           Row(
@@ -501,7 +501,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   Text(
                     _months[index],
                     style: TextStyle(
-                      color: isMagic ? Colors.amber : Colors.grey,
+                      color: isMagic ? Colors.amber : context.mutedColor,
                       fontWeight: isMagic ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
@@ -578,7 +578,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.redAccent),
+                  icon: Icon(Icons.delete, color: context.palette.danger),
                   onPressed: () => setState(() => items.removeAt(idx)),
                 ),
               ],
@@ -673,7 +673,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                     trailing: const Icon(Icons.calendar_today),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
-                      side: const BorderSide(color: Colors.white12),
+                      side: BorderSide(color: context.borderColor),
                     ),
                     onTap: () => _selectNextPayDate(context),
                   ),
@@ -714,7 +714,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   const SizedBox(height: 4),
                   Text(
                     l10n.alertThresholdSubtitle,
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    style: TextStyle(color: context.mutedColor, fontSize: 12),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -760,9 +760,9 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
             ),
       bottomSheet: Container(
         padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: Colors.white12)),
+        decoration: BoxDecoration(
+          color: context.cardColor,
+          border: Border(top: BorderSide(color: context.borderColor)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -774,7 +774,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   _isSolo
                       ? _l10n.netEssentialExpenses
                       : _l10n.netCommonExpenses,
-                  style: const TextStyle(color: Colors.grey),
+                  style: TextStyle(color: context.mutedColor),
                 ),
                 Text(
                   formatCurrency(_netCommunalExpenses),
@@ -798,8 +798,8 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
                   ),
                   Text(
                     _l10n.bPays(formatCurrency(_contributionB)),
-                    style: const TextStyle(
-                      color: Colors.orange,
+                    style: TextStyle(
+                      color: context.palette.warning,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -812,7 +812,7 @@ class _BudgetSetupScreenState extends State<BudgetSetupScreen> {
               child: ElevatedButton(
                 onPressed: _saveBudget,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: Text(

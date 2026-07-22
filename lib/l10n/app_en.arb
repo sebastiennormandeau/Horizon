@@ -274,6 +274,13 @@
   "vNameTooLong": "First name too long (40 characters max.).",
   "vJoinCodeInvalid": "The code must contain 6 letters or digits.",
 
+  "chartOtherCategories": "Other categories",
+
+  "themeSection": "Appearance",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "themeSystem": "Automatic (system setting)",
+
   "householdSection": "Household",
   "householdManageTitle": "Manage my household",
   "householdManageSubtitle": "Mode, invitation, separation",

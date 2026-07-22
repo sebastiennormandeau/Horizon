@@ -873,6 +873,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get vJoinCodeInvalid => 'Le code doit contenir 6 lettres ou chiffres.';
 
   @override
+  String get chartOtherCategories => 'Autres catégories';
+
+  @override
+  String get themeSection => 'Apparence';
+
+  @override
+  String get themeLight => 'Clair';
+
+  @override
+  String get themeDark => 'Sombre';
+
+  @override
+  String get themeSystem => 'Automatique (réglage du système)';
+
+  @override
   String get householdSection => 'Foyer';
 
   @override

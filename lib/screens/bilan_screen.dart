@@ -9,6 +9,7 @@ import '../theme/app_colors.dart';
 import '../utils/categories.dart';
 import '../utils/formatters.dart';
 import '../utils/locale_controller.dart';
+import '../widgets/category_donut.dart';
 import '../widgets/household_loader.dart';
 import 'paywall_screen.dart';
 
@@ -226,7 +227,7 @@ class _BilanScreenState extends State<BilanScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(_error ?? _l10n.reportUnavailable,
-                style: const TextStyle(color: Colors.grey)),
+                style: TextStyle(color: context.mutedColor)),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: _refreshReport,
@@ -280,6 +281,17 @@ class _BilanScreenState extends State<BilanScreen> {
         const SizedBox(height: 16),
         if (byCategory.isNotEmpty) ...[
           _sectionTitle(l10n.spendingByCategory),
+          // L'anneau donne le poids relatif de chaque poste ; les barres
+          // qui suivent donnent l'évolution par rapport à la période
+          // précédente. Les deux lectures sont complémentaires.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 4, 4, 18),
+            child: CategoryDonut(
+              byCategory: byCategory,
+              languageCode: Localizations.localeOf(context).languageCode,
+              otherLabel: l10n.chartOtherCategories,
+            ),
+          ),
           _buildCategoryBars(byCategory, prevByCategory),
           const SizedBox(height: 16),
         ],
@@ -334,7 +346,7 @@ class _BilanScreenState extends State<BilanScreen> {
         children: [
           Text(
             _periodType == 'monthly' ? l10n.monthSpending : l10n.weekSpending,
-            style: const TextStyle(color: Colors.grey),
+            style: TextStyle(color: context.mutedColor),
           ),
           const SizedBox(height: 4),
           Text(
@@ -349,7 +361,7 @@ class _BilanScreenState extends State<BilanScreen> {
                 Icon(
                   up ? Icons.trending_up : Icons.trending_down,
                   size: 16,
-                  color: up ? Colors.redAccent : Colors.green,
+                  color: up ? context.palette.danger : context.palette.success,
                 ),
                 const SizedBox(width: 4),
                 Text(
@@ -359,7 +371,7 @@ class _BilanScreenState extends State<BilanScreen> {
                   ),
                   style: TextStyle(
                     fontSize: 12,
-                    color: up ? Colors.redAccent : Colors.green,
+                    color: up ? context.palette.danger : context.palette.success,
                   ),
                 ),
               ],
@@ -367,7 +379,7 @@ class _BilanScreenState extends State<BilanScreen> {
           else
             Text(
               l10n.noPreviousPeriod,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: context.mutedColor),
             ),
         ],
       ),
@@ -414,7 +426,7 @@ class _BilanScreenState extends State<BilanScreen> {
                       '${delta >= 0 ? '+' : ''}${formatCurrency(delta)}',
                       style: TextStyle(
                         fontSize: 11,
-                        color: delta > 0 ? Colors.redAccent : Colors.green,
+                        color: delta > 0 ? context.palette.danger : context.palette.success,
                       ),
                     ),
                   ],
@@ -426,7 +438,7 @@ class _BilanScreenState extends State<BilanScreen> {
                 child: LinearProgressIndicator(
                   value: (entry.value / maxValue).clamp(0.0, 1.0),
                   minHeight: 6,
-                  backgroundColor: Colors.white10,
+                  backgroundColor: context.borderColor,
                   valueColor: AlwaysStoppedAnimation<Color>(cat.color),
                 ),
               ),
@@ -450,9 +462,9 @@ class _BilanScreenState extends State<BilanScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(color: context.borderColor),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -480,7 +492,7 @@ class _BilanScreenState extends State<BilanScreen> {
                 '$occurrences',
                 formatCurrency(monthly),
               ),
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: context.mutedColor),
             ),
             const SizedBox(height: 8),
             Row(
@@ -490,14 +502,12 @@ class _BilanScreenState extends State<BilanScreen> {
                   onPressed: () => _dismissRecurring(household, name),
                   child: Text(
                     l10n.ignore,
-                    style: const TextStyle(color: Colors.grey),
+                    style: TextStyle(color: context.mutedColor),
                   ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () => _addRecurring(name, monthly),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary),
                   child: Text(l10n.addToBudget),
                 ),
               ],
@@ -543,8 +553,8 @@ class _BilanScreenState extends State<BilanScreen> {
                 final over = ratio > 1.0;
                 final warn = ratio > 0.8 && !over;
                 final barColor = over
-                    ? Colors.redAccent
-                    : (warn ? Colors.orange : cat.color);
+                    ? context.palette.danger
+                    : (warn ? context.palette.warning : cat.color);
 
                 return Padding(
                   padding:
@@ -568,7 +578,7 @@ class _BilanScreenState extends State<BilanScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: over ? Colors.redAccent : Colors.white,
+                              color: over ? context.palette.danger : Colors.white,
                             ),
                           ),
                         ],
@@ -579,7 +589,7 @@ class _BilanScreenState extends State<BilanScreen> {
                         child: LinearProgressIndicator(
                           value: ratio.clamp(0.0, 1.0),
                           minHeight: 6,
-                          backgroundColor: Colors.white10,
+                          backgroundColor: context.borderColor,
                           valueColor: AlwaysStoppedAnimation<Color>(barColor),
                         ),
                       ),
@@ -590,8 +600,8 @@ class _BilanScreenState extends State<BilanScreen> {
                             _l10n.overBudgetBy(
                               formatCurrency(spent - budget),
                             ),
-                            style: const TextStyle(
-                                fontSize: 11, color: Colors.redAccent),
+                            style: TextStyle(
+                                fontSize: 11, color: context.palette.danger),
                           ),
                         ),
                     ],
@@ -611,9 +621,9 @@ class _BilanScreenState extends State<BilanScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: context.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -626,7 +636,7 @@ class _BilanScreenState extends State<BilanScreen> {
             const SizedBox(height: 12),
             Text(
               l10n.aiDisclaimer,
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
+              style: TextStyle(fontSize: 11, color: context.mutedColor),
             ),
             const SizedBox(height: 12),
           ] else ...[
@@ -635,7 +645,7 @@ class _BilanScreenState extends State<BilanScreen> {
             Text(
               l10n.aiPitch,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey, fontSize: 13),
+              style: TextStyle(color: context.mutedColor, fontSize: 13),
             ),
             const SizedBox(height: 12),
           ],
@@ -655,7 +665,7 @@ class _BilanScreenState extends State<BilanScreen> {
                         : l10n.regenerateAdvice,
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
@@ -669,10 +679,10 @@ class _BilanScreenState extends State<BilanScreen> {
       padding: const EdgeInsets.only(left: 4, bottom: 8, top: 4),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.bold,
-          color: Colors.grey,
+          color: context.mutedColor,
         ),
       ),
     );
@@ -682,9 +692,9 @@ class _BilanScreenState extends State<BilanScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: context.borderColor),
       ),
       child: Column(children: children),
     );

@@ -46,7 +46,6 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          backgroundColor: AppColors.surface,
           title: Text(
             isSolo ? l10n.householdCreatedSolo : l10n.householdCreated,
           ),
@@ -69,7 +68,7 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
                     const SizedBox(height: 16),
                     Text(
                       l10n.inviteCodeNote,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      style: TextStyle(fontSize: 12, color: context.mutedColor),
                     ),
                   ],
           ),
@@ -175,7 +174,7 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
                       const SizedBox(height: 8),
                       Text(
                         l10n.welcomeBody,
-                        style: const TextStyle(color: Colors.grey),
+                        style: TextStyle(color: context.mutedColor),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 32),
@@ -195,30 +194,30 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
                       const SizedBox(height: 12),
                       Text(
                         l10n.modeChangeNote,
-                        style: const TextStyle(
-                            color: Colors.grey, fontSize: 12),
+                        style: TextStyle(
+                            color: context.mutedColor, fontSize: 12),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 32),
                       Row(
                         children: [
-                          const Expanded(child: Divider(color: Colors.white24)),
+                          Expanded(child: Divider(color: context.borderColor)),
                           Padding(
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
                               l10n.orSeparator,
-                              style: const TextStyle(color: Colors.grey),
+                              style: TextStyle(color: context.mutedColor),
                             ),
                           ),
-                          const Expanded(child: Divider(color: Colors.white24)),
+                          Expanded(child: Divider(color: context.borderColor)),
                         ],
                       ),
                       const SizedBox(height: 24),
                       Text(
                         l10n.joinExistingTitle,
-                        style: const TextStyle(
-                            color: Colors.grey, fontSize: 13),
+                        style: TextStyle(
+                            color: context.mutedColor, fontSize: 13),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
@@ -262,7 +261,7 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: AppColors.surface,
+      color: context.cardColor,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -291,13 +290,13 @@ class _HouseholdSetupScreenState extends State<HouseholdSetupScreen> {
                     const SizedBox(height: 4),
                     Text(
                       description,
-                      style: const TextStyle(
-                          color: Colors.grey, fontSize: 12.5, height: 1.35),
+                      style: TextStyle(
+                          color: context.mutedColor, fontSize: 12.5, height: 1.35),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.grey),
+              Icon(Icons.chevron_right, color: context.mutedColor),
             ],
           ),
         ),

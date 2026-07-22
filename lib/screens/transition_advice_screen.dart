@@ -100,7 +100,7 @@ class _TransitionAdviceScreenState extends State<TransitionAdviceScreen> {
                         const SizedBox(height: 16),
                         Text(
                           l10n.transitionAdviceLoading,
-                          style: const TextStyle(color: Colors.grey),
+                          style: TextStyle(color: context.mutedColor),
                         ),
                       ],
                     )
@@ -109,7 +109,7 @@ class _TransitionAdviceScreenState extends State<TransitionAdviceScreen> {
                       icon: const Icon(Icons.auto_awesome),
                       label: Text(l10n.transitionAdviceGenerate),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
                           vertical: 14,
@@ -126,7 +126,7 @@ class _TransitionAdviceScreenState extends State<TransitionAdviceScreen> {
             const SizedBox(height: 16),
             Text(
               _error!,
-              style: const TextStyle(color: Colors.orange),
+              style: TextStyle(color: context.palette.warning),
               textAlign: TextAlign.center,
             ),
           ],

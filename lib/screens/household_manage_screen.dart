@@ -66,7 +66,6 @@ class _HouseholdManageScreenState extends State<HouseholdManageScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
         title: Text(title),
         content: SingleChildScrollView(
           child: Column(
@@ -93,7 +92,7 @@ class _HouseholdManageScreenState extends State<HouseholdManageScreen> {
           ElevatedButton(
             onPressed: () =>
                 Navigator.pop(context, controller.text.trim() == keyword),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            style: ElevatedButton.styleFrom(backgroundColor: context.palette.danger),
             child: Text(actionLabel),
           ),
         ],
@@ -107,7 +106,6 @@ class _HouseholdManageScreenState extends State<HouseholdManageScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
         title: Text(l10n.invitePartnerTitle),
         content: Text(l10n.invitePartnerBody),
         actions: [
@@ -117,7 +115,6 @@ class _HouseholdManageScreenState extends State<HouseholdManageScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             child: Text(l10n.invitePartnerAction),
           ),
         ],
@@ -142,7 +139,6 @@ class _HouseholdManageScreenState extends State<HouseholdManageScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
         title: Text(l10n.backToSoloTitle),
         content: Text(l10n.backToSoloBody),
         actions: [
@@ -152,7 +148,6 @@ class _HouseholdManageScreenState extends State<HouseholdManageScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             child: Text(l10n.backToSoloAction),
           ),
         ],
@@ -249,9 +244,9 @@ class _HouseholdManageScreenState extends State<HouseholdManageScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: context.borderColor),
       ),
       child: Row(
         children: [
@@ -315,7 +310,7 @@ class _HouseholdManageScreenState extends State<HouseholdManageScreen> {
           ),
           const Divider(height: 1),
           ListTile(
-            leading: const Icon(Icons.undo, color: Colors.grey),
+            leading: Icon(Icons.undo, color: context.mutedColor),
             title: Text(l10n.backToSoloTitle),
             subtitle: Text(l10n.backToSoloBody),
             isThreeLine: true,
@@ -330,10 +325,10 @@ class _HouseholdManageScreenState extends State<HouseholdManageScreen> {
       _sectionTitle(l10n.householdSection),
       _card([
         ListTile(
-          leading: const Icon(Icons.info_outline, color: Colors.grey),
+          leading: Icon(Icons.info_outline, color: context.mutedColor),
           title: Text(
             l10n.cannotRemovePartner,
-            style: const TextStyle(fontSize: 13, color: Colors.grey),
+            style: TextStyle(fontSize: 13, color: context.mutedColor),
           ),
         ),
       ]),
@@ -354,10 +349,10 @@ class _HouseholdManageScreenState extends State<HouseholdManageScreen> {
         _card([
           if (canReset)
             ListTile(
-              leading: const Icon(Icons.restart_alt, color: Colors.orange),
+              leading: Icon(Icons.restart_alt, color: context.palette.warning),
               title: Text(
                 l10n.resetDataTitle,
-                style: const TextStyle(color: Colors.orange),
+                style: TextStyle(color: context.palette.warning),
               ),
               subtitle: Text(l10n.resetDataSubtitle),
               onTap: _resetData,
@@ -365,10 +360,10 @@ class _HouseholdManageScreenState extends State<HouseholdManageScreen> {
           if (!household.awaitingPartner) ...[
             if (canReset) const Divider(height: 1),
             ListTile(
-              leading: const Icon(Icons.heart_broken, color: Colors.redAccent),
+              leading: Icon(Icons.heart_broken, color: context.palette.danger),
               title: Text(
                 l10n.leaveHouseholdTitle,
-                style: const TextStyle(color: Colors.redAccent),
+                style: TextStyle(color: context.palette.danger),
               ),
               subtitle: Text(
                 debt.abs() >= 0.01
@@ -388,10 +383,10 @@ class _HouseholdManageScreenState extends State<HouseholdManageScreen> {
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.bold,
-          color: Colors.grey,
+          color: context.mutedColor,
         ),
       ),
     );
@@ -400,9 +395,9 @@ class _HouseholdManageScreenState extends State<HouseholdManageScreen> {
   Widget _card(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: context.borderColor),
       ),
       child: Column(children: children),
     );

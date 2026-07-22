@@ -117,13 +117,13 @@ class _PaywallScreenState extends State<PaywallScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: context.borderColor),
       ),
       child: Text(
         _l10n.webNoPurchase,
-        style: const TextStyle(color: Colors.grey),
+        style: TextStyle(color: context.mutedColor),
         textAlign: TextAlign.center,
       ),
     );
@@ -133,13 +133,13 @@ class _PaywallScreenState extends State<PaywallScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: context.borderColor),
       ),
       child: Text(
         _l10n.storeUnavailable,
-        style: const TextStyle(color: Colors.grey),
+        style: TextStyle(color: context.mutedColor),
         textAlign: TextAlign.center,
       ),
     );
@@ -171,7 +171,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 child: ElevatedButton(
                   onPressed: () => _purchase(package),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: Text(
