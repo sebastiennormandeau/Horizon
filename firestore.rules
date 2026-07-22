@@ -81,7 +81,11 @@ service cloud.firestore {
         && resource.data.household_id == userHouseholdId()
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['assigned_to_bucket', 'category'])
-        && request.resource.data.assigned_to_bucket in ['', 'Solo_A', 'Solo_B', 'Common']
+        // 'Transfer' : mouvement interne (paiement de carte, virement entre
+        // ses propres comptes). Volontairement absent de VALID_BUCKETS côté
+        // serveur, donc sans effet sur les cagnottes — c'est ce qui évite de
+        // compter deux fois un achat par carte puis son remboursement.
+        && request.resource.data.assigned_to_bucket in ['', 'Solo_A', 'Solo_B', 'Common', 'Transfer']
         && (!('category' in request.resource.data)
             || (request.resource.data.category is string
                 && request.resource.data.category.size() <= 40));

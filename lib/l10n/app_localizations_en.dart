@@ -871,6 +871,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chartOtherCategories => 'Other categories';
 
   @override
+  String get bucketTransfer => 'Internal transfer';
+
+  @override
   String get bankSection => 'Bank accounts';
 
   @override

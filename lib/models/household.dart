@@ -139,6 +139,8 @@ class Household {
         return isSolo ? l10n.bucketPersonal : 'Solo $nameB';
       case 'Common':
         return isSolo ? l10n.bucketEssential : l10n.bucketCommon;
+      case 'Transfer':
+        return l10n.bucketTransfer;
       default:
         return l10n.bucketToSort;
     }
@@ -162,6 +164,17 @@ class Household {
   List<String> visibleBuckets(String uid) => isSolo
       ? [soloBucketFor(uid), 'Common']
       : const ['Solo_A', 'Common', 'Solo_B'];
+
+  /// Cagnottes visibles dans l'historique.
+  ///
+  /// Inclut les mouvements internes (paiement de carte, virement entre ses
+  /// comptes) : ils n'entament aucune cagnotte, mais doivent rester visibles
+  /// et reclassables — la détection automatique par catégorie Plaid n'est pas
+  /// infaillible.
+  List<String> historyBuckets(String uid) => [
+        ...visibleBuckets(uid),
+        'Transfer',
+      ];
 
   /// Niveau d'alerte le plus grave parmi les cagnottes qui existent vraiment.
   ///

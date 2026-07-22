@@ -15,6 +15,12 @@ import { requireAuth, enforceRateLimit, assertString } from "./security";
 // Catégories « entrées d'argent » exclues du total des dépenses.
 const NON_SPENDING_CATEGORIES = ["INCOME", "TRANSFER_IN"];
 
+// Mouvements internes (paiement de carte, virement entre ses comptes). Déjà
+// sans effet sur les cagnottes, ils doivent aussi sortir des bilans : sinon
+// le paiement d'une carte gonflerait le total des dépenses alors que les
+// achats correspondants y figurent déjà.
+const TRANSFER_BUCKET = "Transfer";
+
 interface PeriodBounds {
   id: string;
   start: Date;
@@ -109,6 +115,7 @@ function aggregate(rows: TxRow[]) {
 
   for (const t of rows) {
     if (t.amount <= 0) continue; // remboursements / entrées
+    if (t.bucket === TRANSFER_BUCKET) continue;
     if (NON_SPENDING_CATEGORIES.includes(t.category)) continue;
     total += t.amount;
     byCategory[t.category] = (byCategory[t.category] ?? 0) + t.amount;
@@ -155,6 +162,10 @@ export function detectRecurring(
   const groups = new Map<string, TxRow[]>();
   for (const t of rows) {
     if (t.amount <= 0) continue;
+    // Un paiement de carte revient tous les mois : sans cette exclusion, il
+    // serait suggéré comme dépense fixe à budgéter, ce qui le compterait une
+    // seconde fois dans le budget.
+    if (t.bucket === TRANSFER_BUCKET) continue;
     if (NON_SPENDING_CATEGORIES.includes(t.category)) continue;
     const key = t.merchant.toLowerCase().trim();
     if (!groups.has(key)) groups.set(key, []);

@@ -1657,6 +1657,12 @@ abstract class AppLocalizations {
   /// **'Autres catégories'**
   String get chartOtherCategories;
 
+  /// No description provided for @bucketTransfer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Transfert interne'**
+  String get bucketTransfer;
+
   /// No description provided for @bankSection.
   ///
   /// In fr, this message translates to:

@@ -276,6 +276,8 @@
 
   "chartOtherCategories": "Other categories",
 
+  "bucketTransfer": "Internal transfer",
+
   "bankSection": "Bank accounts",
   "bankManageTitle": "My bank accounts",
   "bankManageSubtitle": "Connections and syncing",

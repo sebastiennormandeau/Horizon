@@ -85,7 +85,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     // elle.
     final filters = <String, String>{
       'all': l10n.filterAll,
-      for (final bucket in household.visibleBuckets(uid))
+      for (final bucket in household.historyBuckets(uid))
         bucket: household.bucketLabel(bucket, l10n),
     };
 
@@ -117,7 +117,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         .where('household_id', isEqualTo: household.id)
         .where(
           'assigned_to_bucket',
-          whereIn: const ['Solo_A', 'Common', 'Solo_B'],
+          whereIn: household.historyBuckets(uid),
         );
 
     // Plan gratuit : profondeur d'historique limitée à 30 jours.
@@ -353,7 +353,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   }
                 },
                 itemBuilder: (context) => [
-                  for (final bucket in household.visibleBuckets(uid))
+                  for (final bucket in household.historyBuckets(uid))
                     if (bucket != t.assignedToBucket)
                       PopupMenuItem(
                         value: bucket,

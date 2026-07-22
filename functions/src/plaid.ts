@@ -59,6 +59,39 @@ interface BankConnection {
 }
 
 /**
+ * Cagnotte fictive des mouvements internes (paiement de carte de crédit,
+ * virement entre ses propres comptes).
+ *
+ * Absente de `VALID_BUCKETS` dans `ledger.ts` : le déclencheur l'ignore, ces
+ * transactions n'ont donc **aucun effet** sur les soldes.
+ *
+ * Pourquoi c'est nécessaire : en budgétisation à base zéro, une dépense est
+ * comptée au moment de **l'achat**, pas du paiement. Un achat par carte
+ * réduit déjà la cagnotte ; si le paiement mensuel de la carte — qui apparaît
+ * comme une sortie du compte chèque — était compté à son tour, la même somme
+ * serait retranchée deux fois. Ce paiement est un transfert entre deux
+ * comptes du foyer, pas une dépense.
+ */
+export const TRANSFER_BUCKET = "Transfer";
+
+/**
+ * Catégories détaillées de Plaid qui dénotent un mouvement interne.
+ *
+ * On se fonde sur la catégorie **détaillée** et non primaire : `LOAN_PAYMENTS`
+ * couvre aussi l'hypothèque et le prêt auto, qui sont de vraies dépenses et
+ * doivent continuer d'entamer les cagnottes.
+ */
+const INTERNAL_TRANSFER_DETAILED = new Set([
+  "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT",
+  "TRANSFER_OUT_ACCOUNT_TRANSFER",
+  "TRANSFER_IN_ACCOUNT_TRANSFER",
+]);
+
+export function isInternalTransfer(detailed?: string | null): boolean {
+  return !!detailed && INTERNAL_TRANSFER_DETAILED.has(detailed);
+}
+
+/**
  * Recalcule le nombre de connexions bancaires du foyer et l'inscrit sur son
  * document.
  *
@@ -163,12 +196,15 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
     existing.forEach((snap, idx) => {
       if (snap.exists) return;
       const t = chunk[idx];
+      const detailed = t.personal_finance_category?.detailed ?? null;
       batch.set(refs[idx], {
         amount: t.amount,
         merchant_name: t.merchant_name || t.name || "Inconnu",
         paid_by_user_id: conn.user_id,
         household_id: conn.household_id,
-        assigned_to_bucket: "",
+        // Les mouvements internes sont classés d'office : ils ne doivent ni
+        // encombrer la file de tri, ni toucher aux cagnottes.
+        assigned_to_bucket: isInternalTransfer(detailed) ? TRANSFER_BUCKET : "",
         status: "Posted",
         date: t.date ?? null,
         // Catégorisation Plaid (personal_finance_category), affinable par
@@ -371,6 +407,14 @@ export const generatePlaidLinkToken = functions
         },
         client_name: "Horizon App",
         products: [Products.Transactions],
+        // Échéances et soldes de relevé des cartes de crédit, ajoutés
+        // uniquement quand l'institution les supporte : celles qui ne les
+        // offrent pas restent sélectionnables (contrairement à `products`,
+        // qui filtrerait la liste des banques).
+        // ⚠️ En production, chaque produit est facturé dès l'initialisation
+        // du Item et ne peut plus en être retiré : seule la suppression du
+        // Item (`/item/remove`) arrête les frais.
+        required_if_supported_products: [Products.Liabilities],
         country_codes: [CountryCode.Us, CountryCode.Ca],
         language,
         webhook: webhookUrl,
