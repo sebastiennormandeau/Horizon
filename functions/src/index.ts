@@ -14,6 +14,9 @@ export {
   generatePlaidLinkToken,
   exchangePublicToken,
   plaidWebhookHandler,
+  listBankConnections,
+  removeBankConnection,
+  syncBankConnections,
 } from "./plaid";
 export { onTransactionAssigned, settleDebt } from "./ledger";
 export { createHousehold, joinHousehold } from "./households";

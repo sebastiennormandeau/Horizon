@@ -1657,6 +1657,138 @@ abstract class AppLocalizations {
   /// **'Autres catégories'**
   String get chartOtherCategories;
 
+  /// No description provided for @bankSection.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comptes bancaires'**
+  String get bankSection;
+
+  /// No description provided for @bankManageTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mes comptes bancaires'**
+  String get bankManageTitle;
+
+  /// No description provided for @bankManageSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexions et synchronisation'**
+  String get bankManageSubtitle;
+
+  /// No description provided for @bankNone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune banque connectée pour l\'instant.'**
+  String get bankNone;
+
+  /// No description provided for @bankUnknownInstitution.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compte bancaire'**
+  String get bankUnknownInstitution;
+
+  /// No description provided for @bankPartnerAccount.
+  ///
+  /// In fr, this message translates to:
+  /// **'Relié par votre partenaire'**
+  String get bankPartnerAccount;
+
+  /// No description provided for @bankNeverSynced.
+  ///
+  /// In fr, this message translates to:
+  /// **'Jamais synchronisé'**
+  String get bankNeverSynced;
+
+  /// No description provided for @bankLastSync.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dernière synchronisation : {date}'**
+  String bankLastSync(String date);
+
+  /// No description provided for @bankDisconnect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déconnecter'**
+  String get bankDisconnect;
+
+  /// No description provided for @bankDisconnectTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Déconnecter cette banque ?'**
+  String get bankDisconnectTitle;
+
+  /// No description provided for @bankDisconnectBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'accès d\'Horizon à ce compte sera révoqué auprès de Plaid et aucune nouvelle transaction ne sera importée.\n\nVos transactions déjà classées sont conservées : elles font partie de votre historique et de vos cagnottes.'**
+  String get bankDisconnectBody;
+
+  /// No description provided for @bankDisconnected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Banque déconnectée.'**
+  String get bankDisconnected;
+
+  /// No description provided for @bankSyncNow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Synchroniser maintenant'**
+  String get bankSyncNow;
+
+  /// No description provided for @bankSyncing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Synchronisation en cours...'**
+  String get bankSyncing;
+
+  /// No description provided for @bankSyncDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} nouvelle(s) transaction(s) importée(s).'**
+  String bankSyncDone(int count);
+
+  /// No description provided for @bankSyncNothing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune nouvelle transaction. Après une première connexion, Plaid peut mettre plusieurs minutes à livrer l\'historique — les transactions apparaîtront toutes seules.'**
+  String get bankSyncNothing;
+
+  /// No description provided for @bankAddAnother.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connecter une autre banque'**
+  String get bankAddAnother;
+
+  /// No description provided for @bankFreePlanLimit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le plan gratuit permet une seule banque par foyer.'**
+  String get bankFreePlanLimit;
+
+  /// No description provided for @allSortedTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout est trié !'**
+  String get allSortedTitle;
+
+  /// No description provided for @allSortedBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune transaction en attente. Les prochaines apparaîtront ici automatiquement.'**
+  String get allSortedBody;
+
+  /// No description provided for @noBankTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reliez votre banque pour commencer'**
+  String get noBankTitle;
+
+  /// No description provided for @noBankBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos transactions seront importées automatiquement, puis vous les classerez d\'un glissement.'**
+  String get noBankBody;
+
   /// No description provided for @plaidExitTitle.
   ///
   /// In fr, this message translates to:

@@ -418,6 +418,40 @@
 
   "chartOtherCategories": "Autres catégories",
 
+  "bankSection": "Comptes bancaires",
+  "bankManageTitle": "Mes comptes bancaires",
+  "bankManageSubtitle": "Connexions et synchronisation",
+  "bankNone": "Aucune banque connectée pour l'instant.",
+  "bankUnknownInstitution": "Compte bancaire",
+  "bankPartnerAccount": "Relié par votre partenaire",
+  "bankNeverSynced": "Jamais synchronisé",
+  "bankLastSync": "Dernière synchronisation : {date}",
+  "@bankLastSync": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "bankDisconnect": "Déconnecter",
+  "bankDisconnectTitle": "Déconnecter cette banque ?",
+  "bankDisconnectBody": "L'accès d'Horizon à ce compte sera révoqué auprès de Plaid et aucune nouvelle transaction ne sera importée.\n\nVos transactions déjà classées sont conservées : elles font partie de votre historique et de vos cagnottes.",
+  "bankDisconnected": "Banque déconnectée.",
+  "bankSyncNow": "Synchroniser maintenant",
+  "bankSyncing": "Synchronisation en cours...",
+  "bankSyncDone": "{count} nouvelle(s) transaction(s) importée(s).",
+  "@bankSyncDone": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bankSyncNothing": "Aucune nouvelle transaction. Après une première connexion, Plaid peut mettre plusieurs minutes à livrer l'historique — les transactions apparaîtront toutes seules.",
+  "bankAddAnother": "Connecter une autre banque",
+  "bankFreePlanLimit": "Le plan gratuit permet une seule banque par foyer.",
+
+  "allSortedTitle": "Tout est trié !",
+  "allSortedBody": "Aucune transaction en attente. Les prochaines apparaîtront ici automatiquement.",
+  "noBankTitle": "Reliez votre banque pour commencer",
+  "noBankBody": "Vos transactions seront importées automatiquement, puis vous les classerez d'un glissement.",
+
   "plaidExitTitle": "Connexion bancaire interrompue",
   "plaidExitCancelled": "Connexion annulée à l'étape : {status}",
   "@plaidExitCancelled": {

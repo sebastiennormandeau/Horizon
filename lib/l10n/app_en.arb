@@ -276,6 +276,40 @@
 
   "chartOtherCategories": "Other categories",
 
+  "bankSection": "Bank accounts",
+  "bankManageTitle": "My bank accounts",
+  "bankManageSubtitle": "Connections and syncing",
+  "bankNone": "No bank connected yet.",
+  "bankUnknownInstitution": "Bank account",
+  "bankPartnerAccount": "Linked by your partner",
+  "bankNeverSynced": "Never synced",
+  "bankLastSync": "Last sync: {date}",
+  "@bankLastSync": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "bankDisconnect": "Disconnect",
+  "bankDisconnectTitle": "Disconnect this bank?",
+  "bankDisconnectBody": "Horizon's access to this account will be revoked with Plaid and no new transactions will be imported.\n\nYour already-sorted transactions are kept: they are part of your history and your pot balances.",
+  "bankDisconnected": "Bank disconnected.",
+  "bankSyncNow": "Sync now",
+  "bankSyncing": "Syncing...",
+  "bankSyncDone": "{count} new transaction(s) imported.",
+  "@bankSyncDone": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bankSyncNothing": "No new transactions. After a first connection, Plaid can take several minutes to deliver the history — transactions will appear on their own.",
+  "bankAddAnother": "Connect another bank",
+  "bankFreePlanLimit": "The free plan allows one bank per household.",
+
+  "allSortedTitle": "All sorted!",
+  "allSortedBody": "No transactions waiting. New ones will show up here automatically.",
+  "noBankTitle": "Link your bank to get started",
+  "noBankBody": "Your transactions will be imported automatically, then you sort them with a swipe.",
+
   "plaidExitTitle": "Bank connection interrupted",
   "plaidExitCancelled": "Connection cancelled at step: {status}",
   "@plaidExitCancelled": {

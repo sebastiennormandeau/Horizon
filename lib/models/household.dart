@@ -19,6 +19,14 @@ class Household {
   final String subscriptionTier;
   final double alertThreshold;
 
+  /// Nombre de banques reliées au foyer.
+  ///
+  /// Maintenu par le serveur : les règles interdisent aux clients de lire
+  /// `bank_connections`, qui contient les jetons d'accès. Sans ce compteur,
+  /// l'accueil ne pourrait pas distinguer « aucune banque connectée » de
+  /// « tout est trié » — les deux donnent une liste vide.
+  final int bankConnectionsCount;
+
   /// Mode d'utilisation : `solo` (une seule personne) ou `couple`.
   /// Les foyers créés avant l'ajout de cette option n'ont pas le champ et
   /// sont traités comme `couple` (comportement historique).
@@ -39,6 +47,7 @@ class Household {
     required this.joinCode,
     required this.subscriptionTier,
     required this.alertThreshold,
+    required this.bankConnectionsCount,
     required this.householdMode,
   });
 
@@ -63,6 +72,8 @@ class Household {
       subscriptionTier: (data['subscription_tier'] as String?) ?? 'free',
       alertThreshold: (data['alert_threshold'] as num?)?.toDouble() ?? 100.0,
       householdMode: (data['household_mode'] as String?) ?? 'couple',
+      bankConnectionsCount:
+          (data['bank_connections_count'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -132,6 +143,9 @@ class Household {
         return l10n.bucketToSort;
     }
   }
+
+  /// Au moins une banque est reliée au foyer.
+  bool get hasBankConnection => bankConnectionsCount > 0;
 
   /// Un siège est libre : le foyer peut accueillir quelqu'un.
   ///

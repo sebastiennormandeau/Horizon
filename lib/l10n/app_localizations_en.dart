@@ -871,6 +871,81 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chartOtherCategories => 'Other categories';
 
   @override
+  String get bankSection => 'Bank accounts';
+
+  @override
+  String get bankManageTitle => 'My bank accounts';
+
+  @override
+  String get bankManageSubtitle => 'Connections and syncing';
+
+  @override
+  String get bankNone => 'No bank connected yet.';
+
+  @override
+  String get bankUnknownInstitution => 'Bank account';
+
+  @override
+  String get bankPartnerAccount => 'Linked by your partner';
+
+  @override
+  String get bankNeverSynced => 'Never synced';
+
+  @override
+  String bankLastSync(String date) {
+    return 'Last sync: $date';
+  }
+
+  @override
+  String get bankDisconnect => 'Disconnect';
+
+  @override
+  String get bankDisconnectTitle => 'Disconnect this bank?';
+
+  @override
+  String get bankDisconnectBody =>
+      'Horizon\'s access to this account will be revoked with Plaid and no new transactions will be imported.\n\nYour already-sorted transactions are kept: they are part of your history and your pot balances.';
+
+  @override
+  String get bankDisconnected => 'Bank disconnected.';
+
+  @override
+  String get bankSyncNow => 'Sync now';
+
+  @override
+  String get bankSyncing => 'Syncing...';
+
+  @override
+  String bankSyncDone(int count) {
+    return '$count new transaction(s) imported.';
+  }
+
+  @override
+  String get bankSyncNothing =>
+      'No new transactions. After a first connection, Plaid can take several minutes to deliver the history — transactions will appear on their own.';
+
+  @override
+  String get bankAddAnother => 'Connect another bank';
+
+  @override
+  String get bankFreePlanLimit =>
+      'The free plan allows one bank per household.';
+
+  @override
+  String get allSortedTitle => 'All sorted!';
+
+  @override
+  String get allSortedBody =>
+      'No transactions waiting. New ones will show up here automatically.';
+
+  @override
+  String get noBankTitle => 'Link your bank to get started';
+
+  @override
+  String get noBankBody =>
+      'Your transactions will be imported automatically, then you sort them with a swipe.';
+
+  @override
   String get plaidExitTitle => 'Bank connection interrupted';
 
   @override

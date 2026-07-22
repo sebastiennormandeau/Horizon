@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions/v1";
 import { db, FieldValue, auth } from "./init";
 import { requireAuth, enforceRateLimit } from "./security";
-import { getPlaidClient, plaidSecrets } from "./plaid";
+import { getPlaidClient, plaidSecrets, refreshConnectionCount } from "./plaid";
 
 /**
  * Suppression complète du compte (droit à l'effacement — Loi 25 / RGPD).
@@ -94,6 +94,7 @@ export const deleteAccount = functions
             [isA ? "safe_to_spend_solo_A" : "safe_to_spend_solo_B"]: 0,
             updated_at: FieldValue.serverTimestamp(),
           });
+          await refreshConnectionCount(householdId);
         }
       }
     }

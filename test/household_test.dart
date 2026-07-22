@@ -28,6 +28,7 @@ Household buildHousehold({
     joinCode: 'ABC234',
     subscriptionTier: 'free',
     alertThreshold: alertThreshold,
+    bankConnectionsCount: 1,
     householdMode: mode,
   );
 }

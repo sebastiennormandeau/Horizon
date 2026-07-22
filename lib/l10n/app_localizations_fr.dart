@@ -876,6 +876,81 @@ class AppLocalizationsFr extends AppLocalizations {
   String get chartOtherCategories => 'Autres catégories';
 
   @override
+  String get bankSection => 'Comptes bancaires';
+
+  @override
+  String get bankManageTitle => 'Mes comptes bancaires';
+
+  @override
+  String get bankManageSubtitle => 'Connexions et synchronisation';
+
+  @override
+  String get bankNone => 'Aucune banque connectée pour l\'instant.';
+
+  @override
+  String get bankUnknownInstitution => 'Compte bancaire';
+
+  @override
+  String get bankPartnerAccount => 'Relié par votre partenaire';
+
+  @override
+  String get bankNeverSynced => 'Jamais synchronisé';
+
+  @override
+  String bankLastSync(String date) {
+    return 'Dernière synchronisation : $date';
+  }
+
+  @override
+  String get bankDisconnect => 'Déconnecter';
+
+  @override
+  String get bankDisconnectTitle => 'Déconnecter cette banque ?';
+
+  @override
+  String get bankDisconnectBody =>
+      'L\'accès d\'Horizon à ce compte sera révoqué auprès de Plaid et aucune nouvelle transaction ne sera importée.\n\nVos transactions déjà classées sont conservées : elles font partie de votre historique et de vos cagnottes.';
+
+  @override
+  String get bankDisconnected => 'Banque déconnectée.';
+
+  @override
+  String get bankSyncNow => 'Synchroniser maintenant';
+
+  @override
+  String get bankSyncing => 'Synchronisation en cours...';
+
+  @override
+  String bankSyncDone(int count) {
+    return '$count nouvelle(s) transaction(s) importée(s).';
+  }
+
+  @override
+  String get bankSyncNothing =>
+      'Aucune nouvelle transaction. Après une première connexion, Plaid peut mettre plusieurs minutes à livrer l\'historique — les transactions apparaîtront toutes seules.';
+
+  @override
+  String get bankAddAnother => 'Connecter une autre banque';
+
+  @override
+  String get bankFreePlanLimit =>
+      'Le plan gratuit permet une seule banque par foyer.';
+
+  @override
+  String get allSortedTitle => 'Tout est trié !';
+
+  @override
+  String get allSortedBody =>
+      'Aucune transaction en attente. Les prochaines apparaîtront ici automatiquement.';
+
+  @override
+  String get noBankTitle => 'Reliez votre banque pour commencer';
+
+  @override
+  String get noBankBody =>
+      'Vos transactions seront importées automatiquement, puis vous les classerez d\'un glissement.';
+
+  @override
   String get plaidExitTitle => 'Connexion bancaire interrompue';
 
   @override

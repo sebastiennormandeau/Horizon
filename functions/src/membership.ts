@@ -2,7 +2,7 @@ import * as functions from "firebase-functions/v1";
 import { db, FieldValue } from "./init";
 import { requireAuth, enforceRateLimit } from "./security";
 import { generateJoinCode } from "./households";
-import { getPlaidClient, plaidSecrets } from "./plaid";
+import { getPlaidClient, plaidSecrets, refreshConnectionCount } from "./plaid";
 
 /** Limite Firestore : 500 écritures par lot, on garde une marge. */
 const BATCH_SIZE = 400;
@@ -236,6 +236,7 @@ export const leaveHousehold = functions
       role: FieldValue.delete(),
     });
     await batch.commit();
+    await refreshConnectionCount(householdId);
 
     return { success: true, transactions_deleted: myTx.size };
   });
@@ -310,6 +311,8 @@ export const resetHouseholdData = functions
       internal_debt_balance: 0,
       updated_at: FieldValue.serverTimestamp(),
     });
+
+    await refreshConnectionCount(householdId);
 
     return {
       success: true,

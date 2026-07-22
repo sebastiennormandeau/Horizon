@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:plaid_flutter/plaid_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/app_transaction.dart';
@@ -13,10 +11,11 @@ import '../models/household.dart';
 import '../theme/app_colors.dart';
 import '../utils/categories.dart';
 import '../utils/formatters.dart';
-import '../utils/locale_controller.dart';
+import '../services/plaid_service.dart';
 import '../widgets/balance_card.dart';
 import '../widgets/horizon_logo.dart';
 import '../widgets/household_loader.dart';
+import 'bank_connections_screen.dart';
 import 'bilan_screen.dart';
 import 'budget_setup_screen.dart';
 import 'history_screen.dart';
@@ -87,7 +86,9 @@ class _HomeScreenState extends State<HomeScreen> {
       _showPlaidExitDiagnostic(event);
     });
 
-    if (kIsWeb) _resumePlaidOAuth();
+    // Reprise d une connexion interrompue par un OAuth (Web) : c est ici,
+    // et nulle part ailleurs, car la page a ete rechargee entre-temps.
+    PlaidService.resumeOAuthIfNeeded();
   }
 
   @override
@@ -179,65 +180,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Plateforme transmise au serveur : Plaid revient vers une URL sur le Web
-  /// et iOS, mais vers un nom de paquet sur Android.
-  static String get _plaidPlatform {
-    if (kIsWeb) return 'web';
-    return defaultTargetPlatform == TargetPlatform.android ? 'android' : 'ios';
-  }
-
-  /// Clé du jeton mis de côté le temps d'un aller-retour OAuth sur le Web.
-  static const _linkTokenKey = 'plaid_pending_link_token';
-
-  /// Reprend une connexion bancaire interrompue par une authentification
-  /// OAuth (Web uniquement).
-  ///
-  /// Les institutions canadiennes authentifient chez elles puis rechargent
-  /// l'app à l'URL de redirection avec un paramètre `oauth_state_id`. Plaid
-  /// exige alors de rouvrir Link avec le **même** jeton et l'URL reçue —
-  /// d'où la mise de côté du jeton avant l'ouverture.
-  Future<void> _resumePlaidOAuth() async {
-    final url = Uri.base;
-    if (!url.queryParameters.containsKey('oauth_state_id')) return;
-
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(_linkTokenKey);
-    // Consommé dans tous les cas : un jeton périmé ne doit pas rouvrir Link
-    // au prochain démarrage.
-    await prefs.remove(_linkTokenKey);
-    if (token == null) return;
-
-    PlaidLink.create(
-      configuration: LinkTokenConfiguration(
-        token: token,
-        receivedRedirectUri: url.toString(),
-      ),
-    );
-    PlaidLink.open();
-  }
-
   Future<void> _openPlaid() async {
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable(
-        'generatePlaidLinkToken',
-      );
-      // Plaid Link s'affiche dans la langue active de l'app.
-      final result = await callable.call({
-        'language': LocaleController.instance.effectiveLanguageCode,
-        'platform': _plaidPlatform,
-      });
-      final linkToken = result.data['link_token'] as String;
-
-      if (kIsWeb) {
-        // Survit au rechargement de page provoqué par l'OAuth.
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_linkTokenKey, linkToken);
-      }
-
-      final linkTokenConfiguration = LinkTokenConfiguration(token: linkToken);
-
-      PlaidLink.create(configuration: linkTokenConfiguration);
-      PlaidLink.open();
+      await PlaidService.open();
     } catch (e) {
       debugPrint('Erreur Plaid: $e');
       if (!mounted) return;
@@ -687,33 +632,11 @@ class _HomeScreenState extends State<HomeScreen> {
         final docs = snapshot.data!.docs;
 
         if (docs.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Opacity(opacity: 0.55, child: const HorizonLogo(size: 88)),
-                  const SizedBox(height: 28),
-                  Text(
-                    l10n.noTransactionsToSort,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: context.mutedColor,
-                      fontSize: 17,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: _openPlaid,
-                    icon: const Icon(Icons.account_balance),
-                    label: Text(l10n.connectMyBank),
-                  ),
-                ],
-              ),
-            ),
-          );
+          // Deux situations très différentes donnent une liste vide : aucune
+          // banque reliée, ou tout est déjà trié. Proposer « Connecter ma
+          // banque » dans le second cas laissait croire que la connexion
+          // n'avait pas fonctionné.
+          return _buildEmptyState(household);
         }
 
         final soloBucket = household.soloBucketFor(uid);
@@ -765,6 +688,73 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         );
       },
+    );
+  }
+
+  /// Écran vide de la file de tri.
+  ///
+  /// Distingue « aucune banque reliée » de « tout est trié » : sans le
+  /// compteur porté par le foyer, les deux cas seraient indiscernables côté
+  /// client, `bank_connections` étant interdite de lecture.
+  Widget _buildEmptyState(Household household) {
+    final l10n = _l10n;
+    final connected = household.hasBankConnection;
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (connected)
+              Icon(
+                Icons.check_circle_outline,
+                size: 68,
+                color: context.palette.success,
+              )
+            else
+              Opacity(opacity: 0.55, child: const HorizonLogo(size: 88)),
+            const SizedBox(height: 24),
+            Text(
+              connected ? l10n.allSortedTitle : l10n.noBankTitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              connected ? l10n.allSortedBody : l10n.noBankBody,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.mutedColor,
+                fontSize: 14,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 24),
+            if (connected)
+              OutlinedButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BankConnectionsScreen(),
+                  ),
+                ),
+                icon: const Icon(Icons.account_balance),
+                label: Text(l10n.bankManageTitle),
+              )
+            else
+              ElevatedButton.icon(
+                onPressed: _openPlaid,
+                icon: const Icon(Icons.account_balance),
+                label: Text(l10n.connectMyBank),
+              ),
+          ],
+        ),
+      ),
     );
   }
 

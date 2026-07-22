@@ -9,7 +9,7 @@ import {
   Transaction as PlaidTransaction,
   RemovedTransaction,
 } from "plaid";
-import { db, FieldValue } from "./init";
+import { db, FieldValue, Timestamp } from "./init";
 import {
   requireAuth,
   enforceRateLimit,
@@ -56,6 +56,57 @@ interface BankConnection {
   user_id: string;
   household_id: string;
   sync_cursor?: string;
+}
+
+/**
+ * Recalcule le nombre de connexions bancaires du foyer et l'inscrit sur son
+ * document.
+ *
+ * Les clients ne peuvent pas lire `bank_connections` (elle contient les
+ * jetons d'accès) : sans ce compteur, l'accueil ne pourrait pas distinguer
+ * « aucune banque connectée » de « tout est trié ». On recompte plutôt que
+ * d'incrémenter, pour qu'une suppression manquée ne fasse pas dériver la
+ * valeur durablement.
+ */
+export async function refreshConnectionCount(
+  householdId: string
+): Promise<void> {
+  try {
+    const snap = await db
+      .collection("bank_connections")
+      .where("household_id", "==", householdId)
+      .count()
+      .get();
+    await db
+      .collection("households")
+      .doc(householdId)
+      .update({ bank_connections_count: snap.data().count });
+  } catch (e) {
+    // Purement indicatif : un échec ne doit jamais faire échouer l'action
+    // en cours (connexion, suppression de compte, départ d'un foyer).
+    console.error(`Recompte des connexions échoué pour ${householdId}:`, e);
+  }
+}
+
+/** Nom lisible de l'institution, pour l'afficher dans l'app. */
+async function institutionNameOf(
+  client: PlaidApi,
+  accessToken: string
+): Promise<{ id: string | null; name: string | null }> {
+  try {
+    const item = await client.itemGet({ access_token: accessToken });
+    const institutionId = item.data.item.institution_id;
+    if (!institutionId) return { id: null, name: null };
+    const inst = await client.institutionsGetById({
+      institution_id: institutionId,
+      country_codes: [CountryCode.Us, CountryCode.Ca],
+    });
+    return { id: institutionId, name: inst.data.institution.name };
+  } catch (e) {
+    // Cosmétique : l'app affichera « Compte bancaire » à défaut de nom.
+    console.error("Récupération du nom d'institution échouée:", e);
+    return { id: null, name: null };
+  }
 }
 
 /**
@@ -387,6 +438,8 @@ export const exchangePublicToken = functions
       const accessToken = exchangeResponse.data.access_token;
       const itemId = exchangeResponse.data.item_id;
 
+      const institution = await institutionNameOf(client, accessToken);
+
       // L'access_token ne quitte jamais le serveur : les règles Firestore
       // interdisent toute lecture client de bank_connections.
       await db.collection("bank_connections").doc(itemId).set({
@@ -394,10 +447,13 @@ export const exchangePublicToken = functions
         household_id: householdId,
         access_token: accessToken,
         item_id: itemId,
+        institution_id: institution.id,
+        institution_name: institution.name,
         created_at: FieldValue.serverTimestamp(),
       });
 
       const imported = await syncTransactionsForItem(itemId);
+      await refreshConnectionCount(householdId);
       return { success: true, imported };
     } catch (error) {
       console.error("Erreur exchangePublicToken:", error);
@@ -406,6 +462,158 @@ export const exchangePublicToken = functions
         "Échec de la connexion bancaire"
       );
     }
+  });
+
+/** Identifiant d'item Plaid. */
+const ITEM_ID_PATTERN = /^[A-Za-z0-9._-]{8,128}$/;
+
+/**
+ * Connexions bancaires du foyer, sans le moindre jeton.
+ *
+ * Les règles Firestore interdisent toute lecture cliente de
+ * `bank_connections` : c'est cette fonction qui expose la part affichable.
+ */
+export const listBankConnections = functions.https.onCall(
+  async (data, context) => {
+    const uid = requireAuth(context);
+
+    const userSnap = await db.collection("users").doc(uid).get();
+    const householdId = userSnap.data()?.household_id as string | undefined;
+    if (!householdId) return { connections: [] };
+
+    const snap = await db
+      .collection("bank_connections")
+      .where("household_id", "==", householdId)
+      .get();
+
+    return {
+      connections: snap.docs.map((d) => {
+        const c = d.data();
+        return {
+          item_id: d.id,
+          institution_name: c.institution_name ?? null,
+          // Permet à l'app de distinguer ses propres comptes de ceux du
+          // partenaire, sans exposer d'identifiant utilisable autrement.
+          is_mine: c.user_id === uid,
+          created_at: (c.created_at as Timestamp | undefined)
+            ?.toDate()
+            .toISOString() ?? null,
+          last_synced_at: (c.last_synced_at as Timestamp | undefined)
+            ?.toDate()
+            .toISOString() ?? null,
+        };
+      }),
+    };
+  }
+);
+
+/**
+ * Déconnecte une banque : révocation du jeton chez Plaid puis effacement.
+ *
+ * Réservé à la personne qui a établi la connexion — un membre ne coupe pas
+ * l'accès bancaire de l'autre. Les transactions déjà importées sont
+ * **conservées** : elles font partie de l'historique budgétaire du foyer et
+ * des cagnottes déjà calculées ; seule la synchronisation cesse.
+ */
+export const removeBankConnection = functions
+  .runWith({ secrets: plaidSecrets })
+  .https.onCall(async (data, context) => {
+    const uid = requireAuth(context);
+    await enforceRateLimit("removeBankConnection", uid, 10, 3600);
+
+    const itemId = assertString(data?.item_id, "item_id", {
+      maxLength: 128,
+      pattern: ITEM_ID_PATTERN,
+    });
+
+    const ref = db.collection("bank_connections").doc(itemId);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "Cette connexion bancaire n'existe pas."
+      );
+    }
+    const conn = snap.data() as BankConnection;
+    if (conn.user_id !== uid) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Seule la personne qui a connecté cette banque peut la déconnecter."
+      );
+    }
+
+    if (conn.access_token) {
+      try {
+        await getPlaidClient().itemRemove({ access_token: conn.access_token });
+      } catch (e) {
+        // Même politique que deleteAccount : le jeton disparaît de nos
+        // systèmes dans tous les cas, l'échec est consigné.
+        console.error(`itemRemove a échoué pour ${itemId}:`, e);
+      }
+    }
+    await ref.delete();
+    await refreshConnectionCount(conn.household_id);
+
+    return { success: true };
+  });
+
+/**
+ * Relance la synchronisation de toutes les connexions du foyer.
+ *
+ * Plaid livre normalement les transactions par webhook, mais l'historique
+ * d'un compte fraîchement relié peut mettre plusieurs minutes à arriver :
+ * ce bouton évite d'attendre sans savoir si quelque chose se passe.
+ */
+export const syncBankConnections = functions
+  .runWith({ secrets: plaidSecrets, timeoutSeconds: 300 })
+  .https.onCall(async (data, context) => {
+    const uid = requireAuth(context);
+    await enforceRateLimit("syncBankConnections", uid, 10, 3600);
+
+    const userSnap = await db.collection("users").doc(uid).get();
+    const householdId = userSnap.data()?.household_id as string | undefined;
+    if (!householdId) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Vous ne faites partie d'aucun foyer."
+      );
+    }
+
+    const snap = await db
+      .collection("bank_connections")
+      .where("household_id", "==", householdId)
+      .get();
+
+    let imported = 0;
+    for (const doc of snap.docs) {
+      try {
+        // Rattrapage des connexions établies avant que le nom d'institution
+        // soit enregistré : évite de devoir les délier puis relier.
+        if (!doc.data().institution_name) {
+          const token = doc.data().access_token as string | undefined;
+          if (token) {
+            const inst = await institutionNameOf(getPlaidClient(), token);
+            if (inst.name) {
+              await doc.ref.update({
+                institution_id: inst.id,
+                institution_name: inst.name,
+              });
+            }
+          }
+        }
+        imported += await syncTransactionsForItem(doc.id);
+      } catch (e) {
+        // Une connexion en erreur (jeton révoqué côté banque) ne doit pas
+        // empêcher les autres de se synchroniser.
+        console.error(`Synchronisation échouée pour ${doc.id}:`, e);
+      }
+    }
+
+    // Rattrape aussi un compteur absent : les foyers reliés avant l ajout
+    // de ce champ n en ont pas, et l accueil les croirait sans banque.
+    await refreshConnectionCount(householdId);
+
+    return { success: true, imported, connections: snap.size };
   });
 
 export const plaidWebhookHandler = functions

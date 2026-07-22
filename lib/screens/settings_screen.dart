@@ -14,6 +14,7 @@ import '../utils/theme_controller.dart';
 import '../utils/validators.dart';
 import '../widgets/household_loader.dart';
 import '../widgets/legal_documents.dart';
+import 'bank_connections_screen.dart';
 import 'household_manage_screen.dart';
 import 'paywall_screen.dart';
 
@@ -140,8 +141,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
-              style:
-                  ElevatedButton.styleFrom(),
               child: Text(l10n.close),
             ),
           ],
@@ -267,6 +266,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           user?.emailVerified == true
                               ? l10n.emailVerified
                               : l10n.emailNotVerified,
+                        ),
+                      ),
+                    ]),
+                    const SizedBox(height: 16),
+                    _sectionTitle(l10n.bankSection),
+                    _card([
+                      ListTile(
+                        leading: const Icon(Icons.account_balance,
+                            color: AppColors.primary),
+                        title: Text(l10n.bankManageTitle),
+                        subtitle: Text(l10n.bankManageSubtitle),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const BankConnectionsScreen(),
+                          ),
                         ),
                       ),
                     ]),
