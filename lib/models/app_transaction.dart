@@ -11,6 +11,11 @@ class AppTransaction {
   final String? date;
   final String category;
 
+  /// Institution d'origine, copiée sur la transaction à l'import : les règles
+  /// interdisent au client de lire `bank_connections`, qui contient les
+  /// jetons d'accès.
+  final String? institutionName;
+
   const AppTransaction({
     required this.id,
     required this.amount,
@@ -20,7 +25,16 @@ class AppTransaction {
     required this.createdAt,
     required this.date,
     required this.category,
+    required this.institutionName,
   });
+
+  /// Date lisible `JJ/MM`, sans dépendance à intl — l'app formate déjà ses
+  /// montants à la main pour la même raison.
+  String? get shortDate {
+    final parts = date?.split('-');
+    if (parts == null || parts.length != 3) return null;
+    return '${parts[2]}/${parts[1]}';
+  }
 
   factory AppTransaction.fromSnapshot(DocumentSnapshot snapshot) {
     final data = snapshot.data() as Map<String, dynamic>? ?? {};
@@ -33,6 +47,7 @@ class AppTransaction {
       createdAt: (data['created_at'] as Timestamp?)?.toDate(),
       date: data['date'] as String?,
       category: (data['category'] as String?) ?? 'OTHER',
+      institutionName: data['institution_name'] as String?,
     );
   }
 }

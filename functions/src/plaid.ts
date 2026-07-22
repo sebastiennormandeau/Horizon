@@ -56,6 +56,7 @@ interface BankConnection {
   user_id: string;
   household_id: string;
   sync_cursor?: string;
+  institution_name?: string | null;
 }
 
 /**
@@ -73,6 +74,25 @@ interface BankConnection {
  * comptes du foyer, pas une dépense.
  */
 export const TRANSFER_BUCKET = "Transfer";
+
+/**
+ * Cagnotte fictive des transactions écartées du tri.
+ *
+ * Comme `Transfer`, absente de `VALID_BUCKETS` : aucun effet sur les soldes.
+ * Sert à sortir de la file les dépenses des mois révolus — relier une banque
+ * rapatrie des mois d'historique, et les trier viderait les cagnottes du mois
+ * courant de dépenses qui ne le concernent pas.
+ *
+ * Contrairement à `Transfer`, ces transactions restent comptées dans les
+ * bilans : ce sont de vraies dépenses, simplement pas à classer.
+ */
+export const ARCHIVED_BUCKET = "Archived";
+
+/** Premier jour du mois courant, au format `AAAA-MM-JJ`. */
+function startOfCurrentMonth(): string {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-01`;
+}
 
 /**
  * Catégories détaillées de Plaid qui dénotent un mouvement interne.
@@ -121,6 +141,71 @@ export async function refreshConnectionCount(
   }
 }
 
+/**
+ * Renseigne la provenance des transactions importées avant que le champ
+ * `institution_name` existe.
+ *
+ * Relit l'historique de la connexion depuis le début (curseur nul) sans
+ * toucher au curseur enregistré : c'est le seul moyen de rattacher une
+ * transaction déjà stockée à son institution, puisque son document ne
+ * conservait aucun lien vers la connexion d'origine.
+ *
+ * Ne s'exécute que si des documents en manquent réellement.
+ */
+async function backfillInstitutionNames(
+  client: PlaidApi,
+  conn: BankConnection,
+  itemId: string
+): Promise<number> {
+  if (!conn.institution_name) return 0;
+
+  const ids = new Set<string>();
+  let cursor: string | undefined = undefined;
+  let hasMore = true;
+  while (hasMore) {
+    const resp = await client.transactionsSync({
+      access_token: conn.access_token,
+      cursor,
+    });
+    resp.data.added.forEach((t) => ids.add(t.transaction_id));
+    resp.data.modified.forEach((t) => ids.add(t.transaction_id));
+    hasMore = resp.data.has_more;
+    cursor = resp.data.next_cursor;
+  }
+
+  const refs = [...ids].map((id) => db.collection("transactions").doc(id));
+  let updated = 0;
+  const chunk = 400;
+  for (let i = 0; i < refs.length; i += chunk) {
+    const slice = refs.slice(i, i + chunk);
+    const snaps = await db.getAll(...slice);
+    const batch = db.batch();
+    let pending = 0;
+    snaps.forEach((s) => {
+      if (!s.exists || s.data()?.institution_name) return;
+      batch.update(s.ref, {
+        institution_name: conn.institution_name,
+        item_id: itemId,
+      });
+      pending++;
+    });
+    if (pending > 0) {
+      await batch.commit();
+      updated += pending;
+    }
+  }
+
+  // Marqueur sur la connexion : on ne peut pas repérer les documents à
+  // compléter par une requête, Firestore ne faisant pas correspondre un champ
+  // ABSENT à `null`. Sans ce drapeau, chaque synchronisation relirait tout
+  // l'historique chez Plaid.
+  await db
+    .collection("bank_connections")
+    .doc(itemId)
+    .update({ institution_backfilled: true });
+  return updated;
+}
+
 /** Nom lisible de l'institution, pour l'afficher dans l'app. */
 async function institutionNameOf(
   client: PlaidApi,
@@ -163,6 +248,13 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
   const conn = connSnap.data() as BankConnection;
 
   const client = getPlaidClient();
+  // Première synchronisation d'une connexion : Plaid livre alors des mois
+  // d'historique d'un coup. Les dépenses antérieures au mois courant sont
+  // écartées de la file de tri (voir ARCHIVED_BUCKET). On se limite à ce
+  // premier import : ainsi une transaction du mois passé qui se règle avec
+  // quelques jours de retard reste bien à trier.
+  const isInitialSync = !conn.sync_cursor;
+  const monthStart = startOfCurrentMonth();
   let cursor = conn.sync_cursor;
   let added: PlaidTransaction[] = [];
   let modified: PlaidTransaction[] = [];
@@ -197,14 +289,24 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
       if (snap.exists) return;
       const t = chunk[idx];
       const detailed = t.personal_finance_category?.detailed ?? null;
+      const isOld = isInitialSync && !!t.date && t.date < monthStart;
       batch.set(refs[idx], {
         amount: t.amount,
         merchant_name: t.merchant_name || t.name || "Inconnu",
         paid_by_user_id: conn.user_id,
         household_id: conn.household_id,
+        // Provenance : permet d'afficher l'institution sur chaque transaction
+        // sans exposer `bank_connections`, interdite de lecture cliente.
+        institution_name: conn.institution_name ?? null,
+        account_id: t.account_id ?? null,
         // Les mouvements internes sont classés d'office : ils ne doivent ni
-        // encombrer la file de tri, ni toucher aux cagnottes.
-        assigned_to_bucket: isInternalTransfer(detailed) ? TRANSFER_BUCKET : "",
+        // encombrer la file de tri, ni toucher aux cagnottes. Les dépenses
+        // des mois révolus sont écartées du tri mais restent dans les bilans.
+        assigned_to_bucket: isInternalTransfer(detailed)
+          ? TRANSFER_BUCKET
+          : isOld
+            ? ARCHIVED_BUCKET
+            : "",
         status: "Posted",
         date: t.date ?? null,
         // Catégorisation Plaid (personal_finance_category), affinable par
@@ -661,6 +763,12 @@ export const syncBankConnections = functions
             }
           }
         }
+        const conn = doc.data() as BankConnection & {
+          institution_backfilled?: boolean;
+        };
+        if (conn.institution_name && !conn.institution_backfilled) {
+          await backfillInstitutionNames(getPlaidClient(), conn, doc.id);
+        }
         imported += await syncTransactionsForItem(doc.id);
       } catch (e) {
         // Une connexion en erreur (jeton révoqué côté banque) ne doit pas
@@ -675,6 +783,55 @@ export const syncBankConnections = functions
 
     return { success: true, imported, connections: snap.size };
   });
+
+/**
+ * Écarte de la file de tri les transactions non classées des mois révolus.
+ *
+ * Les cagnottes sont calculées pour le **mois courant** : trier des dépenses
+ * d'avril viderait le budget de juillet de sommes qui ne le concernent pas.
+ * Ces transactions restent visibles dans l'historique et comptées dans les
+ * bilans, qui se bornent sur la date réelle.
+ */
+export const archivePastTransactions = functions.https.onCall(
+  async (data, context) => {
+    const uid = requireAuth(context);
+    await enforceRateLimit("archivePastTransactions", uid, 10, 3600);
+
+    const userSnap = await db.collection("users").doc(uid).get();
+    const householdId = userSnap.data()?.household_id as string | undefined;
+    if (!householdId) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Vous ne faites partie d'aucun foyer."
+      );
+    }
+
+    const snap = await db
+      .collection("transactions")
+      .where("household_id", "==", householdId)
+      .where("assigned_to_bucket", "==", "")
+      .get();
+
+    const monthStart = startOfCurrentMonth();
+    const old = snap.docs.filter((d) => {
+      const date = d.data().date as string | undefined;
+      return !!date && date < monthStart;
+    });
+
+    const chunk = 400; // limite Firestore : 500 écritures par lot
+    for (let i = 0; i < old.length; i += chunk) {
+      const batch = db.batch();
+      old
+        .slice(i, i + chunk)
+        .forEach((d) =>
+          batch.update(d.ref, { assigned_to_bucket: ARCHIVED_BUCKET })
+        );
+      await batch.commit();
+    }
+
+    return { success: true, archived: old.length };
+  }
+);
 
 export const plaidWebhookHandler = functions
   .runWith({ secrets: plaidSecrets })

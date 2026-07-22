@@ -419,6 +419,26 @@
   "chartOtherCategories": "Autres catégories",
 
   "bucketTransfer": "Transfert interne",
+  "bucketArchived": "Écartée du tri",
+
+  "sortFilterAll": "Tout",
+  "sortFilterThisMonth": "Ce mois-ci",
+  "archivePastTitle": "Écarter les mois passés",
+  "archivePastBody": "Les transactions non triées antérieures à ce mois-ci seront retirées de la file.\n\nElles resteront visibles dans l'Historique et comptées dans vos bilans — seules vos cagnottes, qui sont calculées pour le mois courant, ne seront pas touchées.",
+  "archivePastAction": "Écarter",
+  "archivePastDone": "{count} transaction(s) écartée(s) de la file.",
+  "@archivePastDone": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "archivePastNothing": "Aucune transaction d'un mois passé à écarter.",
+  "toSortCount": "{count} à trier",
+  "@toSortCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
 
   "bankSection": "Comptes bancaires",
   "bankManageTitle": "Mes comptes bancaires",

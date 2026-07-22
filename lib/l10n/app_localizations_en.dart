@@ -874,6 +874,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bucketTransfer => 'Internal transfer';
 
   @override
+  String get bucketArchived => 'Skipped';
+
+  @override
+  String get sortFilterAll => 'All';
+
+  @override
+  String get sortFilterThisMonth => 'This month';
+
+  @override
+  String get archivePastTitle => 'Skip past months';
+
+  @override
+  String get archivePastBody =>
+      'Unsorted transactions from before this month will be removed from the queue.\n\nThey stay visible in History and counted in your reports — only your pots, which are computed for the current month, are left untouched.';
+
+  @override
+  String get archivePastAction => 'Skip them';
+
+  @override
+  String archivePastDone(int count) {
+    return '$count transaction(s) removed from the queue.';
+  }
+
+  @override
+  String get archivePastNothing => 'No transactions from past months to skip.';
+
+  @override
+  String toSortCount(int count) {
+    return '$count to sort';
+  }
+
+  @override
   String get bankSection => 'Bank accounts';
 
   @override

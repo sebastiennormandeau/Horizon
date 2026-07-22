@@ -1663,6 +1663,60 @@ abstract class AppLocalizations {
   /// **'Transfert interne'**
   String get bucketTransfer;
 
+  /// No description provided for @bucketArchived.
+  ///
+  /// In fr, this message translates to:
+  /// **'Écartée du tri'**
+  String get bucketArchived;
+
+  /// No description provided for @sortFilterAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout'**
+  String get sortFilterAll;
+
+  /// No description provided for @sortFilterThisMonth.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce mois-ci'**
+  String get sortFilterThisMonth;
+
+  /// No description provided for @archivePastTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Écarter les mois passés'**
+  String get archivePastTitle;
+
+  /// No description provided for @archivePastBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les transactions non triées antérieures à ce mois-ci seront retirées de la file.\n\nElles resteront visibles dans l\'Historique et comptées dans vos bilans — seules vos cagnottes, qui sont calculées pour le mois courant, ne seront pas touchées.'**
+  String get archivePastBody;
+
+  /// No description provided for @archivePastAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Écarter'**
+  String get archivePastAction;
+
+  /// No description provided for @archivePastDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} transaction(s) écartée(s) de la file.'**
+  String archivePastDone(int count);
+
+  /// No description provided for @archivePastNothing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune transaction d\'un mois passé à écarter.'**
+  String get archivePastNothing;
+
+  /// No description provided for @toSortCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} à trier'**
+  String toSortCount(int count);
+
   /// No description provided for @bankSection.
   ///
   /// In fr, this message translates to:

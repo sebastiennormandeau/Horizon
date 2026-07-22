@@ -141,6 +141,8 @@ class Household {
         return isSolo ? l10n.bucketEssential : l10n.bucketCommon;
       case 'Transfer':
         return l10n.bucketTransfer;
+      case 'Archived':
+        return l10n.bucketArchived;
       default:
         return l10n.bucketToSort;
     }
@@ -174,6 +176,7 @@ class Household {
   List<String> historyBuckets(String uid) => [
         ...visibleBuckets(uid),
         'Transfer',
+        'Archived',
       ];
 
   /// Niveau d'alerte le plus grave parmi les cagnottes qui existent vraiment.

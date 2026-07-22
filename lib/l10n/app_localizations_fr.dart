@@ -879,6 +879,39 @@ class AppLocalizationsFr extends AppLocalizations {
   String get bucketTransfer => 'Transfert interne';
 
   @override
+  String get bucketArchived => 'Écartée du tri';
+
+  @override
+  String get sortFilterAll => 'Tout';
+
+  @override
+  String get sortFilterThisMonth => 'Ce mois-ci';
+
+  @override
+  String get archivePastTitle => 'Écarter les mois passés';
+
+  @override
+  String get archivePastBody =>
+      'Les transactions non triées antérieures à ce mois-ci seront retirées de la file.\n\nElles resteront visibles dans l\'Historique et comptées dans vos bilans — seules vos cagnottes, qui sont calculées pour le mois courant, ne seront pas touchées.';
+
+  @override
+  String get archivePastAction => 'Écarter';
+
+  @override
+  String archivePastDone(int count) {
+    return '$count transaction(s) écartée(s) de la file.';
+  }
+
+  @override
+  String get archivePastNothing =>
+      'Aucune transaction d\'un mois passé à écarter.';
+
+  @override
+  String toSortCount(int count) {
+    return '$count à trier';
+  }
+
+  @override
   String get bankSection => 'Comptes bancaires';
 
   @override

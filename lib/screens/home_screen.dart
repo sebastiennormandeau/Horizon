@@ -102,6 +102,69 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Dernier événement Plaid en erreur, conservé pour le diagnostic.
   String? _lastPlaidEvent;
 
+  /// Restreint la file de tri au mois courant.
+  bool _thisMonthOnly = false;
+
+  bool _archiving = false;
+
+  /// Premier jour du mois courant, au format de Plaid (`AAAA-MM-JJ`).
+  static String _startOfMonth() {
+    final now = DateTime.now();
+    return '${now.year}-${now.month.toString().padLeft(2, '0')}-01';
+  }
+
+  /// Écarte de la file les transactions non triées des mois révolus.
+  Future<void> _archivePast() async {
+    final l10n = _l10n;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.archivePastTitle),
+        content: Text(l10n.archivePastBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.archivePastAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _archiving = true);
+    try {
+      final callable =
+          FirebaseFunctions.instance.httpsCallable('archivePastTransactions');
+      final result = await callable.call();
+      final n = (result.data['archived'] as num?)?.toInt() ?? 0;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            n > 0 ? l10n.archivePastDone(n) : l10n.archivePastNothing,
+          ),
+        ),
+      );
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? l10n.householdActionError)),
+      );
+    } catch (e) {
+      debugPrint('Erreur archivePastTransactions: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.householdActionError)),
+      );
+    } finally {
+      if (mounted) setState(() => _archiving = false);
+    }
+  }
+
   /// Rend visible l'échec d'une session Plaid.
   ///
   /// Sans ça, une sortie en erreur ne laissait qu'une trace dans la console
@@ -393,19 +456,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildInviteCard(household.joinCode!),
                 _buildDebtBanner(household),
               ],
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    l10n.transactionsToNeutralize,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
+              _buildSortHeader(),
               Expanded(
                 child: _buildTransactionSwipeList(household, uid),
               ),
@@ -612,12 +663,20 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildTransactionSwipeList(Household household, String uid) {
     final l10n = _l10n;
     final lang = Localizations.localeOf(context).languageCode;
+    // Tri par date réelle de l'opération plutôt que par ordre d'import : un
+    // rattrapage d'historique arrive en bloc et l'ordre d'import n'a alors
+    // aucun sens pour l'utilisateur.
+    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+        .collection('transactions')
+        .where('household_id', isEqualTo: household.id)
+        .where('assigned_to_bucket', isEqualTo: '');
+    if (_thisMonthOnly) {
+      query = query.where('date', isGreaterThanOrEqualTo: _startOfMonth());
+    }
+
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('transactions')
-          .where('household_id', isEqualTo: household.id)
-          .where('assigned_to_bucket', isEqualTo: '')
-          .orderBy('created_at', descending: true)
+      stream: query
+          .orderBy('date', descending: true)
           .limit(50)
           .snapshots(),
       builder: (context, snapshot) {
@@ -688,6 +747,52 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         );
       },
+    );
+  }
+
+  /// En-tête de la file de tri : titre, filtre par période et écartement des
+  /// mois révolus.
+  Widget _buildSortHeader() {
+    final l10n = _l10n;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 8, 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              l10n.transactionsToNeutralize,
+              style: const TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+              ),
+            ),
+          ),
+          // Le filtre porte sur la date réelle : relier une banque rapatrie
+          // des mois d'historique qui n'ont pas à encombrer le tri courant.
+          ChoiceChip(
+            label: Text(
+              _thisMonthOnly ? l10n.sortFilterThisMonth : l10n.sortFilterAll,
+              style: const TextStyle(fontSize: 12),
+            ),
+            selected: _thisMonthOnly,
+            onSelected: (v) => setState(() => _thisMonthOnly = v),
+            visualDensity: VisualDensity.compact,
+          ),
+          IconButton(
+            tooltip: l10n.archivePastTitle,
+            icon: _archiving
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.playlist_remove),
+            onPressed: _archiving ? null : _archivePast,
+          ),
+        ],
+      ),
     );
   }
 
@@ -799,8 +904,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 3),
+                // Catégorie · date · provenance. La provenance compte dès
+                // qu'on relie plusieurs institutions : sans elle, impossible
+                // de savoir si une dépense vient du compte chèque ou de la
+                // carte de crédit.
                 Text(
-                  cat.labelFor(lang),
+                  [
+                    cat.labelFor(lang),
+                    if (transaction.shortDate != null) transaction.shortDate!,
+                    if (transaction.institutionName != null)
+                      transaction.institutionName!,
+                  ].join('  ·  '),
                   style: TextStyle(fontSize: 12.5, color: context.mutedColor),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

@@ -277,6 +277,26 @@
   "chartOtherCategories": "Other categories",
 
   "bucketTransfer": "Internal transfer",
+  "bucketArchived": "Skipped",
+
+  "sortFilterAll": "All",
+  "sortFilterThisMonth": "This month",
+  "archivePastTitle": "Skip past months",
+  "archivePastBody": "Unsorted transactions from before this month will be removed from the queue.\n\nThey stay visible in History and counted in your reports — only your pots, which are computed for the current month, are left untouched.",
+  "archivePastAction": "Skip them",
+  "archivePastDone": "{count} transaction(s) removed from the queue.",
+  "@archivePastDone": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "archivePastNothing": "No transactions from past months to skip.",
+  "toSortCount": "{count} to sort",
+  "@toSortCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
 
   "bankSection": "Bank accounts",
   "bankManageTitle": "My bank accounts",
