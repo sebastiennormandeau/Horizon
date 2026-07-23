@@ -29,6 +29,7 @@ Household buildHousehold({
     subscriptionTier: 'free',
     alertThreshold: alertThreshold,
     bankConnectionsCount: 1,
+    institutionLogos: const {},
     householdMode: mode,
   );
 }

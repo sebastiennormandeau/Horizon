@@ -13,6 +13,7 @@ import '../utils/categories.dart';
 import '../utils/formatters.dart';
 import '../services/plaid_service.dart';
 import '../widgets/balance_card.dart';
+import '../widgets/institution_avatar.dart';
 import '../widgets/horizon_logo.dart';
 import '../widgets/household_loader.dart';
 import 'bank_connections_screen.dart';
@@ -888,6 +889,8 @@ class _HomeScreenState extends State<HomeScreen> {
     Household household,
   ) {
     final cat = categoryOf(transaction.category);
+    final branding =
+        household.institutionBranding(transaction.institutionName);
 
     return Container(
       decoration: BoxDecoration(
@@ -898,14 +901,13 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: cat.color.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: Icon(cat.icon, size: 21, color: cat.color),
+          // Logo de la banque : c'est la provenance qu'on veut identifier au
+          // premier coup d'œil quand plusieurs institutions sont reliées. La
+          // catégorie reste indiquée par sa petite icône colorée en légende.
+          InstitutionAvatar(
+            name: transaction.institutionName,
+            logoDataUri: branding.logo,
+            colorHex: branding.color,
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -924,20 +926,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 3),
-                // Catégorie · date · provenance. La provenance compte dès
-                // qu'on relie plusieurs institutions : sans elle, impossible
-                // de savoir si une dépense vient du compte chèque ou de la
-                // carte de crédit.
-                Text(
-                  [
-                    cat.labelFor(lang),
-                    if (transaction.shortDate != null) transaction.shortDate!,
-                    if (transaction.institutionName != null)
-                      transaction.institutionName!,
-                  ].join('  ·  '),
-                  style: TextStyle(fontSize: 12.5, color: context.mutedColor),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                // Icône de catégorie · catégorie · date · provenance. Le logo
+                // à gauche porte déjà la provenance ; l'icône de catégorie
+                // garde son repère visuel malgré le déplacement.
+                Row(
+                  children: [
+                    Icon(cat.icon, size: 13, color: cat.color),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        [
+                          cat.labelFor(lang),
+                          if (transaction.shortDate != null)
+                            transaction.shortDate!,
+                          if (transaction.institutionName != null)
+                            transaction.institutionName!,
+                        ].join('  ·  '),
+                        style: TextStyle(
+                            fontSize: 12.5, color: context.mutedColor),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

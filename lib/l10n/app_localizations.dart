@@ -1870,14 +1870,38 @@ abstract class AppLocalizations {
   /// No description provided for @tutorial4Title.
   ///
   /// In fr, this message translates to:
-  /// **'Vos comptes bancaires'**
+  /// **'Transferts et mouvements internes'**
   String get tutorial4Title;
 
   /// No description provided for @tutorial4Body.
   ///
   /// In fr, this message translates to:
-  /// **'Reliez autant de comptes que nécessaire — chèque, épargne, carte de crédit.\n\nDeux réglages comptent : indiquez quels comptes sont conjoints, pour qu\'aucune dette ne s\'invente entre vous. Et sachez que les paiements de carte et les virements entre vos comptes sont écartés d\'office : une dépense se compte à l\'achat, jamais deux fois.'**
+  /// **'Toute sortie d\'argent n\'est pas une dépense. Un paiement de carte de crédit, un virement vers votre épargne, un remboursement de prêt avec de l\'argent déjà mis de côté : ce sont des mouvements entre vos propres comptes.\n\nHorizon les écarte d\'office quand il les reconnaît. Sinon, le menu « ⋮ » sur chaque transaction vous laisse la classer en « Transfert interne » — elle n\'entamera aucune cagnotte.'**
   String get tutorial4Body;
+
+  /// No description provided for @tutorial5Title.
+  ///
+  /// In fr, this message translates to:
+  /// **'Gardez la file légère'**
+  String get tutorial5Title;
+
+  /// No description provided for @tutorial5Body.
+  ///
+  /// In fr, this message translates to:
+  /// **'Relier une banque importe des mois d\'historique. Pour ne pas trier le passé, le bouton « Écarter les mois passés » retire de la file tout ce qui précède le mois courant.\n\nCes transactions restent dans votre Historique et vos bilans : seules vos cagnottes, calculées pour le mois en cours, sont préservées.'**
+  String get tutorial5Body;
+
+  /// No description provided for @tutorial6Title.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos comptes bancaires'**
+  String get tutorial6Title;
+
+  /// No description provided for @tutorial6Body.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reliez autant de comptes que nécessaire — chèque, épargne, carte de crédit.\n\nUn réglage compte particulièrement : indiquez quels comptes sont conjoints, pour qu\'aucune dette ne s\'invente entre vous quand une charge commune sort d\'un compte que vous alimentez tous les deux.'**
+  String get tutorial6Body;
 
   /// No description provided for @bankJointLabel.
   ///

@@ -4,6 +4,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import '../l10n/app_localizations.dart';
 import '../services/plaid_service.dart';
 import '../theme/app_colors.dart';
+import '../widgets/institution_avatar.dart';
 
 /// Comptes bancaires reliés au foyer : état, synchronisation manuelle,
 /// déconnexion et ajout.
@@ -275,15 +276,10 @@ class _BankConnectionsScreenState extends State<BankConnectionsScreen> {
         children: [
           Row(
             children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: const Icon(Icons.account_balance,
-                size: 21, color: AppColors.primary),
+          InstitutionAvatar(
+            name: connection['institution_name'] as String?,
+            logoDataUri: connection['logo'] as String?,
+            colorHex: connection['color'] as String?,
           ),
           const SizedBox(width: 14),
           Expanded(

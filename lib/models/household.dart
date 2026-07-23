@@ -27,6 +27,12 @@ class Household {
   /// « tout est trié » — les deux donnent une liste vide.
   final int bankConnectionsCount;
 
+  /// Logo et couleur de marque de chaque institution reliée, indexés par nom.
+  ///
+  /// Stocké sur le foyer plutôt que sur chaque transaction : un logo pèse
+  /// ~10 Ko et le recopier sur des milliers de documents les alourdirait.
+  final Map<String, ({String? logo, String? color})> institutionLogos;
+
   /// Mode d'utilisation : `solo` (une seule personne) ou `couple`.
   /// Les foyers créés avant l'ajout de cette option n'ont pas le champ et
   /// sont traités comme `couple` (comportement historique).
@@ -48,6 +54,7 @@ class Household {
     required this.subscriptionTier,
     required this.alertThreshold,
     required this.bankConnectionsCount,
+    required this.institutionLogos,
     required this.householdMode,
   });
 
@@ -74,8 +81,30 @@ class Household {
       householdMode: (data['household_mode'] as String?) ?? 'couple',
       bankConnectionsCount:
           (data['bank_connections_count'] as num?)?.toInt() ?? 0,
+      institutionLogos: _parseLogos(data['institution_logos']),
     );
   }
+
+  static Map<String, ({String? logo, String? color})> _parseLogos(
+    dynamic raw,
+  ) {
+    if (raw is! Map) return const {};
+    final out = <String, ({String? logo, String? color})>{};
+    raw.forEach((key, value) {
+      if (value is Map) {
+        out[key as String] = (
+          logo: value['logo'] as String?,
+          color: value['color'] as String?,
+        );
+      }
+    });
+    return out;
+  }
+
+  /// Logo (data URI) et couleur d'une institution, `null` si non fournis.
+  ({String? logo, String? color}) institutionBranding(String? name) =>
+      (name != null ? institutionLogos[name] : null) ??
+      (logo: null, color: null);
 
   /// Foyer utilisé par une seule personne : pas de seconde cagnotte solo,
   /// pas de dette interne, pas d'invitation.

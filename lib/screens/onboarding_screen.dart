@@ -66,9 +66,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         body: l10n.tutorial3Body,
       ),
       (
-        icon: Icons.account_balance_outlined,
+        icon: Icons.sync_alt,
         title: l10n.tutorial4Title,
         body: l10n.tutorial4Body,
+      ),
+      (
+        icon: Icons.playlist_remove,
+        title: l10n.tutorial5Title,
+        body: l10n.tutorial5Body,
+      ),
+      (
+        icon: Icons.account_balance_outlined,
+        title: l10n.tutorial6Title,
+        body: l10n.tutorial6Body,
       ),
     ];
     final isLast = _page == pages.length - 1;

@@ -265,24 +265,82 @@ async function backfillInstitutionNames(
   return updated;
 }
 
-/** Nom lisible de l'institution, pour l'afficher dans l'app. */
-async function institutionNameOf(
+interface InstitutionInfo {
+  id: string | null;
+  name: string | null;
+  /** Logo PNG 152×152, encodé en data URI, ou null si Plaid n'en fournit pas. */
+  logo: string | null;
+  /** Couleur de marque hexadécimale, pour la pastille de repli. */
+  color: string | null;
+}
+
+/**
+ * Nom, logo et couleur de l'institution.
+ *
+ * `include_optional_metadata` demande le logo : Plaid ne l'a pas pour toutes
+ * les banques (le repli est alors une pastille colorée). Plaid ne détient pas
+ * ces logos et décline toute garantie — ils sont affichés tels quels, sans
+ * retraitement.
+ */
+async function institutionInfoOf(
   client: PlaidApi,
   accessToken: string
-): Promise<{ id: string | null; name: string | null }> {
+): Promise<InstitutionInfo> {
+  const empty: InstitutionInfo = {
+    id: null,
+    name: null,
+    logo: null,
+    color: null,
+  };
   try {
     const item = await client.itemGet({ access_token: accessToken });
     const institutionId = item.data.item.institution_id;
-    if (!institutionId) return { id: null, name: null };
+    if (!institutionId) return empty;
     const inst = await client.institutionsGetById({
       institution_id: institutionId,
       country_codes: [CountryCode.Us, CountryCode.Ca],
+      options: { include_optional_metadata: true },
     });
-    return { id: institutionId, name: inst.data.institution.name };
+    const i = inst.data.institution;
+    return {
+      id: institutionId,
+      name: i.name,
+      logo: i.logo ? `data:image/png;base64,${i.logo}` : null,
+      color: i.primary_color ?? null,
+    };
   } catch (e) {
     // Cosmétique : l'app affichera « Compte bancaire » à défaut de nom.
-    console.error("Récupération du nom d'institution échouée:", e);
-    return { id: null, name: null };
+    console.error("Récupération de l'institution échouée:", e);
+    return empty;
+  }
+}
+
+/**
+ * Range le logo d'une institution sur le document du foyer, indexé par nom.
+ *
+ * Stocké là plutôt que sur chaque transaction : un même logo pèse ~10 Ko et
+ * le recopier sur des milliers de documents les alourdirait inutilement. Le
+ * foyer est déjà chargé par l'accueil, qui reconstitue le lien nom → logo.
+ */
+async function storeInstitutionLogo(
+  householdId: string,
+  inst: InstitutionInfo
+): Promise<void> {
+  if (!inst.name || (!inst.logo && !inst.color)) return;
+  try {
+    await db
+      .collection("households")
+      .doc(householdId)
+      .set(
+        {
+          institution_logos: {
+            [inst.name]: { logo: inst.logo, color: inst.color },
+          },
+        },
+        { merge: true }
+      );
+  } catch (e) {
+    console.error(`Logo d'institution non enregistré (${inst.name}):`, e);
   }
 }
 
@@ -664,7 +722,7 @@ export const exchangePublicToken = functions
       const accessToken = exchangeResponse.data.access_token;
       const itemId = exchangeResponse.data.item_id;
 
-      const institution = await institutionNameOf(client, accessToken);
+      const institution = await institutionInfoOf(client, accessToken);
       const accounts = await fetchAccounts(client, accessToken);
 
       // L'access_token ne quitte jamais le serveur : les règles Firestore
@@ -681,6 +739,7 @@ export const exchangePublicToken = functions
         created_at: FieldValue.serverTimestamp(),
       });
 
+      await storeInstitutionLogo(householdId, institution);
       const imported = await syncTransactionsForItem(itemId);
       await refreshConnectionCount(householdId);
       return { success: true, imported };
@@ -715,12 +774,26 @@ export const listBankConnections = functions.https.onCall(
       .where("household_id", "==", householdId)
       .get();
 
+    // Les logos vivent sur le foyer (indexés par nom d'institution) pour ne
+    // pas être dupliqués sur chaque connexion.
+    const householdSnap = await db
+      .collection("households")
+      .doc(householdId)
+      .get();
+    const logos = (householdSnap.data()?.institution_logos ?? {}) as Record<
+      string,
+      { logo?: string | null; color?: string | null }
+    >;
+
     return {
       connections: snap.docs.map((d) => {
         const c = d.data();
+        const branding = c.institution_name ? logos[c.institution_name] : null;
         return {
           item_id: d.id,
           institution_name: c.institution_name ?? null,
+          logo: branding?.logo ?? null,
+          color: branding?.color ?? null,
           accounts: c.accounts ?? [],
           joint_account_ids: c.joint_account_ids ?? [],
           // Permet à l'app de distinguer ses propres comptes de ceux du
@@ -818,17 +891,28 @@ export const syncBankConnections = functions
     let imported = 0;
     for (const doc of snap.docs) {
       try {
-        // Rattrapage des connexions établies avant que le nom d'institution
-        // soit enregistré : évite de devoir les délier puis relier.
-        if (!doc.data().institution_name) {
+        // Rattrapage des connexions établies avant que le nom et le logo de
+        // l'institution soient enregistrés : évite de devoir les délier puis
+        // relier. On (re)tente tant que le logo manque sur le foyer.
+        const householdSnap = await db
+          .collection("households")
+          .doc(householdId)
+          .get();
+        const hasLogo =
+          !!doc.data().institution_name &&
+          !!(householdSnap.data()?.institution_logos ?? {})[
+            doc.data().institution_name
+          ];
+        if (!doc.data().institution_name || !hasLogo) {
           const token = doc.data().access_token as string | undefined;
           if (token) {
-            const inst = await institutionNameOf(getPlaidClient(), token);
+            const inst = await institutionInfoOf(getPlaidClient(), token);
             if (inst.name) {
               await doc.ref.update({
                 institution_id: inst.id,
                 institution_name: inst.name,
               });
+              await storeInstitutionLogo(householdId, inst);
             }
           }
         }

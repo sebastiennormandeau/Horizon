@@ -986,11 +986,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'Each imported transaction waits to be filed. Swipe left for your personal pot, right for the shared pot.\n\nThe pot updates immediately, and you can undo.';
 
   @override
-  String get tutorial4Title => 'Your bank accounts';
+  String get tutorial4Title => 'Transfers and internal moves';
 
   @override
   String get tutorial4Body =>
-      'Link as many accounts as you need — chequing, savings, credit card.\n\nTwo settings matter: mark which accounts are joint, so no debt gets invented between you. And know that card payments and transfers between your own accounts are set aside automatically: an expense counts when you buy, never twice.';
+      'Not every outflow is an expense. A credit-card payment, a transfer to your savings, a loan repayment with money already set aside: these are moves between your own accounts.\n\nHorizon sets them aside automatically when it recognizes them. Otherwise, the “⋮” menu on each transaction lets you file it as an “Internal transfer” — it won\'t touch any pot.';
+
+  @override
+  String get tutorial5Title => 'Keep the queue light';
+
+  @override
+  String get tutorial5Body =>
+      'Linking a bank imports months of history. So you don\'t sort the past, the “Skip past months” button removes everything before the current month from the queue.\n\nThose transactions stay in your History and reports: only your pots, computed for the current month, are preserved.';
+
+  @override
+  String get tutorial6Title => 'Your bank accounts';
+
+  @override
+  String get tutorial6Body =>
+      'Link as many accounts as you need — chequing, savings, credit card.\n\nOne setting matters most: mark which accounts are joint, so no debt gets invented between you when a shared cost leaves an account you both fund.';
 
   @override
   String get bankJointLabel => 'Joint account';
