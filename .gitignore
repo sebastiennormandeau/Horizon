@@ -54,3 +54,6 @@ l10n_untranslated.txt
 android/key.properties
 *.jks
 *.keystore
+
+# Liste d actions personnelle (a cocher, regenerable via tools/gen_actions_pdf.js)
+HORIZON_ACTIONS.pdf
