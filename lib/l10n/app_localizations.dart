@@ -1765,6 +1765,174 @@ abstract class AppLocalizations {
   /// **'Dernière synchronisation : {date}'**
   String bankLastSync(String date);
 
+  /// No description provided for @notifSection.
+  ///
+  /// In fr, this message translates to:
+  /// **'Notifications'**
+  String get notifSection;
+
+  /// No description provided for @notifManageTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Gérer mes notifications'**
+  String get notifManageTitle;
+
+  /// No description provided for @notifManageSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rappels de carte, alertes de cagnotte...'**
+  String get notifManageSubtitle;
+
+  /// No description provided for @notifEnableTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Activer les notifications'**
+  String get notifEnableTitle;
+
+  /// No description provided for @notifEnableBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Recevez des rappels et des alertes sur cet appareil.'**
+  String get notifEnableBody;
+
+  /// No description provided for @notifEnableButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Activer sur cet appareil'**
+  String get notifEnableButton;
+
+  /// No description provided for @notifDisableButton.
+  ///
+  /// In fr, this message translates to:
+  /// **'Désactiver sur cet appareil'**
+  String get notifDisableButton;
+
+  /// No description provided for @notifEnabled.
+  ///
+  /// In fr, this message translates to:
+  /// **'Notifications activées.'**
+  String get notifEnabled;
+
+  /// No description provided for @notifRefused.
+  ///
+  /// In fr, this message translates to:
+  /// **'Permission refusée. Sur iPhone, ajoutez d\'abord Horizon à votre écran d\'accueil.'**
+  String get notifRefused;
+
+  /// No description provided for @notifIosHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sur iPhone, les notifications ne fonctionnent qu\'après avoir ajouté Horizon à l\'écran d\'accueil (Partager → Sur l\'écran d\'accueil).'**
+  String get notifIosHint;
+
+  /// No description provided for @notifTypesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Types de notifications'**
+  String get notifTypesTitle;
+
+  /// No description provided for @notifCardReminder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rappel de paiement de carte'**
+  String get notifCardReminder;
+
+  /// No description provided for @notifCardReminderSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Avant l\'échéance de vos cartes de crédit'**
+  String get notifCardReminderSub;
+
+  /// No description provided for @notifPotAlert.
+  ///
+  /// In fr, this message translates to:
+  /// **'Alerte de cagnotte'**
+  String get notifPotAlert;
+
+  /// No description provided for @notifPotAlertSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quand une cagnotte passe sous le seuil ou dans le négatif'**
+  String get notifPotAlertSub;
+
+  /// No description provided for @notifToSort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Transactions à trier'**
+  String get notifToSort;
+
+  /// No description provided for @notifToSortSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rappel hebdomadaire si des transactions attendent'**
+  String get notifToSortSub;
+
+  /// No description provided for @notifPartner.
+  ///
+  /// In fr, this message translates to:
+  /// **'Activité du partenaire'**
+  String get notifPartner;
+
+  /// No description provided for @notifPartnerSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Règlements de dette et changements du foyer'**
+  String get notifPartnerSub;
+
+  /// No description provided for @notifOverspend.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dépassement des liquidités'**
+  String get notifOverspend;
+
+  /// No description provided for @notifOverspendSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quand le solde d\'une carte dépasse l\'argent disponible pour la payer'**
+  String get notifOverspendSub;
+
+  /// No description provided for @notifLeadDays.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rappel de carte : {days} jour(s) avant l\'échéance'**
+  String notifLeadDays(int days);
+
+  /// No description provided for @notifSaved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Préférences enregistrées.'**
+  String get notifSaved;
+
+  /// No description provided for @notifCardsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mes cartes de crédit'**
+  String get notifCardsTitle;
+
+  /// No description provided for @notifCardDueDay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Jour d\'échéance (1–28)'**
+  String get notifCardDueDay;
+
+  /// No description provided for @notifCardDueAuto.
+  ///
+  /// In fr, this message translates to:
+  /// **'Échéance fournie automatiquement'**
+  String get notifCardDueAuto;
+
+  /// No description provided for @notifCardNone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune carte de crédit détectée. Reliez-en une, ou reconnectez-la pour activer le suivi des échéances.'**
+  String get notifCardNone;
+
+  /// No description provided for @notifCardManualHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisissez le jour d\'échéance si votre banque ne le fournit pas automatiquement.'**
+  String get notifCardManualHint;
+
   /// No description provided for @searchHint.
   ///
   /// In fr, this message translates to:

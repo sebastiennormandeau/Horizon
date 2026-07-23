@@ -36,6 +36,20 @@ class AppEnv {
     defaultValue: '6Ld42l8tAAAAACKeHK_OpdxUC2jJ7NMnJyDGzy62',
   );
 
+  /// Clé publique VAPID pour les notifications push sur le Web (FCM).
+  ///
+  /// À récupérer dans Console Firebase → Paramètres du projet → Cloud
+  /// Messaging → « Certificats push Web » → générer une paire de clés, puis
+  /// coller la clé publique ici. Sans elle, les notifications web sont
+  /// simplement inactives (l'app fonctionne normalement).
+  static const String vapidKey = String.fromEnvironment(
+    'VAPID_KEY',
+    defaultValue: 'REPLACE_WITH_VAPID_PUBLIC_KEY',
+  );
+
+  static bool get hasVapidKey =>
+      vapidKey.isNotEmpty && vapidKey != 'REPLACE_WITH_VAPID_PUBLIC_KEY';
+
   /// Clés SDK publiques RevenueCat (ce ne sont pas des secrets, mais on les
   /// garde configurables pour séparer dev et prod).
   static const String revenueCatAppleKey = String.fromEnvironment(

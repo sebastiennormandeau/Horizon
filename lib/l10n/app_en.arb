@@ -311,6 +311,40 @@
       "date": { "type": "String" }
     }
   },
+  "notifSection": "Notifications",
+  "notifManageTitle": "Manage my notifications",
+  "notifManageSubtitle": "Card reminders, pot alerts...",
+  "notifEnableTitle": "Enable notifications",
+  "notifEnableBody": "Get reminders and alerts on this device.",
+  "notifEnableButton": "Enable on this device",
+  "notifDisableButton": "Disable on this device",
+  "notifEnabled": "Notifications enabled.",
+  "notifRefused": "Permission denied. On iPhone, first add Horizon to your home screen.",
+  "notifIosHint": "On iPhone, notifications only work after adding Horizon to your home screen (Share → Add to Home Screen).",
+  "notifTypesTitle": "Notification types",
+  "notifCardReminder": "Card payment reminder",
+  "notifCardReminderSub": "Before your credit cards are due",
+  "notifPotAlert": "Pot alert",
+  "notifPotAlertSub": "When a pot drops below the threshold or goes negative",
+  "notifToSort": "Transactions to sort",
+  "notifToSortSub": "Weekly reminder when transactions are waiting",
+  "notifPartner": "Partner activity",
+  "notifPartnerSub": "Debt settlements and household changes",
+  "notifOverspend": "Cash shortfall",
+  "notifOverspendSub": "When a card balance exceeds the cash available to pay it",
+  "notifLeadDays": "Card reminder: {days} day(s) before the due date",
+  "@notifLeadDays": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "notifSaved": "Preferences saved.",
+  "notifCardsTitle": "My credit cards",
+  "notifCardDueDay": "Due day (1–28)",
+  "notifCardDueAuto": "Due date provided automatically",
+  "notifCardNone": "No credit card detected. Link one, or reconnect it to enable due-date tracking.",
+  "notifCardManualHint": "Enter the due day if your bank does not provide it automatically.",
+
   "searchHint": "Search a merchant, a category...",
   "sortTooltip": "Sort",
   "sortDateDesc": "Date — newest first",

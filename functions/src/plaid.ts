@@ -742,6 +742,16 @@ export const exchangePublicToken = functions
       await storeInstitutionLogo(householdId, institution);
       const imported = await syncTransactionsForItem(itemId);
       await refreshConnectionCount(householdId);
+      // Solde et échéance des cartes de la nouvelle connexion, si elle
+      // supporte liabilities. Best-effort : n'empêche pas la connexion.
+      // Import différé pour éviter la boucle plaid ↔ cards au chargement
+      // (cards importe plaidSecrets d'ici, évalué à l'initialisation).
+      try {
+        const { refreshCardData } = await import("./cards");
+        await refreshCardData(householdId);
+      } catch (e) {
+        console.error("refreshCardData après connexion:", e);
+      }
       return { success: true, imported };
     } catch (error) {
       console.error("Erreur exchangePublicToken:", error);

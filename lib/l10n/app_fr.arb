@@ -453,6 +453,40 @@
       "date": { "type": "String" }
     }
   },
+  "notifSection": "Notifications",
+  "notifManageTitle": "Gérer mes notifications",
+  "notifManageSubtitle": "Rappels de carte, alertes de cagnotte...",
+  "notifEnableTitle": "Activer les notifications",
+  "notifEnableBody": "Recevez des rappels et des alertes sur cet appareil.",
+  "notifEnableButton": "Activer sur cet appareil",
+  "notifDisableButton": "Désactiver sur cet appareil",
+  "notifEnabled": "Notifications activées.",
+  "notifRefused": "Permission refusée. Sur iPhone, ajoutez d'abord Horizon à votre écran d'accueil.",
+  "notifIosHint": "Sur iPhone, les notifications ne fonctionnent qu'après avoir ajouté Horizon à l'écran d'accueil (Partager → Sur l'écran d'accueil).",
+  "notifTypesTitle": "Types de notifications",
+  "notifCardReminder": "Rappel de paiement de carte",
+  "notifCardReminderSub": "Avant l'échéance de vos cartes de crédit",
+  "notifPotAlert": "Alerte de cagnotte",
+  "notifPotAlertSub": "Quand une cagnotte passe sous le seuil ou dans le négatif",
+  "notifToSort": "Transactions à trier",
+  "notifToSortSub": "Rappel hebdomadaire si des transactions attendent",
+  "notifPartner": "Activité du partenaire",
+  "notifPartnerSub": "Règlements de dette et changements du foyer",
+  "notifOverspend": "Dépassement des liquidités",
+  "notifOverspendSub": "Quand le solde d'une carte dépasse l'argent disponible pour la payer",
+  "notifLeadDays": "Rappel de carte : {days} jour(s) avant l'échéance",
+  "@notifLeadDays": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "notifSaved": "Préférences enregistrées.",
+  "notifCardsTitle": "Mes cartes de crédit",
+  "notifCardDueDay": "Jour d'échéance (1–28)",
+  "notifCardDueAuto": "Échéance fournie automatiquement",
+  "notifCardNone": "Aucune carte de crédit détectée. Reliez-en une, ou reconnectez-la pour activer le suivi des échéances.",
+  "notifCardManualHint": "Saisissez le jour d'échéance si votre banque ne le fournit pas automatiquement.",
+
   "searchHint": "Rechercher un commerçant, une catégorie...",
   "sortTooltip": "Trier",
   "sortDateDesc": "Date — du plus récent",

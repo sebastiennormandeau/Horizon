@@ -53,15 +53,19 @@
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
   <script>
-    // Désinstalle tout service worker hérité des versions précédentes.
-    // Flutter en enregistrait un pour le fonctionnement hors ligne ; il
-    // continuait de servir un bundle périmé après un déploiement, obligeant
-    // à vider le cache à la main. L'app est désormais construite avec
-    // --pwa-strategy=none, mais celui déjà installé sur un appareil doit
-    // être retiré explicitement.
+    // Désinstalle UNIQUEMENT le service worker de cache de Flutter, hérité
+    // des versions précédentes : il servait un bundle périmé après un
+    // déploiement (d'où --pwa-strategy=none aujourd'hui). Surtout ne pas
+    // toucher au service worker de messagerie (firebase-messaging-sw.js),
+    // que le plugin FCM enregistre pour les notifications en arrière-plan.
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function (regs) {
-        for (var i = 0; i < regs.length; i++) regs[i].unregister();
+        for (var i = 0; i < regs.length; i++) {
+          var sw = regs[i].active || regs[i].installing || regs[i].waiting;
+          if (sw && sw.scriptURL && sw.scriptURL.indexOf('flutter_service_worker') !== -1) {
+            regs[i].unregister();
+          }
+        }
       });
     }
   </script>

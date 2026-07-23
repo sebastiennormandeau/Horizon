@@ -61,6 +61,13 @@ service cloud.firestore {
         allow read: if isUserInHousehold(householdId);
         allow write: if false;
       }
+
+      // Cartes de crédit (soldes, échéances) : lecture par le foyer, écriture
+      // réservée au serveur. Ne contient aucun jeton d'accès.
+      match /cards/{cardId} {
+        allow read: if isUserInHousehold(householdId);
+        allow write: if false;
+      }
     }
 
     // Contient les access_token Plaid : accessible uniquement via l'Admin SDK.

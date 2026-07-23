@@ -15,6 +15,7 @@ import '../utils/validators.dart';
 import '../widgets/household_loader.dart';
 import '../widgets/legal_documents.dart';
 import 'bank_connections_screen.dart';
+import 'notifications_screen.dart';
 import 'household_manage_screen.dart';
 import 'onboarding_screen.dart';
 import 'paywall_screen.dart';
@@ -302,6 +303,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (_) => const HouseholdManageScreen(),
+                          ),
+                        ),
+                      ),
+                    ]),
+                    const SizedBox(height: 16),
+                    _sectionTitle(l10n.notifSection),
+                    _card([
+                      ListTile(
+                        leading: const Icon(Icons.notifications_outlined,
+                            color: AppColors.primary),
+                        title: Text(l10n.notifManageTitle),
+                        subtitle: Text(l10n.notifManageSubtitle),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationsScreen(),
                           ),
                         ),
                       ),

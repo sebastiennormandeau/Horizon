@@ -932,6 +932,98 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get notifSection => 'Notifications';
+
+  @override
+  String get notifManageTitle => 'Manage my notifications';
+
+  @override
+  String get notifManageSubtitle => 'Card reminders, pot alerts...';
+
+  @override
+  String get notifEnableTitle => 'Enable notifications';
+
+  @override
+  String get notifEnableBody => 'Get reminders and alerts on this device.';
+
+  @override
+  String get notifEnableButton => 'Enable on this device';
+
+  @override
+  String get notifDisableButton => 'Disable on this device';
+
+  @override
+  String get notifEnabled => 'Notifications enabled.';
+
+  @override
+  String get notifRefused =>
+      'Permission denied. On iPhone, first add Horizon to your home screen.';
+
+  @override
+  String get notifIosHint =>
+      'On iPhone, notifications only work after adding Horizon to your home screen (Share → Add to Home Screen).';
+
+  @override
+  String get notifTypesTitle => 'Notification types';
+
+  @override
+  String get notifCardReminder => 'Card payment reminder';
+
+  @override
+  String get notifCardReminderSub => 'Before your credit cards are due';
+
+  @override
+  String get notifPotAlert => 'Pot alert';
+
+  @override
+  String get notifPotAlertSub =>
+      'When a pot drops below the threshold or goes negative';
+
+  @override
+  String get notifToSort => 'Transactions to sort';
+
+  @override
+  String get notifToSortSub => 'Weekly reminder when transactions are waiting';
+
+  @override
+  String get notifPartner => 'Partner activity';
+
+  @override
+  String get notifPartnerSub => 'Debt settlements and household changes';
+
+  @override
+  String get notifOverspend => 'Cash shortfall';
+
+  @override
+  String get notifOverspendSub =>
+      'When a card balance exceeds the cash available to pay it';
+
+  @override
+  String notifLeadDays(int days) {
+    return 'Card reminder: $days day(s) before the due date';
+  }
+
+  @override
+  String get notifSaved => 'Preferences saved.';
+
+  @override
+  String get notifCardsTitle => 'My credit cards';
+
+  @override
+  String get notifCardDueDay => 'Due day (1–28)';
+
+  @override
+  String get notifCardDueAuto => 'Due date provided automatically';
+
+  @override
+  String get notifCardNone =>
+      'No credit card detected. Link one, or reconnect it to enable due-date tracking.';
+
+  @override
+  String get notifCardManualHint =>
+      'Enter the due day if your bank does not provide it automatically.';
+
+  @override
   String get searchHint => 'Search a merchant, a category...';
 
   @override

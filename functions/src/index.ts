@@ -8,6 +8,8 @@
  *  - membership.ts : transitions solo↔couple, séparation, remise à zéro
  *  - account.ts    : suppression de compte et export de données (Loi 25)
  *  - billing.ts    : webhook RevenueCat, rollover budgétaire mensuel
+ *  - notifications.ts : push FCM, préférences, rappel de tri hebdomadaire
+ *  - cards.ts      : cartes de crédit (liabilities), rappels et liquidités
  *  - security.ts   : authentification, rate limiting, validation d'entrées
  */
 export {
@@ -32,3 +34,10 @@ export { deleteAccount, exportMyData } from "./account";
 export { revenueCatWebhook, monthlyRollover } from "./billing";
 export { generateReport, addRecurringToBudget, weeklyReports } from "./reports";
 export { generateCoachAdvice, generateTransitionAdvice } from "./coach";
+export {
+  registerPushToken,
+  unregisterPushToken,
+  setNotifPrefs,
+  weeklyToSortReminder,
+} from "./notifications";
+export { refreshCards, setCardDueDay, dailyCardChecks } from "./cards";

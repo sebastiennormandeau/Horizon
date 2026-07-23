@@ -1,6 +1,7 @@
 import * as functions from "firebase-functions/v1";
 import { db, FieldValue } from "./init";
 import { requireAuth, enforceRateLimit } from "./security";
+import { sendToUser, householdMemberIds } from "./notifications";
 
 const VALID_BUCKETS = ["Common", "Solo_A", "Solo_B"];
 
@@ -25,6 +26,12 @@ export const onTransactionAssigned = functions.firestore
     if (!payerId || !householdId || amount === 0) return;
 
     const householdRef = db.collection("households").doc(householdId);
+
+    // Détecte un franchissement de seuil vers le bas pour n'alerter qu'une
+    // fois, au moment où une cagnotte passe sous le seuil — pas à chaque
+    // dépense supplémentaire une fois déjà sous le seuil.
+    let crossedPot: { label: string; before: number; after: number } | null =
+      null;
 
     await db.runTransaction(async (tx) => {
       const householdSnap = await tx.get(householdRef);
@@ -67,8 +74,30 @@ export const onTransactionAssigned = functions.firestore
         }
       };
 
+      const commonBefore = common;
+      const soloABefore = soloA;
+      const soloBBefore = soloB;
+
       apply(beforeBucket, -1);
       apply(afterBucket, 1);
+
+      // La cagnotte touchée par cette assignation vient-elle de franchir le
+      // seuil ? On ne regarde que celle qui a bougé.
+      const threshold = (household.alert_threshold as number) ?? 100;
+      const check = (label: string, was: number, now: number) => {
+        if (was >= threshold && now < threshold) {
+          crossedPot = { label, before: was, after: now };
+        }
+      };
+      if (afterBucket === "Common" || beforeBucket === "Common") {
+        check("Commun", commonBefore, common);
+      }
+      if (afterBucket === "Solo_A" || beforeBucket === "Solo_A") {
+        check("Solo_A", soloABefore, soloA);
+      }
+      if (afterBucket === "Solo_B" || beforeBucket === "Solo_B") {
+        check("Solo_B", soloBBefore, soloB);
+      }
 
       tx.update(householdRef, {
         safe_to_spend_common: common,
@@ -78,6 +107,30 @@ export const onTransactionAssigned = functions.firestore
         updated_at: FieldValue.serverTimestamp(),
       });
     });
+
+    // Notification hors transaction : un envoi ne doit jamais bloquer ni
+    // rejouer l'écriture du grand livre.
+    if (crossedPot) {
+      const pot = crossedPot as { label: string; after: number };
+      const householdSnap = await householdRef.get();
+      const hd = householdSnap.data() ?? {};
+      const members = await householdMemberIds(hd);
+      // Libellé lisible : le prénom pour les cagnottes personnelles.
+      const label =
+        pot.label === "Solo_A"
+          ? (hd.user_A_name as string) || "Solo A"
+          : pot.label === "Solo_B"
+            ? (hd.user_B_name as string) || "Solo B"
+            : pot.label;
+      pot.label = label;
+      const negative = pot.after < 0;
+      const body = negative
+        ? `La cagnotte « ${pot.label} » est passée dans le négatif (${pot.after.toFixed(2)} $).`
+        : `La cagnotte « ${pot.label} » est passée sous votre seuil d'alerte (${pot.after.toFixed(2)} $).`;
+      for (const uid of members) {
+        await sendToUser(uid, "pot_alert", "Cagnotte sous surveillance", body);
+      }
+    }
   });
 
 /**
@@ -128,6 +181,23 @@ export const settleDebt = functions.https.onCall(async (data, context) => {
 
     return debt;
   });
+
+  // Prévient l'autre membre : un règlement le concerne directement.
+  const hd = (await householdRef.get()).data() ?? {};
+  const members = await householdMemberIds(hd);
+  const settlerName =
+    (hd.user_A_id ?? hd.created_by) === uid
+      ? (hd.user_A_name as string) || "Votre partenaire"
+      : (hd.user_B_name as string) || "Votre partenaire";
+  for (const memberId of members) {
+    if (memberId === uid) continue;
+    await sendToUser(
+      memberId,
+      "partner",
+      "Dette réglée",
+      `${settlerName} a réglé la dette interne (${Math.abs(settled).toFixed(2)} $).`
+    );
+  }
 
   return { success: true, amount_settled: Math.abs(settled) };
 });

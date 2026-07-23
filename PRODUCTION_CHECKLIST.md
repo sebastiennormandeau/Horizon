@@ -563,6 +563,31 @@ Le code est prêt (fonction `generateCoachAdvice`, écran Bilan). À faire :
    le conseil est partagé par le foyer — le bouton « Régénérer » permet à
    l'autre partenaire de l'obtenir dans sa langue.
 
+## 7 ter. Notifications push (FCM) 🔧🧪
+
+Le code est complet (six types activables, rappels de carte, alertes de
+cagnotte, dépassement des liquidités). Il manque **une clé publique VAPID** —
+sans elle, l'activation des notifications ne fait rien (l'app fonctionne
+normalement).
+
+1. Console Firebase → Paramètres du projet → **Cloud Messaging** →
+   « Certificats push Web » → **Générer une paire de clés**.
+2. Copier la **clé publique** et la poser dans
+   [lib/config/app_env.dart](lib/config/app_env.dart) (`vapidKey`, valeur par
+   défaut) — ce n'est pas un secret. Le `--dart-define=VAPID_KEY=...` reste
+   disponible pour le futur projet de production.
+3. `flutter build web --pwa-strategy=none` puis
+   `firebase deploy --only hosting --project horizon-dbba0`.
+4. 🧪 **iPhone** : ajouter Horizon à l'écran d'accueil (Safari → Partager →
+   Sur l'écran d'accueil), ouvrir depuis l'icône, Réglages → Notifications →
+   « Activer sur cet appareil ». Le push web iOS **n'existe pas** dans un
+   onglet Safari classique (contrainte Apple, iOS 16.4+).
+5. 🧪 Vérifier un déclencheur : trier une dépense jusqu'à faire passer une
+   cagnotte sous le seuil doit produire une notification.
+- Les rappels d'échéance de carte dépendent de `liabilities` (produit activé,
+  §5 bis) ; à défaut, saisir le jour d'échéance à la main dans
+  Réglages → Notifications → Mes cartes de crédit.
+
 ## 8. Conformité (Loi 25) ✅🔧
 
 - ✅ Export des données (Réglages → « Exporter mes données »)

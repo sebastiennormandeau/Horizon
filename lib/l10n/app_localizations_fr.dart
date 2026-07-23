@@ -938,6 +938,101 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get notifSection => 'Notifications';
+
+  @override
+  String get notifManageTitle => 'Gérer mes notifications';
+
+  @override
+  String get notifManageSubtitle => 'Rappels de carte, alertes de cagnotte...';
+
+  @override
+  String get notifEnableTitle => 'Activer les notifications';
+
+  @override
+  String get notifEnableBody =>
+      'Recevez des rappels et des alertes sur cet appareil.';
+
+  @override
+  String get notifEnableButton => 'Activer sur cet appareil';
+
+  @override
+  String get notifDisableButton => 'Désactiver sur cet appareil';
+
+  @override
+  String get notifEnabled => 'Notifications activées.';
+
+  @override
+  String get notifRefused =>
+      'Permission refusée. Sur iPhone, ajoutez d\'abord Horizon à votre écran d\'accueil.';
+
+  @override
+  String get notifIosHint =>
+      'Sur iPhone, les notifications ne fonctionnent qu\'après avoir ajouté Horizon à l\'écran d\'accueil (Partager → Sur l\'écran d\'accueil).';
+
+  @override
+  String get notifTypesTitle => 'Types de notifications';
+
+  @override
+  String get notifCardReminder => 'Rappel de paiement de carte';
+
+  @override
+  String get notifCardReminderSub =>
+      'Avant l\'échéance de vos cartes de crédit';
+
+  @override
+  String get notifPotAlert => 'Alerte de cagnotte';
+
+  @override
+  String get notifPotAlertSub =>
+      'Quand une cagnotte passe sous le seuil ou dans le négatif';
+
+  @override
+  String get notifToSort => 'Transactions à trier';
+
+  @override
+  String get notifToSortSub =>
+      'Rappel hebdomadaire si des transactions attendent';
+
+  @override
+  String get notifPartner => 'Activité du partenaire';
+
+  @override
+  String get notifPartnerSub => 'Règlements de dette et changements du foyer';
+
+  @override
+  String get notifOverspend => 'Dépassement des liquidités';
+
+  @override
+  String get notifOverspendSub =>
+      'Quand le solde d\'une carte dépasse l\'argent disponible pour la payer';
+
+  @override
+  String notifLeadDays(int days) {
+    return 'Rappel de carte : $days jour(s) avant l\'échéance';
+  }
+
+  @override
+  String get notifSaved => 'Préférences enregistrées.';
+
+  @override
+  String get notifCardsTitle => 'Mes cartes de crédit';
+
+  @override
+  String get notifCardDueDay => 'Jour d\'échéance (1–28)';
+
+  @override
+  String get notifCardDueAuto => 'Échéance fournie automatiquement';
+
+  @override
+  String get notifCardNone =>
+      'Aucune carte de crédit détectée. Reliez-en une, ou reconnectez-la pour activer le suivi des échéances.';
+
+  @override
+  String get notifCardManualHint =>
+      'Saisissez le jour d\'échéance si votre banque ne le fournit pas automatiquement.';
+
+  @override
   String get searchHint => 'Rechercher un commerçant, une catégorie...';
 
   @override
