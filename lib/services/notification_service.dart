@@ -4,6 +4,18 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 import '../config/app_env.dart';
 
+/// Gestionnaire des messages reçus quand l'app est en arrière-plan (natif).
+///
+/// Doit être une fonction de premier niveau : Firebase l'appelle dans un
+/// isolate séparé. Sur le Web, ce rôle est tenu par `firebase-messaging-sw.js`.
+/// Les messages de type « notification » sont affichés automatiquement par le
+/// système Android ; ce handler existe surtout pour éviter l'avertissement du
+/// plugin et servira si l'on ajoute un traitement des messages « data ».
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  debugPrint('Notification en arrière-plan: ${message.messageId}');
+}
+
 /// Notifications push (Firebase Cloud Messaging).
 ///
 /// ⚠️ Sur iOS, le push web n'existe **que** si l'app a été ajoutée à l'écran
@@ -21,8 +33,10 @@ class NotificationService {
   ///
   /// Retourne `true` si un jeton a été enregistré.
   static Future<bool> enable() async {
-    if (!AppEnv.hasVapidKey) {
-      debugPrint('VAPID absente : notifications désactivées.');
+    // La clé VAPID n'est nécessaire que sur le Web. En natif (Android, iOS),
+    // FCM utilise le jeton de la plateforme — passer la clé serait inutile.
+    if (kIsWeb && !AppEnv.hasVapidKey) {
+      debugPrint('VAPID absente : notifications web désactivées.');
       return false;
     }
     try {
@@ -33,7 +47,9 @@ class NotificationService {
         return false;
       }
 
-      final token = await messaging.getToken(vapidKey: AppEnv.vapidKey);
+      final token = await messaging.getToken(
+        vapidKey: kIsWeb ? AppEnv.vapidKey : null,
+      );
       if (token == null) return false;
 
       await FirebaseFunctions.instance
@@ -57,11 +73,18 @@ class NotificationService {
     }
   }
 
+  /// Enregistre le gestionnaire de messages d'arrière-plan (natif).
+  /// À appeler une fois au démarrage, avant tout usage de FirebaseMessaging.
+  static void registerBackgroundHandler() {
+    if (kIsWeb) return; // géré par le service worker sur le Web.
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  }
+
   /// Retire le jeton de cet appareil (l'utilisateur coupe les notifications).
   static Future<void> disable() async {
     try {
       final token = await FirebaseMessaging.instance.getToken(
-        vapidKey: AppEnv.vapidKey,
+        vapidKey: kIsWeb ? AppEnv.vapidKey : null,
       );
       if (token != null) {
         await FirebaseFunctions.instance

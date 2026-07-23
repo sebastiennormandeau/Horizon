@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Notifications (Android 13+) : la permission runtime est demandée par
+         firebase_messaging, mais doit être déclarée ici pour être accordable. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
-        android:label="horizon"
+        android:label="Horizon"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

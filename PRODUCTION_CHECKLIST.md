@@ -618,6 +618,58 @@ normalement).
 
 ---
 
+## 8 bis. Application Android native (.apk) 🔧🧪
+
+Ma conjointe utilisera un **APK natif**, pas le Web. Le code est architecturé
+pour ça (détection de plateforme, providers App Check natifs, `platform` Plaid,
+FCM natif), mais un APK fonctionnel exige quelques réglages **différents du
+Web** — ne pas supposer que « ça marche sur le Web » suffit.
+
+### ✅ Déjà en place dans le dépôt
+- `android/app/google-services.json` (paquet `com.vibecodingmind.horizon`,
+  projet `horizon-dbba0`) — requis par FCM natif.
+- Plugin `com.google.gms.google-services` appliqué.
+- `applicationId` = `com.vibecodingmind.horizon`.
+- Permission `POST_NOTIFICATIONS` (Android 13+) déclarée au manifeste.
+- Notifications natives : clé VAPID **ignorée** en natif (FCM utilise le jeton
+  de plateforme), gestionnaire d'arrière-plan enregistré (`main.dart`).
+
+### 🔧 À faire au moment de générer l'APK
+1. **Build de production** :
+   ```
+   flutter build apk --release --dart-define=APP_ENV=prod
+   # ou app bundle pour le Play Store :
+   flutter build appbundle --release --dart-define=APP_ENV=prod
+   ```
+   ⚠️ En `--release`, App Check passe en **Play Integrity** (voir §1) : sans
+   configuration Play Integrity + empreinte SHA-256 dans la console Firebase,
+   les appels aux fonctions seront rejetés une fois App Check appliqué.
+2. **Signature** : configurer une clé de signature (`android/key.properties`
+   + `signingConfigs`) — un `--release` non signé ne s'installe pas.
+3. **Plaid OAuth natif** : l'Android natif utilise le **nom de paquet**, pas
+   l'URL de redirection.
+   - Tableau de bord Plaid → Team Settings → API → *Allowed Android package
+     names* → ajouter `com.vibecodingmind.horizon`.
+   - `functions/.env` : `PLAID_ANDROID_PACKAGE=com.vibecodingmind.horizon`,
+     puis redéployer `generatePlaidLinkToken`. (Le client envoie déjà
+     `platform=android` automatiquement.)
+4. **Empreintes SHA-1 / SHA-256** de la clé de signature à ajouter dans
+   Console Firebase → Paramètres → Vos applications → app Android (nécessaire
+   à Play Integrity et à certaines API Google).
+5. 🧪 **Tester sur l'appareil** : connexion bancaire (OAuth revient dans
+   l'app via le paquet), notifications (permission Android 13+, réception en
+   arrière-plan), MFA, thème.
+
+### ℹ️ Différences Web ↔ natif à garder en tête
+| | Web | Android natif |
+| --- | --- | --- |
+| Push | service worker + clé VAPID | FCM natif, jeton de plateforme |
+| Plaid OAuth | `redirect_uri` (URL https) | `android_package_name` |
+| App Check | reCAPTCHA Enterprise | Play Integrity |
+| Notifications en onglet | oui (Android), non (iOS) | natives, toujours |
+
+---
+
 ## 9. Publication des apps 🔧
 
 - [ ] Icônes/splash finaux, captures d'écran, fiches Play Store & App Store

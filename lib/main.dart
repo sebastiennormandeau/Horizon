@@ -9,6 +9,7 @@ import 'config/app_env.dart';
 import 'firebase_options.dart';
 import 'firebase_options_prod.dart' as prod_options;
 import 'l10n/app_localizations.dart';
+import 'services/notification_service.dart';
 import 'services/revenuecat_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
@@ -59,6 +60,10 @@ void main() async {
   }
 
   await RevenueCatService.initialize();
+
+  // Gestionnaire de notifications en arrière-plan (natif Android/iOS ;
+  // sur le Web, c'est le service worker qui s'en charge).
+  NotificationService.registerBackgroundHandler();
 
   // Langue et mode d'affichage, persistés localement : disponibles dès
   // l'écran de connexion, avant toute authentification.
