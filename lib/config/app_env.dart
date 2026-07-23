@@ -44,7 +44,8 @@ class AppEnv {
   /// simplement inactives (l'app fonctionne normalement).
   static const String vapidKey = String.fromEnvironment(
     'VAPID_KEY',
-    defaultValue: 'REPLACE_WITH_VAPID_PUBLIC_KEY',
+    defaultValue:
+        'BN9WrFGlqKzYV-zgJ6hhdpf6fSQl1TmQxOwB7Zf7wJ6NKVlzauq2tqdI7YbyRR2_EzN_UzoeqZWoOroimPZES-c',
   );
 
   static bool get hasVapidKey =>
