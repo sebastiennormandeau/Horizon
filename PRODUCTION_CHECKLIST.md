@@ -634,29 +634,40 @@ Web** — ne pas supposer que « ça marche sur le Web » suffit.
 - Notifications natives : clé VAPID **ignorée** en natif (FCM utilise le jeton
   de plateforme), gestionnaire d'arrière-plan enregistré (`main.dart`).
 
-### 🔧 À faire au moment de générer l'APK
-1. **Build de production** :
+### ✅ Fait
+- **Plaid OAuth natif** : `com.vibecodingmind.horizon` enregistré dans le
+  tableau de bord Plaid (*Allowed Android package names*), et
+  `PLAID_ANDROID_PACKAGE=com.vibecodingmind.horizon` déployé sur
+  `generatePlaidLinkToken` (le client envoie `platform=android` tout seul).
+- **Play Integrity** : configuré dans Firebase (App Check).
+- **Config de signature Gradle** : `android/app/build.gradle.kts` lit
+  `android/key.properties` s'il existe, sinon retombe sur la clé de débogage.
+
+### 🔧 Reste pour un APK **publiable**
+1. **Générer le magasin de clés de release** (une seule fois, à garder
+   précieusement — le perdre bloque toute mise à jour de l'app) :
+   ```
+   keytool -genkey -v -keystore horizon-release.jks -keyalg RSA \
+     -keysize 2048 -validity 10000 -alias horizon
+   ```
+   puis copier `android/key.properties.example` en `android/key.properties`
+   et y mettre le chemin du `.jks` et les mots de passe. Les deux fichiers
+   sont déjà exclus du dépôt (`.gitignore`).
+2. **Ajouter les empreintes SHA-1 et SHA-256** de cette clé dans Console
+   Firebase → Paramètres → app Android (requis par Play Integrity) :
+   ```
+   keytool -list -v -keystore horizon-release.jks -alias horizon
+   ```
+3. **Builder** :
    ```
    flutter build apk --release --dart-define=APP_ENV=prod
-   # ou app bundle pour le Play Store :
+   # ou, pour le Play Store :
    flutter build appbundle --release --dart-define=APP_ENV=prod
    ```
-   ⚠️ En `--release`, App Check passe en **Play Integrity** (voir §1) : sans
-   configuration Play Integrity + empreinte SHA-256 dans la console Firebase,
-   les appels aux fonctions seront rejetés une fois App Check appliqué.
-2. **Signature** : configurer une clé de signature (`android/key.properties`
-   + `signingConfigs`) — un `--release` non signé ne s'installe pas.
-3. **Plaid OAuth natif** : l'Android natif utilise le **nom de paquet**, pas
-   l'URL de redirection.
-   - Tableau de bord Plaid → Team Settings → API → *Allowed Android package
-     names* → ajouter `com.vibecodingmind.horizon`.
-   - `functions/.env` : `PLAID_ANDROID_PACKAGE=com.vibecodingmind.horizon`,
-     puis redéployer `generatePlaidLinkToken`. (Le client envoie déjà
-     `platform=android` automatiquement.)
-4. **Empreintes SHA-1 / SHA-256** de la clé de signature à ajouter dans
-   Console Firebase → Paramètres → Vos applications → app Android (nécessaire
-   à Play Integrity et à certaines API Google).
-5. 🧪 **Tester sur l'appareil** : connexion bancaire (OAuth revient dans
+   ⚠️ Sans `key.properties`, l'APK est signé avec la clé de **débogage** :
+   installable pour tester, mais **non publiable** et son SHA ne correspondra
+   pas à Play Integrity.
+4. 🧪 **Tester sur l'appareil** : connexion bancaire (l'OAuth revient dans
    l'app via le paquet), notifications (permission Android 13+, réception en
    arrière-plan), MFA, thème.
 

@@ -1,0 +1,11 @@
+# Modèle de configuration de signature Android.
+#
+# Copier ce fichier en `android/key.properties` (jamais versionné) et remplir
+# les valeurs après avoir généré le magasin de clés (voir PRODUCTION_CHECKLIST
+# §8 bis). Le magasin `.jks` lui-même ne doit jamais quitter un endroit sûr :
+# le perdre rend impossible toute mise à jour de l'app sur le Play Store.
+
+storeFile=C:/chemin/vers/horizon-release.jks
+storePassword=MOT_DE_PASSE_DU_MAGASIN
+keyAlias=horizon
+keyPassword=MOT_DE_PASSE_DE_LA_CLE

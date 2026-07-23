@@ -49,3 +49,8 @@ l10n_untranslated.txt
 
 # Cache local du CLI Firebase
 .firebase/
+
+# Signature Android (ne JAMAIS versionner : contient des mots de passe)
+android/key.properties
+*.jks
+*.keystore
