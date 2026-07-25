@@ -47,6 +47,10 @@ class BalanceCard extends StatelessWidget {
 
   final bool featured;
 
+  /// Rend la carte cliquable et affiche une petite icône « portefeuille » qui
+  /// signale l'action (comparer au solde réel du compte).
+  final VoidCallback? onTap;
+
   const BalanceCard({
     super.key,
     required this.title,
@@ -54,6 +58,7 @@ class BalanceCard extends StatelessWidget {
     required this.accent,
     this.alert = 0,
     this.featured = false,
+    this.onTap,
   });
 
   @override
@@ -72,7 +77,7 @@ class BalanceCard extends StatelessWidget {
       labelColor = context.mutedColor;
     }
 
-    return AnimatedContainer(
+    final card = AnimatedContainer(
       duration: const Duration(milliseconds: 350),
       curve: Curves.easeOut,
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
@@ -141,6 +146,31 @@ class BalanceCard extends StatelessWidget {
               letterSpacing: -0.5,
               fontFeatures: const [FontFeature.tabularFigures()],
               color: foreground,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (onTap == null) return card;
+
+    // Icône discrète en coin : signale que la carte ouvre le solde réel du
+    // compte, sans encombrer la lecture du montant.
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Stack(
+        children: [
+          card,
+          Positioned(
+            top: 9,
+            right: 9,
+            child: Icon(
+              Icons.account_balance_wallet_outlined,
+              size: 13,
+              color: useGradient
+                  ? Colors.white.withValues(alpha: 0.85)
+                  : context.mutedColor,
             ),
           ),
         ],

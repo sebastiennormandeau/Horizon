@@ -1134,7 +1134,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get bankDisconnectBody =>
-      'L\'accès d\'Horizon à ce compte sera révoqué auprès de Plaid et aucune nouvelle transaction ne sera importée.\n\nVos transactions déjà classées sont conservées : elles font partie de votre historique et de vos cagnottes.';
+      'L\'accès d\'Horizon à ce compte sera révoqué auprès de Plaid, et les transactions importées de cette banque seront retirées d\'Horizon.\n\nLeur effet sur les cagnottes est annulé automatiquement. Reconnecter la banque réimportera son historique.';
 
   @override
   String get bankDisconnected => 'Banque déconnectée.';
@@ -1338,4 +1338,71 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get transitionAdviceError =>
       'Impossible de générer les conseils pour le moment.';
+
+  @override
+  String get realBalanceTitle => 'Mon solde réel';
+
+  @override
+  String get realBalanceTooltip => 'Comparer au solde réel de mon compte';
+
+  @override
+  String get realBalanceMyAccounts => 'Mes comptes personnels';
+
+  @override
+  String get realBalanceAvailable => 'Solde réel disponible';
+
+  @override
+  String get realBalanceSoloPot => 'Ma cagnotte solo';
+
+  @override
+  String get realBalanceJoint => 'Comptes conjoints (exclus du calcul)';
+
+  @override
+  String get realBalanceEmpty =>
+      'Aucun compte de dépôt personnel relié. Le solde réel s\'affiche pour tes comptes chèque et épargne connectés.';
+
+  @override
+  String get realBalanceError =>
+      'Impossible de récupérer les soldes pour le moment.';
+
+  @override
+  String get realBalanceRefresh => 'Rafraîchir';
+
+  @override
+  String get realBalanceNote =>
+      'Ta cagnotte solo, c\'est l\'argent perso qu\'il te reste à dépenser ce mois-ci. Ton compte réel contient aussi de quoi couvrir les dépenses communes et fixes : les deux montants ne sont pas censés être identiques.';
+
+  @override
+  String get acctChecking => 'Chèque';
+
+  @override
+  String get acctSavings => 'Épargne';
+
+  @override
+  String get acctDeposit => 'Dépôt';
+
+  @override
+  String get spendingByCategoryHint =>
+      'Touchez une catégorie pour voir et corriger ses transactions.';
+
+  @override
+  String get categoryTxEmpty =>
+      'Aucune transaction dans cette catégorie pour cette période.';
+
+  @override
+  String categoryTxTotal(String amount) {
+    return 'Total : $amount';
+  }
+
+  @override
+  String get categoryTxChange => 'Changer la catégorie';
+
+  @override
+  String get categoryTxPickTitle => 'Choisir une catégorie';
+
+  @override
+  String get categoryTxUpdated => 'Catégorie mise à jour';
+
+  @override
+  String get categoryTxError => 'La mise à jour a échoué.';
 }

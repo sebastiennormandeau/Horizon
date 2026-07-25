@@ -11,6 +11,7 @@ import '../utils/formatters.dart';
 import '../utils/locale_controller.dart';
 import '../widgets/category_donut.dart';
 import '../widgets/household_loader.dart';
+import 'category_transactions_screen.dart';
 import 'paywall_screen.dart';
 
 /// Bilan hebdomadaire / mensuel : chiffres calculés par le serveur
@@ -273,6 +274,11 @@ class _BilanScreenState extends State<BilanScreen> {
                 ?.map((e) => Map<String, dynamic>.from(e as Map)) ??
             []);
     final aiAdvice = report['ai_advice'] as String?;
+    // Bornes de la période, pour ouvrir le détail d'une catégorie sur la même
+    // sélection que le moteur de bilans. Absentes sur d'anciens bilans : les
+    // barres restent alors non cliquables.
+    final periodStart = (report['period_start'] as Timestamp?)?.toDate();
+    final periodEnd = (report['period_end'] as Timestamp?)?.toDate();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
@@ -292,7 +298,16 @@ class _BilanScreenState extends State<BilanScreen> {
               otherLabel: l10n.chartOtherCategories,
             ),
           ),
-          _buildCategoryBars(byCategory, prevByCategory),
+          if (periodStart != null && periodEnd != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 8),
+              child: Text(
+                l10n.spendingByCategoryHint,
+                style: TextStyle(fontSize: 12, color: context.mutedColor),
+              ),
+            ),
+          _buildCategoryBars(
+              byCategory, prevByCategory, household, periodStart, periodEnd),
           const SizedBox(height: 16),
         ],
         if (topMerchants.isNotEmpty) ...[
@@ -389,12 +404,16 @@ class _BilanScreenState extends State<BilanScreen> {
   Widget _buildCategoryBars(
     Map<String, dynamic> byCategory,
     Map<String, dynamic> prevByCategory,
+    Household household,
+    DateTime? periodStart,
+    DateTime? periodEnd,
   ) {
     final entries = byCategory.entries
         .map((e) => MapEntry(e.key, (e.value as num).toDouble()))
         .toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     final maxValue = entries.isEmpty ? 1.0 : entries.first.value;
+    final tappable = periodStart != null && periodEnd != null;
 
     return _card(
       entries.map((entry) {
@@ -402,47 +421,67 @@ class _BilanScreenState extends State<BilanScreen> {
         final prev = (prevByCategory[entry.key] as num?)?.toDouble() ?? 0;
         final delta = entry.value - prev;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(cat.icon, size: 16, color: cat.color),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(cat.labelFor(_lang),
-                        style: const TextStyle(fontSize: 13)),
-                  ),
-                  Text(
-                    formatCurrency(entry.value),
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.bold),
-                  ),
-                  if (prev > 0) ...[
-                    const SizedBox(width: 6),
-                    Text(
-                      '${delta >= 0 ? '+' : ''}${formatCurrency(delta)}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: delta > 0 ? context.palette.danger : context.palette.success,
+        return InkWell(
+          onTap: tappable
+              ? () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CategoryTransactionsScreen(
+                        householdId: household.id,
+                        categoryKey: entry.key,
+                        periodStart: periodStart,
+                        periodEnd: periodEnd,
                       ),
                     ),
+                  )
+              : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(cat.icon, size: 16, color: cat.color),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(cat.labelFor(_lang),
+                          style: const TextStyle(fontSize: 13)),
+                    ),
+                    Text(
+                      formatCurrency(entry.value),
+                      style: const TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                    if (prev > 0) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        '${delta >= 0 ? '+' : ''}${formatCurrency(delta)}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: delta > 0 ? context.palette.danger : context.palette.success,
+                        ),
+                      ),
+                    ],
+                    if (tappable) ...[
+                      const SizedBox(width: 4),
+                      Icon(Icons.chevron_right,
+                          size: 16, color: context.mutedColor),
+                    ],
                   ],
-                ],
-              ),
-              const SizedBox(height: 4),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: (entry.value / maxValue).clamp(0.0, 1.0),
-                  minHeight: 6,
-                  backgroundColor: context.borderColor,
-                  valueColor: AlwaysStoppedAnimation<Color>(cat.color),
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: (entry.value / maxValue).clamp(0.0, 1.0),
+                    minHeight: 6,
+                    backgroundColor: context.borderColor,
+                    valueColor: AlwaysStoppedAnimation<Color>(cat.color),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       }).toList(),

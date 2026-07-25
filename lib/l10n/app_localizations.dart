@@ -2116,7 +2116,7 @@ abstract class AppLocalizations {
   /// No description provided for @bankDisconnectBody.
   ///
   /// In fr, this message translates to:
-  /// **'L\'accès d\'Horizon à ce compte sera révoqué auprès de Plaid et aucune nouvelle transaction ne sera importée.\n\nVos transactions déjà classées sont conservées : elles font partie de votre historique et de vos cagnottes.'**
+  /// **'L\'accès d\'Horizon à ce compte sera révoqué auprès de Plaid, et les transactions importées de cette banque seront retirées d\'Horizon.\n\nLeur effet sur les cagnottes est annulé automatiquement. Reconnecter la banque réimportera son historique.'**
   String get bankDisconnectBody;
 
   /// No description provided for @bankDisconnected.
@@ -2472,6 +2472,126 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Impossible de générer les conseils pour le moment.'**
   String get transitionAdviceError;
+
+  /// No description provided for @realBalanceTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mon solde réel'**
+  String get realBalanceTitle;
+
+  /// No description provided for @realBalanceTooltip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comparer au solde réel de mon compte'**
+  String get realBalanceTooltip;
+
+  /// No description provided for @realBalanceMyAccounts.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mes comptes personnels'**
+  String get realBalanceMyAccounts;
+
+  /// No description provided for @realBalanceAvailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Solde réel disponible'**
+  String get realBalanceAvailable;
+
+  /// No description provided for @realBalanceSoloPot.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ma cagnotte solo'**
+  String get realBalanceSoloPot;
+
+  /// No description provided for @realBalanceJoint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comptes conjoints (exclus du calcul)'**
+  String get realBalanceJoint;
+
+  /// No description provided for @realBalanceEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun compte de dépôt personnel relié. Le solde réel s\'affiche pour tes comptes chèque et épargne connectés.'**
+  String get realBalanceEmpty;
+
+  /// No description provided for @realBalanceError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de récupérer les soldes pour le moment.'**
+  String get realBalanceError;
+
+  /// No description provided for @realBalanceRefresh.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rafraîchir'**
+  String get realBalanceRefresh;
+
+  /// No description provided for @realBalanceNote.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ta cagnotte solo, c\'est l\'argent perso qu\'il te reste à dépenser ce mois-ci. Ton compte réel contient aussi de quoi couvrir les dépenses communes et fixes : les deux montants ne sont pas censés être identiques.'**
+  String get realBalanceNote;
+
+  /// No description provided for @acctChecking.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chèque'**
+  String get acctChecking;
+
+  /// No description provided for @acctSavings.
+  ///
+  /// In fr, this message translates to:
+  /// **'Épargne'**
+  String get acctSavings;
+
+  /// No description provided for @acctDeposit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dépôt'**
+  String get acctDeposit;
+
+  /// No description provided for @spendingByCategoryHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Touchez une catégorie pour voir et corriger ses transactions.'**
+  String get spendingByCategoryHint;
+
+  /// No description provided for @categoryTxEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune transaction dans cette catégorie pour cette période.'**
+  String get categoryTxEmpty;
+
+  /// No description provided for @categoryTxTotal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Total : {amount}'**
+  String categoryTxTotal(String amount);
+
+  /// No description provided for @categoryTxChange.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer la catégorie'**
+  String get categoryTxChange;
+
+  /// No description provided for @categoryTxPickTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir une catégorie'**
+  String get categoryTxPickTitle;
+
+  /// No description provided for @categoryTxUpdated.
+  ///
+  /// In fr, this message translates to:
+  /// **'Catégorie mise à jour'**
+  String get categoryTxUpdated;
+
+  /// No description provided for @categoryTxError.
+  ///
+  /// In fr, this message translates to:
+  /// **'La mise à jour a échoué.'**
+  String get categoryTxError;
 }
 
 class _AppLocalizationsDelegate

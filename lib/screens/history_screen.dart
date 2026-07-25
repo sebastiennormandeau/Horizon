@@ -447,10 +447,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '-${formatCurrency(t.amount)}',
-                style: const TextStyle(
+                // Montant négatif = entrée d'argent : « +X » en vert, pas « --X ».
+                t.amount < 0
+                    ? '+${formatCurrency(-t.amount)}'
+                    : '-${formatCurrency(t.amount)}',
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
+                  color: t.amount < 0
+                      ? context.palette.success
+                      : context.colors.onSurface,
                 ),
               ),
               PopupMenuButton<String>(

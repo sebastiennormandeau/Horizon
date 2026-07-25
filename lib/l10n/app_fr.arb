@@ -520,7 +520,7 @@
 
   "bankDisconnect": "Déconnecter",
   "bankDisconnectTitle": "Déconnecter cette banque ?",
-  "bankDisconnectBody": "L'accès d'Horizon à ce compte sera révoqué auprès de Plaid et aucune nouvelle transaction ne sera importée.\n\nVos transactions déjà classées sont conservées : elles font partie de votre historique et de vos cagnottes.",
+  "bankDisconnectBody": "L'accès d'Horizon à ce compte sera révoqué auprès de Plaid, et les transactions importées de cette banque seront retirées d'Horizon.\n\nLeur effet sur les cagnottes est annulé automatiquement. Reconnecter la banque réimportera son historique.",
   "bankDisconnected": "Banque déconnectée.",
   "bankSyncNow": "Synchroniser maintenant",
   "bankSyncing": "Synchronisation en cours...",
@@ -621,5 +621,32 @@
   "transitionAdviceIntro": "Un changement de situation bouscule un budget. Le coach vous propose des bonnes pratiques pour aborder cette étape sereinement.",
   "transitionAdviceGenerate": "Obtenir mes conseils",
   "transitionAdviceLoading": "Le coach rédige vos conseils...",
-  "transitionAdviceError": "Impossible de générer les conseils pour le moment."
+  "transitionAdviceError": "Impossible de générer les conseils pour le moment.",
+
+  "realBalanceTitle": "Mon solde réel",
+  "realBalanceTooltip": "Comparer au solde réel de mon compte",
+  "realBalanceMyAccounts": "Mes comptes personnels",
+  "realBalanceAvailable": "Solde réel disponible",
+  "realBalanceSoloPot": "Ma cagnotte solo",
+  "realBalanceJoint": "Comptes conjoints (exclus du calcul)",
+  "realBalanceEmpty": "Aucun compte de dépôt personnel relié. Le solde réel s'affiche pour tes comptes chèque et épargne connectés.",
+  "realBalanceError": "Impossible de récupérer les soldes pour le moment.",
+  "realBalanceRefresh": "Rafraîchir",
+  "realBalanceNote": "Ta cagnotte solo, c'est l'argent perso qu'il te reste à dépenser ce mois-ci. Ton compte réel contient aussi de quoi couvrir les dépenses communes et fixes : les deux montants ne sont pas censés être identiques.",
+  "acctChecking": "Chèque",
+  "acctSavings": "Épargne",
+  "acctDeposit": "Dépôt",
+
+  "spendingByCategoryHint": "Touchez une catégorie pour voir et corriger ses transactions.",
+  "categoryTxEmpty": "Aucune transaction dans cette catégorie pour cette période.",
+  "categoryTxTotal": "Total : {amount}",
+  "@categoryTxTotal": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "categoryTxChange": "Changer la catégorie",
+  "categoryTxPickTitle": "Choisir une catégorie",
+  "categoryTxUpdated": "Catégorie mise à jour",
+  "categoryTxError": "La mise à jour a échoué."
 }

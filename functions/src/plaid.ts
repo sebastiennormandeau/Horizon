@@ -58,7 +58,13 @@ interface BankConnection {
   sync_cursor?: string;
   institution_name?: string | null;
   /** Comptes de l'institution, pour les afficher et les qualifier un à un. */
-  accounts?: { account_id: string; name: string; mask?: string | null }[];
+  accounts?: {
+    account_id: string;
+    name: string;
+    mask?: string | null;
+    type?: string | null;
+    subtype?: string | null;
+  }[];
   /**
    * Comptes conjoints de cette connexion : leurs dépenses communes ne créent
    * pas de dette interne.
@@ -74,13 +80,25 @@ interface BankConnection {
 async function fetchAccounts(
   client: PlaidApi,
   accessToken: string
-): Promise<{ account_id: string; name: string; mask?: string | null }[]> {
+): Promise<
+  {
+    account_id: string;
+    name: string;
+    mask?: string | null;
+    type?: string | null;
+    subtype?: string | null;
+  }[]
+> {
   try {
     const resp = await client.accountsGet({ access_token: accessToken });
     return resp.data.accounts.map((a) => ({
       account_id: a.account_id,
       name: a.official_name || a.name,
       mask: a.mask ?? null,
+      // Le type (`credit`, `depository`…) sert à reconnaître un paiement de
+      // carte : un dépôt sur un compte de crédit n'est pas un revenu.
+      type: a.type ?? null,
+      subtype: a.subtype ?? null,
     }));
   } catch (e) {
     console.error("Récupération des comptes échouée:", e);
@@ -156,6 +174,71 @@ const PAYROLL_DETAILED = new Set(["INCOME_WAGES", "INCOME_SALARY"]);
 
 export function isPayroll(detailed?: string | null): boolean {
   return !!detailed && PAYROLL_DETAILED.has(detailed);
+}
+
+/**
+ * Masques (4 derniers chiffres) de tous les comptes reliés du foyer.
+ *
+ * Sert à repérer les virements entre comptes du foyer : leur libellé cite le
+ * numéro du compte contrepartie.
+ */
+async function householdAccountMasks(householdId: string): Promise<string[]> {
+  const conns = await db
+    .collection("bank_connections")
+    .where("household_id", "==", householdId)
+    .get();
+  const masks = new Set<string>();
+  for (const d of conns.docs) {
+    const accounts = (d.data().accounts ?? []) as {
+      mask?: string | null;
+    }[];
+    for (const a of accounts) {
+      if (a.mask) masks.add(a.mask);
+    }
+  }
+  return [...masks];
+}
+
+/**
+ * Le libellé désigne-t-il un mouvement vers/depuis un autre compte DU FOYER ?
+ *
+ * Plaid étiquette « virement chèque→épargne » d'une dizaine de façons
+ * (`TRANSFER_IN_OTHER_TRANSFER_IN`, `TRANSFER_OUT_SAVINGS`…) et classe même un
+ * virement « prêt auto » en `LOAN_PAYMENTS_CAR_PAYMENT` : la catégorie seule
+ * rate ces mouvements internes, qui atterrissent alors dans la file de tri.
+ *
+ * Signal bien plus fiable : le libellé cite le numéro du compte contrepartie
+ * (« Deposit from Tangerine Chequing Account - 4009344997 »), et ce numéro se
+ * termine par le masque d'un compte connecté (••4997). Un dépôt d'un compte
+ * NON relié (« Compte perso Alex - 4009344544 ») reste externe — son masque
+ * n'est pas dans la liste, donc c'est bien une vraie entrée d'argent.
+ */
+function mentionsOwnAccount(
+  name: string | undefined | null,
+  masks: string[]
+): boolean {
+  if (!name || masks.length === 0) return false;
+  const runs = name.match(/\d{6,}/g); // numéros de compte complets
+  if (!runs) return false;
+  return runs.some((run) => masks.some((m) => run.endsWith(m)));
+}
+
+/**
+ * Le libellé est-il celui d'un paiement de carte reçu
+ * (« PAYMENT - THANK YOU / PAIEMENT MERCI ») ?
+ *
+ * Sur un compte de CARTE, une entrée d'argent est soit un paiement (mouvement
+ * interne, à ne pas compter), soit un remboursement de marchand. Ce mémo
+ * distingue le paiement : exiger À LA FOIS un mot « paiement » ET un « merci »
+ * évite de confondre avec un remboursement (qui porte le nom du marchand) ou
+ * un vrai virement reçu au compte chèque libellé « payment ».
+ */
+function isCardPaymentMemo(name: string | undefined | null): boolean {
+  if (!name) return false;
+  const n = name.toLowerCase();
+  const payment = n.includes("payment") || n.includes("paiement");
+  const thanks = n.includes("thank you") || n.includes("merci");
+  return payment && thanks;
 }
 
 /**
@@ -373,6 +456,22 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
   const isInitialSync = !conn.sync_cursor;
   const monthStart = startOfCurrentMonth();
   const jointIds = conn.joint_account_ids ?? [];
+  // Numéros des comptes du foyer, pour reconnaître un virement interne au
+  // libellé plutôt qu'à la seule catégorie Plaid (qui en rate beaucoup).
+  const ownMasks = await householdAccountMasks(conn.household_id);
+  // Comptes de crédit du foyer : un dépôt sur une carte est un paiement de
+  // carte (mouvement interne), jamais un revenu. On réunit les cartes connues
+  // via liabilities et les comptes marqués « credit » sur la connexion.
+  const creditAccts = new Set<string>();
+  const cardDocs = await db
+    .collection("households")
+    .doc(conn.household_id)
+    .collection("cards")
+    .get();
+  cardDocs.forEach((c) => creditAccts.add(c.id));
+  for (const a of conn.accounts ?? []) {
+    if (a.type === "credit") creditAccts.add(a.account_id);
+  }
   let cursor = conn.sync_cursor;
   let added: PlaidTransaction[] = [];
   let modified: PlaidTransaction[] = [];
@@ -408,6 +507,20 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
       const t = chunk[idx];
       const detailed = t.personal_finance_category?.detailed ?? null;
       const isOld = isInitialSync && !!t.date && t.date < monthStart;
+      // Interne si la catégorie le dit, OU si le libellé cite un compte du
+      // foyer (virement chèque↔épargne, « prêt auto » vers son épargne…), OU
+      // si c'est un paiement reçu sur une carte de crédit (Plaid l'étiquette
+      // souvent « income » à tort).
+      const label = t.name || t.merchant_name;
+      const isCardPayment =
+        typeof t.amount === "number" &&
+        t.amount < 0 &&
+        creditAccts.has(t.account_id) &&
+        isCardPaymentMemo(label);
+      const isInternal =
+        isInternalTransfer(detailed) ||
+        mentionsOwnAccount(label, ownMasks) ||
+        isCardPayment;
       batch.set(refs[idx], {
         amount: t.amount,
         merchant_name: t.merchant_name || t.name || "Inconnu",
@@ -424,7 +537,7 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
         // Les mouvements internes sont classés d'office : ils ne doivent ni
         // encombrer la file de tri, ni toucher aux cagnottes. Les dépenses
         // des mois révolus sont écartées du tri mais restent dans les bilans.
-        assigned_to_bucket: isInternalTransfer(detailed)
+        assigned_to_bucket: isInternal
           ? TRANSFER_BUCKET
           : isOld || isPayroll(detailed)
             ? ARCHIVED_BUCKET
@@ -740,6 +853,20 @@ export const exchangePublicToken = functions
       });
 
       await storeInstitutionLogo(householdId, institution);
+
+      // Re-lier une institution déjà connectée = la remplacer. Sans ça, les
+      // transactions de l'ancienne connexion resteraient orphelines et
+      // seraient réimportées en double sous les nouveaux identifiants Plaid.
+      // Couvre le cas « reconnecter sans déconnecter d'abord », pour n'importe
+      // quelle institution.
+      await replaceSameInstitutionConnections(
+        client,
+        uid,
+        householdId,
+        institution.id,
+        itemId
+      );
+
       const imported = await syncTransactionsForItem(itemId);
       await refreshConnectionCount(householdId);
       // Solde et échéance des cartes de la nouvelle connexion, si elle
@@ -822,12 +949,129 @@ export const listBankConnections = functions.https.onCall(
 );
 
 /**
+ * Retire les transactions d'un item et renverse leur effet sur les cagnottes.
+ *
+ * Déconnecter une banque doit emporter ses transactions : les garder en fait
+ * des orphelines, et reconnecter la même banque les réimporte sous de nouveaux
+ * identifiants Plaid — un doublon par achat (c'est précisément le bug que ceci
+ * corrige). Une transaction déjà triée dans un vrai pot (Solo_A/Solo_B/Common)
+ * a agi sur les cagnottes : on renverse cet effet — addition pure, donc
+ * `FieldValue.increment`, sans course avec `onTransactionAssigned` (qui, lui,
+ * ne se déclenche pas à la suppression) — avant d'effacer les documents.
+ */
+async function reverseAndDeleteItemTransactions(
+  itemId: string,
+  householdId: string
+): Promise<number> {
+  const [txSnap, hhSnap] = await Promise.all([
+    db.collection("transactions").where("item_id", "==", itemId).get(),
+    db.collection("households").doc(householdId).get(),
+  ]);
+  if (txSnap.empty) return 0;
+  const household = hhSnap.data() ?? {};
+
+  const userAId = household.user_A_id ?? household.created_by;
+  const ratioA = (household.split_ratio_user_A ?? 50) / 100;
+  const ratioB = (household.split_ratio_user_B ?? 50) / 100;
+
+  let dCommon = 0;
+  let dSoloA = 0;
+  let dSoloB = 0;
+  let dDebt = 0;
+  for (const doc of txSnap.docs) {
+    const t = doc.data();
+    const bucket: string = t.assigned_to_bucket ?? "";
+    const amount = typeof t.amount === "number" ? t.amount : 0;
+    if (bucket === "Common") {
+      dCommon += amount;
+      // Renverse apply("Common", +1) de ledger.ts, sauf sur compte conjoint.
+      if (t.is_joint_account !== true) {
+        const isUserA = t.paid_by_user_id === userAId;
+        dDebt -= isUserA ? amount * ratioB : -(amount * ratioA);
+      }
+    } else if (bucket === "Solo_A") {
+      dSoloA += amount;
+    } else if (bucket === "Solo_B") {
+      dSoloB += amount;
+    }
+  }
+
+  if (dCommon || dSoloA || dSoloB || dDebt) {
+    await db.collection("households").doc(householdId).update({
+      safe_to_spend_common: FieldValue.increment(dCommon),
+      safe_to_spend_solo_A: FieldValue.increment(dSoloA),
+      safe_to_spend_solo_B: FieldValue.increment(dSoloB),
+      internal_debt_balance: FieldValue.increment(dDebt),
+      updated_at: FieldValue.serverTimestamp(),
+    });
+  }
+
+  const chunk = 400; // limite Firestore : 500 écritures par lot
+  for (let i = 0; i < txSnap.docs.length; i += chunk) {
+    const batch = db.batch();
+    txSnap.docs.slice(i, i + chunk).forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+  return txSnap.size;
+}
+
+/**
+ * Retire les autres connexions du même utilisateur à la même institution.
+ *
+ * Re-lier une banque crée un nouvel item Plaid ; garder l'ancienne connexion
+ * dédoublerait chaque transaction. On traite donc un re-lien comme un
+ * remplacement — un foyer n'a qu'une connexion par institution. Réutilise le
+ * même renversement grand-livre + suppression que `removeBankConnection`.
+ */
+async function replaceSameInstitutionConnections(
+  client: PlaidApi,
+  uid: string,
+  householdId: string,
+  institutionId: string | null | undefined,
+  keepItemId: string
+): Promise<void> {
+  if (!institutionId) return;
+  const snap = await db
+    .collection("bank_connections")
+    .where("household_id", "==", householdId)
+    .get();
+  for (const d of snap.docs) {
+    const c = d.data();
+    if (
+      d.id === keepItemId ||
+      c.user_id !== uid ||
+      c.institution_id !== institutionId
+    ) {
+      continue;
+    }
+    await reverseAndDeleteItemTransactions(d.id, householdId);
+    const oldCards = await db
+      .collection("households")
+      .doc(householdId)
+      .collection("cards")
+      .where("item_id", "==", d.id)
+      .get();
+    for (const card of oldCards.docs) await card.ref.delete();
+    const token = c.access_token as string | undefined;
+    if (token) {
+      try {
+        await client.itemRemove({ access_token: token });
+      } catch (e) {
+        console.error(`itemRemove (re-lien) a échoué pour ${d.id}:`, e);
+      }
+    }
+    await d.ref.delete();
+  }
+}
+
+/**
  * Déconnecte une banque : révocation du jeton chez Plaid puis effacement.
  *
  * Réservé à la personne qui a établi la connexion — un membre ne coupe pas
- * l'accès bancaire de l'autre. Les transactions déjà importées sont
- * **conservées** : elles font partie de l'historique budgétaire du foyer et
- * des cagnottes déjà calculées ; seule la synchronisation cesse.
+ * l'accès bancaire de l'autre. Les transactions importées sont **retirées** et
+ * leur effet sur les cagnottes renversé (voir
+ * `reverseAndDeleteItemTransactions`) : sinon une reconnexion les dédoublerait.
+ * Les cartes rattachées à l'item sont aussi effacées.
  */
 export const removeBankConnection = functions
   .runWith({ secrets: plaidSecrets })
@@ -856,6 +1100,23 @@ export const removeBankConnection = functions
       );
     }
 
+    // Retirer d'abord les transactions (et renverser leur effet grand-livre) :
+    // les laisser en ferait des orphelines, dédoublées à la reconnexion.
+    const deleted = await reverseAndDeleteItemTransactions(
+      itemId,
+      conn.household_id
+    );
+
+    // Cartes rattachées à cet item : sans quoi un rappel d'échéance
+    // continuerait de tomber pour une carte déconnectée.
+    const cardsSnap = await db
+      .collection("households")
+      .doc(conn.household_id)
+      .collection("cards")
+      .where("item_id", "==", itemId)
+      .get();
+    for (const c of cardsSnap.docs) await c.ref.delete();
+
     if (conn.access_token) {
       try {
         await getPlaidClient().itemRemove({ access_token: conn.access_token });
@@ -868,7 +1129,16 @@ export const removeBankConnection = functions
     await ref.delete();
     await refreshConnectionCount(conn.household_id);
 
-    return { success: true };
+    // Les liquidités du foyer comptaient les comptes de cette connexion :
+    // recalcul depuis les connexions restantes (best-effort, import différé).
+    try {
+      const { refreshCardData } = await import("./cards");
+      await refreshCardData(conn.household_id);
+    } catch (e) {
+      console.error("refreshCardData après déconnexion:", e);
+    }
+
+    return { success: true, transactions_deleted: deleted };
   });
 
 /**
@@ -1080,6 +1350,64 @@ export const archivePastTransactions = functions.https.onCall(
     return { success: true, archived: old.length };
   }
 );
+
+/**
+ * Soldes réels des comptes de dépôt de l'appelant (chèque/épargne), pour les
+ * comparer à sa cagnotte solo. Ne renvoie que **ses** connexions, et marque
+ * chaque compte conjoint ou non, afin d'isoler le personnel du partagé.
+ *
+ * Lecture directe chez Plaid : `bank_connections` est interdit de lecture
+ * cliente, donc un solde ne peut transiter que par un callable.
+ */
+export const getMyCashBalances = functions
+  .runWith({ secrets: plaidSecrets })
+  .https.onCall(async (data, context) => {
+    const uid = requireAuth(context);
+    await enforceRateLimit("getMyCashBalances", uid, 30, 3600);
+
+    const conns = await db
+      .collection("bank_connections")
+      .where("user_id", "==", uid)
+      .get();
+
+    const client = getPlaidClient();
+    const accounts: {
+      account_id: string;
+      name: string;
+      mask: string | null;
+      subtype: string | null;
+      balance: number;
+      institution_name: string | null;
+      is_joint: boolean;
+    }[] = [];
+
+    for (const doc of conns.docs) {
+      const conn = doc.data() as BankConnection;
+      if (!conn.access_token) continue;
+      const jointIds = new Set(conn.joint_account_ids ?? []);
+      try {
+        const bal = await client.accountsBalanceGet({
+          access_token: conn.access_token,
+        });
+        for (const a of bal.data.accounts) {
+          if (a.type !== "depository") continue;
+          accounts.push({
+            account_id: a.account_id,
+            name: a.official_name || a.name || "Compte",
+            mask: a.mask ?? null,
+            subtype: a.subtype ?? null,
+            balance: a.balances.available ?? a.balances.current ?? 0,
+            institution_name: conn.institution_name ?? null,
+            is_joint: jointIds.has(a.account_id),
+          });
+        }
+      } catch (e) {
+        console.error(`Solde indisponible pour ${doc.id}:`, e);
+      }
+    }
+
+    return { accounts };
+  });
 
 export const plaidWebhookHandler = functions
   .runWith({ secrets: plaidSecrets })

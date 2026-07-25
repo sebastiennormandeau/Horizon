@@ -1124,7 +1124,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bankDisconnectBody =>
-      'Horizon\'s access to this account will be revoked with Plaid and no new transactions will be imported.\n\nYour already-sorted transactions are kept: they are part of your history and your pot balances.';
+      'Horizon\'s access to this account will be revoked with Plaid, and the transactions imported from this bank will be removed from Horizon.\n\nTheir effect on your pots is reversed automatically. Reconnecting the bank will re-import its history.';
 
   @override
   String get bankDisconnected => 'Bank disconnected.';
@@ -1327,4 +1327,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transitionAdviceError => 'Unable to generate advice right now.';
+
+  @override
+  String get realBalanceTitle => 'My real balance';
+
+  @override
+  String get realBalanceTooltip => 'Compare with my account\'s real balance';
+
+  @override
+  String get realBalanceMyAccounts => 'My personal accounts';
+
+  @override
+  String get realBalanceAvailable => 'Real available balance';
+
+  @override
+  String get realBalanceSoloPot => 'My solo pot';
+
+  @override
+  String get realBalanceJoint => 'Joint accounts (excluded)';
+
+  @override
+  String get realBalanceEmpty =>
+      'No personal deposit account linked. Real balances show for your connected chequing and savings accounts.';
+
+  @override
+  String get realBalanceError => 'Unable to fetch balances right now.';
+
+  @override
+  String get realBalanceRefresh => 'Refresh';
+
+  @override
+  String get realBalanceNote =>
+      'Your solo pot is the personal money you have left to spend this month. Your real account also holds money for shared and fixed expenses — the two amounts aren\'t meant to match.';
+
+  @override
+  String get acctChecking => 'Chequing';
+
+  @override
+  String get acctSavings => 'Savings';
+
+  @override
+  String get acctDeposit => 'Deposit';
+
+  @override
+  String get spendingByCategoryHint =>
+      'Tap a category to see and fix its transactions.';
+
+  @override
+  String get categoryTxEmpty =>
+      'No transactions in this category for this period.';
+
+  @override
+  String categoryTxTotal(String amount) {
+    return 'Total: $amount';
+  }
+
+  @override
+  String get categoryTxChange => 'Change category';
+
+  @override
+  String get categoryTxPickTitle => 'Pick a category';
+
+  @override
+  String get categoryTxUpdated => 'Category updated';
+
+  @override
+  String get categoryTxError => 'Update failed.';
 }

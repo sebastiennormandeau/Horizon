@@ -378,7 +378,7 @@
 
   "bankDisconnect": "Disconnect",
   "bankDisconnectTitle": "Disconnect this bank?",
-  "bankDisconnectBody": "Horizon's access to this account will be revoked with Plaid and no new transactions will be imported.\n\nYour already-sorted transactions are kept: they are part of your history and your pot balances.",
+  "bankDisconnectBody": "Horizon's access to this account will be revoked with Plaid, and the transactions imported from this bank will be removed from Horizon.\n\nTheir effect on your pots is reversed automatically. Reconnecting the bank will re-import its history.",
   "bankDisconnected": "Bank disconnected.",
   "bankSyncNow": "Sync now",
   "bankSyncing": "Syncing...",
@@ -479,5 +479,32 @@
   "transitionAdviceIntro": "A change in circumstances shakes up a budget. The coach offers best practices to navigate this step calmly.",
   "transitionAdviceGenerate": "Get my advice",
   "transitionAdviceLoading": "The coach is writing your advice...",
-  "transitionAdviceError": "Unable to generate advice right now."
+  "transitionAdviceError": "Unable to generate advice right now.",
+
+  "realBalanceTitle": "My real balance",
+  "realBalanceTooltip": "Compare with my account's real balance",
+  "realBalanceMyAccounts": "My personal accounts",
+  "realBalanceAvailable": "Real available balance",
+  "realBalanceSoloPot": "My solo pot",
+  "realBalanceJoint": "Joint accounts (excluded)",
+  "realBalanceEmpty": "No personal deposit account linked. Real balances show for your connected chequing and savings accounts.",
+  "realBalanceError": "Unable to fetch balances right now.",
+  "realBalanceRefresh": "Refresh",
+  "realBalanceNote": "Your solo pot is the personal money you have left to spend this month. Your real account also holds money for shared and fixed expenses — the two amounts aren't meant to match.",
+  "acctChecking": "Chequing",
+  "acctSavings": "Savings",
+  "acctDeposit": "Deposit",
+
+  "spendingByCategoryHint": "Tap a category to see and fix its transactions.",
+  "categoryTxEmpty": "No transactions in this category for this period.",
+  "categoryTxTotal": "Total: {amount}",
+  "@categoryTxTotal": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "categoryTxChange": "Change category",
+  "categoryTxPickTitle": "Pick a category",
+  "categoryTxUpdated": "Category updated",
+  "categoryTxError": "Update failed."
 }

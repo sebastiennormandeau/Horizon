@@ -18,6 +18,7 @@ import '../widgets/horizon_logo.dart';
 import '../widgets/household_loader.dart';
 import 'bank_connections_screen.dart';
 import 'bilan_screen.dart';
+import 'cash_comparison_screen.dart';
 import 'onboarding_screen.dart';
 import 'budget_setup_screen.dart';
 import 'history_screen.dart';
@@ -484,6 +485,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Ouvre la comparaison entre la cagnotte solo et le vrai solde du compte.
+  void _openCashComparison(Household household, String uid) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            CashComparisonScreen(household: household, uid: uid),
+      ),
+    );
+  }
+
   Widget _buildBucketsOverview(Household household, String uid) {
     final l10n = _l10n;
     final isA = household.isUserA(uid);
@@ -504,6 +516,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 amount: mine,
                 accent: AppColors.solo,
                 alert: household.alertLevel(mine),
+                onTap: household.hasBankConnection
+                    ? () => _openCashComparison(household, uid)
+                    : null,
               ),
             ),
             const SizedBox(width: 10),
@@ -531,6 +546,10 @@ class _HomeScreenState extends State<HomeScreen> {
               amount: household.safeToSpendSoloA,
               accent: isA ? AppColors.solo : AppColors.partner,
               alert: household.alertLevel(household.safeToSpendSoloA),
+              // Le solde réel n'a de sens que pour ses propres comptes.
+              onTap: isA && household.hasBankConnection
+                  ? () => _openCashComparison(household, uid)
+                  : null,
             ),
           ),
           const SizedBox(width: 10),
@@ -550,6 +569,9 @@ class _HomeScreenState extends State<HomeScreen> {
               amount: household.safeToSpendSoloB,
               accent: !isA ? AppColors.solo : AppColors.partner,
               alert: household.alertLevel(household.safeToSpendSoloB),
+              onTap: !isA && household.hasBankConnection
+                  ? () => _openCashComparison(household, uid)
+                  : null,
             ),
           ),
         ],
@@ -891,6 +913,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final cat = categoryOf(transaction.category);
     final branding =
         household.institutionBranding(transaction.institutionName);
+    // Un montant négatif est une entrée d'argent (remboursement, dépôt) : on
+    // l'affiche « +X » en vert, jamais « --X ».
+    final isCredit = transaction.amount < 0;
 
     return Container(
       decoration: BoxDecoration(
@@ -955,13 +980,17 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: 10),
           Text(
-            '-${formatCurrency(transaction.amount)}',
+            isCredit
+                ? '+${formatCurrency(-transaction.amount)}'
+                : '-${formatCurrency(transaction.amount)}',
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 18,
               letterSpacing: -0.4,
               fontFeatures: const [FontFeature.tabularFigures()],
-              color: context.colors.onSurface,
+              color: isCredit
+                  ? context.palette.success
+                  : context.colors.onSurface,
             ),
           ),
           // Le glissement ne propose que les cagnottes réelles. Un mouvement
