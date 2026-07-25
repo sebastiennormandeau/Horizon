@@ -43,7 +43,7 @@ dependencies:
   cloud_firestore: 6.6.0
   firebase_auth: 6.5.4
   plaid_flutter: 5.1.1
-  purchases_flutter: 10.4.1
+  purchases_flutter: 10.4.3
   cloud_functions: 6.3.3
   flutter_markdown: 0.7.7+1
   firebase_app_check: 0.4.5
