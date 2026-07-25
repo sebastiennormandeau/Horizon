@@ -291,27 +291,41 @@ export async function generateStoredReport(
     .collection("reports")
     .doc(bounds.id);
 
-  await reportRef.set(
-    {
-      period_type: periodType,
-      period_start: Timestamp.fromDate(bounds.start),
-      period_end: Timestamp.fromDate(bounds.end),
-      generated_at: FieldValue.serverTimestamp(),
-      total_spent: current.total,
-      transaction_count: current.count,
-      by_category: current.byCategory,
-      by_bucket: current.byBucket,
-      top_merchants: current.topMerchants,
-      prev_period_id: bounds.prevId,
-      prev_total_spent: previous.total,
-      prev_by_category: previous.byCategory,
-      recurring_suggestions: recurring.map((r) => ({
-        ...r,
-        monthly_amount: monthlyEquivalent(r.amount, r.frequency_days),
-      })),
-    },
-    { merge: true }
-  );
+  // L'avis IA est écrit séparément par le coach : on le repropage pour qu'un
+  // simple recalcul des chiffres ne l'efface pas.
+  const existing = (await reportRef.get()).data();
+
+  // Set COMPLET (sans merge) : les cartes `by_category`/`by_bucket`/
+  // `prev_by_category` doivent être REMPLACÉES, pas fusionnées. Avec
+  // `{ merge: true }`, une catégorie qui disparaît d'une période à l'autre
+  // (p. ex. reclassée en Transfer) laissait sa valeur périmée dans la carte —
+  // d'où une barre « Autre » fantôme, supérieure au total, que le détail ne
+  // retrouvait dans aucune transaction réelle.
+  await reportRef.set({
+    period_type: periodType,
+    period_start: Timestamp.fromDate(bounds.start),
+    period_end: Timestamp.fromDate(bounds.end),
+    generated_at: FieldValue.serverTimestamp(),
+    total_spent: current.total,
+    transaction_count: current.count,
+    by_category: current.byCategory,
+    by_bucket: current.byBucket,
+    top_merchants: current.topMerchants,
+    prev_period_id: bounds.prevId,
+    prev_total_spent: previous.total,
+    prev_by_category: previous.byCategory,
+    recurring_suggestions: recurring.map((r) => ({
+      ...r,
+      monthly_amount: monthlyEquivalent(r.amount, r.frequency_days),
+    })),
+    ...(existing?.ai_advice !== undefined
+      ? {
+          ai_advice: existing.ai_advice,
+          ai_advice_at: existing.ai_advice_at,
+          ai_advice_language: existing.ai_advice_language,
+        }
+      : {}),
+  });
 
   return bounds.id;
 }
