@@ -17,7 +17,7 @@
     "@anthropic-ai/sdk": "^0.112.2",
     "firebase-admin": "^14.2.0",
     "firebase-functions": "^7.3.0",
-    "plaid": "^43.0.0"
+    "plaid": "^45.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
