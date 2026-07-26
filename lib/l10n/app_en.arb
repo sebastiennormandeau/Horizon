@@ -506,5 +506,17 @@
   "categoryTxChange": "Change category",
   "categoryTxPickTitle": "Pick a category",
   "categoryTxUpdated": "Category updated",
-  "categoryTxError": "Update failed."
+  "categoryTxError": "Update failed.",
+
+  "checkingBalanceLabel": "Real chequing balance",
+  "bankReauthNeeded": "A bank needs to be reconnected",
+  "bankReauthNeededNamed": "{institution}: reconnection required",
+  "@bankReauthNeededNamed": {
+    "placeholders": {
+      "institution": { "type": "String" }
+    }
+  },
+  "bankReconnect": "Reconnect",
+  "bankReconnecting": "Reconnecting…",
+  "bankReconnected": "Bank reconnected"
 }

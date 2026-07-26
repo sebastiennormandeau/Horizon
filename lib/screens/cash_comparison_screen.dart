@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/household.dart';
+import '../services/plaid_service.dart';
 import '../theme/app_colors.dart';
 import '../utils/formatters.dart';
 
@@ -48,6 +49,7 @@ class _CashComparisonScreenState extends State<CashComparisonScreen> {
   bool _loading = true;
   String? _error;
   List<_CashAccount> _accounts = const [];
+  List<Map<String, dynamic>> _reauth = const [];
 
   AppLocalizations get _l10n => AppLocalizations.of(context)!;
 
@@ -78,9 +80,13 @@ class _CashComparisonScreenState extends State<CashComparisonScreen> {
           isJoint: m['is_joint'] == true,
         );
       }).toList();
+      final reauth = ((res.data['reauth'] as List?) ?? const [])
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
       if (!mounted) return;
       setState(() {
         _accounts = accounts;
+        _reauth = reauth;
         _loading = false;
       });
     } on FirebaseFunctionsException catch (e) {
@@ -162,6 +168,10 @@ class _CashComparisonScreenState extends State<CashComparisonScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
+        if (_reauth.isNotEmpty) ...[
+          _reauthCard(_reauth.first),
+          const SizedBox(height: 12),
+        ],
         _comparisonCard(total, solo),
         const SizedBox(height: 12),
         Text(
@@ -192,6 +202,38 @@ class _CashComparisonScreenState extends State<CashComparisonScreen> {
           ...joint.map((a) => _accountTile(a, muted: true)),
         ],
       ],
+    );
+  }
+
+  Widget _reauthCard(Map<String, dynamic> item) {
+    final l10n = _l10n;
+    final inst = (item['institution_name'] as String?)?.trim() ?? '';
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: context.palette.warning.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: context.palette.warning),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.link_off, color: context.palette.warning),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              inst.isEmpty
+                  ? l10n.bankReauthNeeded
+                  : l10n.bankReauthNeededNamed(inst),
+              style: TextStyle(color: context.palette.warning, fontSize: 13),
+            ),
+          ),
+          TextButton(
+            onPressed: () => PlaidService.open(
+                updateItemId: item['item_id'] as String),
+            child: Text(l10n.bankReconnect),
+          ),
+        ],
+      ),
     );
   }
 

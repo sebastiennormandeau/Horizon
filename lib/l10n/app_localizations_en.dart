@@ -1393,4 +1393,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoryTxError => 'Update failed.';
+
+  @override
+  String get checkingBalanceLabel => 'Real chequing balance';
+
+  @override
+  String get bankReauthNeeded => 'A bank needs to be reconnected';
+
+  @override
+  String bankReauthNeededNamed(String institution) {
+    return '$institution: reconnection required';
+  }
+
+  @override
+  String get bankReconnect => 'Reconnect';
+
+  @override
+  String get bankReconnecting => 'Reconnecting…';
+
+  @override
+  String get bankReconnected => 'Bank reconnected';
 }

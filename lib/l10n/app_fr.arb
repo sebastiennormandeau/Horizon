@@ -648,5 +648,17 @@
   "categoryTxChange": "Changer la catégorie",
   "categoryTxPickTitle": "Choisir une catégorie",
   "categoryTxUpdated": "Catégorie mise à jour",
-  "categoryTxError": "La mise à jour a échoué."
+  "categoryTxError": "La mise à jour a échoué.",
+
+  "checkingBalanceLabel": "Compte chèque réel",
+  "bankReauthNeeded": "Une banque doit être reconnectée",
+  "bankReauthNeededNamed": "{institution} : reconnexion requise",
+  "@bankReauthNeededNamed": {
+    "placeholders": {
+      "institution": { "type": "String" }
+    }
+  },
+  "bankReconnect": "Reconnecter",
+  "bankReconnecting": "Reconnexion en cours…",
+  "bankReconnected": "Banque reconnectée"
 }

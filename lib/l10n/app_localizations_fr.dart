@@ -1405,4 +1405,24 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get categoryTxError => 'La mise à jour a échoué.';
+
+  @override
+  String get checkingBalanceLabel => 'Compte chèque réel';
+
+  @override
+  String get bankReauthNeeded => 'Une banque doit être reconnectée';
+
+  @override
+  String bankReauthNeededNamed(String institution) {
+    return '$institution : reconnexion requise';
+  }
+
+  @override
+  String get bankReconnect => 'Reconnecter';
+
+  @override
+  String get bankReconnecting => 'Reconnexion en cours…';
+
+  @override
+  String get bankReconnected => 'Banque reconnectée';
 }

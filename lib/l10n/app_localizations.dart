@@ -2592,6 +2592,42 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'La mise à jour a échoué.'**
   String get categoryTxError;
+
+  /// No description provided for @checkingBalanceLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compte chèque réel'**
+  String get checkingBalanceLabel;
+
+  /// No description provided for @bankReauthNeeded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Une banque doit être reconnectée'**
+  String get bankReauthNeeded;
+
+  /// No description provided for @bankReauthNeededNamed.
+  ///
+  /// In fr, this message translates to:
+  /// **'{institution} : reconnexion requise'**
+  String bankReauthNeededNamed(String institution);
+
+  /// No description provided for @bankReconnect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reconnecter'**
+  String get bankReconnect;
+
+  /// No description provided for @bankReconnecting.
+  ///
+  /// In fr, this message translates to:
+  /// **'Reconnexion en cours…'**
+  String get bankReconnecting;
+
+  /// No description provided for @bankReconnected.
+  ///
+  /// In fr, this message translates to:
+  /// **'Banque reconnectée'**
+  String get bankReconnected;
 }
 
 class _AppLocalizationsDelegate

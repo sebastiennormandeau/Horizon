@@ -51,6 +51,21 @@ export function getPlaidClient(): PlaidApi {
   );
 }
 
+/** Code d'erreur Plaid lisible extrait d'une exception axios (sinon message). */
+function plaidErrorCode(e: unknown): string {
+  const err = e as { response?: { data?: { error_code?: string } }; message?: string };
+  return err?.response?.data?.error_code ?? err?.message ?? String(e);
+}
+
+/**
+ * L'item Plaid demande une ré-authentification ? (identifiants/MFA changés, ou
+ * action requise). Un item dans cet état échoue à toute lecture — soldes,
+ * synchro — jusqu'à ce que l'utilisateur repasse par Link en « update mode ».
+ */
+function isItemLoginRequired(e: unknown): boolean {
+  return plaidErrorCode(e) === "ITEM_LOGIN_REQUIRED";
+}
+
 interface BankConnection {
   access_token: string;
   user_id: string;
@@ -74,6 +89,8 @@ interface BankConnection {
    * n'appellent pas le même traitement.
    */
   joint_account_ids?: string[];
+  /** L'item demande une ré-authentification (ITEM_LOGIN_REQUIRED). */
+  needs_reauth?: boolean;
 }
 
 /** Comptes rattachés à une connexion, pour affichage et qualification. */
@@ -593,6 +610,8 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
   await connRef.update({
     sync_cursor: cursor,
     last_synced_at: FieldValue.serverTimestamp(),
+    // Une synchro réussie prouve que l'item est de nouveau valide.
+    needs_reauth: false,
   });
 
   return imported;
@@ -704,6 +723,28 @@ export const generatePlaidLinkToken = functions
             pattern: /^(web|android|ios)$/,
           });
 
+    // Mode « update » : ré-authentifier une connexion existante passée en
+    // ITEM_LOGIN_REQUIRED, sans créer un nouvel item (donc sans réimporter
+    // l'historique ni dédoubler). Fournir l'`access_token` bascule Link en
+    // update mode ; les `products` y sont alors interdits par Plaid.
+    let accessToken: string | undefined;
+    if (data?.item_id !== undefined) {
+      const itemId = assertString(data.item_id, "item_id", {
+        maxLength: 128,
+        pattern: ITEM_ID_PATTERN,
+      });
+      const connSnap = await db.collection("bank_connections").doc(itemId).get();
+      const conn = connSnap.data() as BankConnection | undefined;
+      if (!conn || conn.user_id !== uid) {
+        throw new functions.https.HttpsError(
+          "permission-denied",
+          "Cette connexion bancaire ne vous appartient pas."
+        );
+      }
+      accessToken = conn.access_token;
+    }
+    const updateMode = accessToken !== undefined;
+
     const client = getPlaidClient();
     const projectId = process.env.GCLOUD_PROJECT;
     const webhookUrl = projectId
@@ -743,7 +784,11 @@ export const generatePlaidLinkToken = functions
           client_user_id: uid,
         },
         client_name: "Horizon App",
-        products: [Products.Transactions],
+        // Update mode : on passe l'access_token et AUCUN produit (Plaid les
+        // refuse alors). Connexion neuve : produit Transactions.
+        ...(updateMode
+          ? { access_token: accessToken }
+          : { products: [Products.Transactions] }),
         // Échéances et soldes de relevé des cartes de crédit, ajoutés
         // uniquement quand l'institution les supporte : celles qui ne les
         // offrent pas restent sélectionnables (contrairement à `products`,
@@ -758,7 +803,7 @@ export const generatePlaidLinkToken = functions
         // ⚠️ En production, chaque produit est facturé dès l'initialisation
         // du Item et ne peut plus en être retiré : seule la suppression du
         // Item (`/item/remove`) arrête les frais.
-        ...(process.env.PLAID_ENABLE_LIABILITIES === "true"
+        ...(!updateMode && process.env.PLAID_ENABLE_LIABILITIES === "true"
           ? { required_if_supported_products: [Products.Liabilities] }
           : {}),
         country_codes: [CountryCode.Us, CountryCode.Ca],
@@ -1380,6 +1425,8 @@ export const getMyCashBalances = functions
       institution_name: string | null;
       is_joint: boolean;
     }[] = [];
+    // Connexions à ré-authentifier : le client propose alors « Reconnecter ».
+    const reauth: { item_id: string; institution_name: string | null }[] = [];
 
     for (const doc of conns.docs) {
       const conn = doc.data() as BankConnection;
@@ -1401,12 +1448,21 @@ export const getMyCashBalances = functions
             is_joint: jointIds.has(a.account_id),
           });
         }
+        // Lecture réussie : l'item est sain, on efface un éventuel drapeau.
+        if (conn.needs_reauth) await doc.ref.update({ needs_reauth: false });
       } catch (e) {
-        console.error(`Solde indisponible pour ${doc.id}:`, e);
+        if (isItemLoginRequired(e)) {
+          if (!conn.needs_reauth) await doc.ref.update({ needs_reauth: true });
+          reauth.push({
+            item_id: doc.id,
+            institution_name: conn.institution_name ?? null,
+          });
+        }
+        console.warn(`Solde indisponible pour ${doc.id}: ${plaidErrorCode(e)}`);
       }
     }
 
-    return { accounts };
+    return { accounts, reauth };
   });
 
 export const plaidWebhookHandler = functions

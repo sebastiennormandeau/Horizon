@@ -38,12 +38,79 @@ class _HomeScreenState extends State<HomeScreen> {
 
   AppLocalizations get _l10n => AppLocalizations.of(context)!;
 
+  /// Solde réel du compte chèque perso (sous-type « checking », hors conjoint),
+  /// affiché sous les cagnottes pour comparaison. `null` = pas encore chargé ou
+  /// aucun compte chèque.
+  double? _checkingBalance;
+  bool _cashLoading = true;
+
+  /// Connexions à ré-authentifier (ITEM_LOGIN_REQUIRED) signalées par le
+  /// serveur : chaque entrée porte `item_id` et `institution_name`.
+  List<Map<String, dynamic>> _cashReauth = const [];
+
+  /// Charge le solde réel du compte chèque via Plaid (callable). Détecte aussi
+  /// les connexions à reconnecter.
+  Future<void> _loadCash() async {
+    try {
+      final res = await FirebaseFunctions.instance
+          .httpsCallable('getMyCashBalances')
+          .call();
+      final accounts = ((res.data['accounts'] as List?) ?? const [])
+          .map((e) => Map<String, dynamic>.from(e as Map));
+      double sum = 0;
+      var hasChecking = false;
+      for (final a in accounts) {
+        if (a['subtype'] == 'checking' && a['is_joint'] != true) {
+          sum += (a['balance'] as num?)?.toDouble() ?? 0;
+          hasChecking = true;
+        }
+      }
+      final reauth = ((res.data['reauth'] as List?) ?? const [])
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      if (!mounted) return;
+      setState(() {
+        _checkingBalance = hasChecking ? sum : null;
+        _cashReauth = reauth;
+        _cashLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Erreur getMyCashBalances: $e');
+      if (!mounted) return;
+      setState(() => _cashLoading = false);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _loadCash();
 
     _successSubscription = PlaidLink.onSuccess.listen((event) async {
+      // Update mode : l'item existe déjà, aucun public_token à échanger — sinon
+      // on recréerait/déduplierait une connexion pourtant saine. On relance
+      // simplement la synchro et on recharge les soldes.
+      final wasUpdate = await PlaidService.consumePendingUpdate();
       if (!mounted) return;
+      if (wasUpdate) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_l10n.bankReconnecting)),
+        );
+        try {
+          await FirebaseFunctions.instance
+              .httpsCallable('syncBankConnections')
+              .call();
+        } catch (e) {
+          debugPrint('Sync après reconnexion: $e');
+        }
+        await _loadCash();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_l10n.bankReconnected)),
+        );
+        return;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_l10n.syncingTransactions)),
       );
@@ -58,6 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(_l10n.bankConnected)),
         );
+        await _loadCash();
       } on FirebaseFunctionsException catch (e) {
         debugPrint("Erreur d'échange de token: ${e.code} ${e.message}");
         if (!mounted) return;
@@ -85,6 +153,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     _exitSubscription = PlaidLink.onExit.listen((event) {
+      // Un update annulé ne doit pas laisser le marqueur fausser le prochain
+      // succès (qui sauterait alors l'échange d'une nouvelle connexion).
+      PlaidService.consumePendingUpdate();
       debugPrint('Plaid Exit: ${event.error?.message ?? 'User cancelled'}');
       _showPlaidExitDiagnostic(event);
     });
@@ -466,6 +537,7 @@ class _HomeScreenState extends State<HomeScreen> {
           return Column(
             children: [
               _buildBucketsOverview(household, uid),
+              _buildCheckingLine(household, uid),
               _buildAlertBanner(household, uid),
               // En solo : ni invitation, ni dette interne — il n'y a
               // personne à inviter ni avec qui s'équilibrer.
@@ -492,6 +564,104 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(
         builder: (_) =>
             CashComparisonScreen(household: household, uid: uid),
+      ),
+    );
+  }
+
+  /// Ré-authentifie une connexion bancaire (Plaid update mode).
+  Future<void> _reconnect(String itemId) async {
+    try {
+      await PlaidService.open(updateItemId: itemId);
+    } catch (e) {
+      debugPrint('Reconnexion Plaid: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_l10n.plaidError)),
+      );
+    }
+  }
+
+  /// Ligne sous les cagnottes : solde réel du compte chèque perso, à surveiller
+  /// en regard de la cagnotte solo. Signale une banque à reconnecter.
+  Widget _buildCheckingLine(Household household, String uid) {
+    if (!household.hasBankConnection) return const SizedBox.shrink();
+    final l10n = _l10n;
+
+    if (_cashReauth.isNotEmpty) {
+      final first = _cashReauth.first;
+      final inst = (first['institution_name'] as String?)?.trim() ?? '';
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: context.palette.warning.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: context.palette.warning),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.link_off, color: context.palette.warning, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  inst.isEmpty
+                      ? l10n.bankReauthNeeded
+                      : l10n.bankReauthNeededNamed(inst),
+                  style:
+                      TextStyle(color: context.palette.warning, fontSize: 12.5),
+                ),
+              ),
+              TextButton(
+                onPressed: () => _reconnect(first['item_id'] as String),
+                child: Text(l10n.bankReconnect),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_cashLoading || _checkingBalance == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
+      child: GestureDetector(
+        onTap: () => _openCashComparison(household, uid),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            color: context.cardColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: context.borderColor),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.account_balance_wallet_outlined,
+                  size: 16, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.checkingBalanceLabel,
+                  style: TextStyle(fontSize: 13, color: context.mutedColor),
+                ),
+              ),
+              Text(
+                formatCurrency(_checkingBalance!),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Icon(Icons.chevron_right, size: 16, color: context.mutedColor),
+            ],
+          ),
+        ),
       ),
     );
   }
