@@ -480,15 +480,21 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
   // carte (mouvement interne), jamais un revenu. On réunit les cartes connues
   // via liabilities et les comptes marqués « credit » sur la connexion.
   const creditAccts = new Set<string>();
-  const cardDocs = await db
+  const householdSnap = await db
     .collection("households")
     .doc(conn.household_id)
-    .collection("cards")
     .get();
+  const cardDocs = await householdSnap.ref.collection("cards").get();
   cardDocs.forEach((c) => creditAccts.add(c.id));
   for (const a of conn.accounts ?? []) {
     if (a.type === "credit") creditAccts.add(a.account_id);
   }
+  // Règles de classement automatique par marchand (marchand normalisé →
+  // cagnotte) : Hydro, Netflix… se classent seuls dès l'import.
+  const sortRules = (householdSnap.data()?.sort_rules ?? {}) as Record<
+    string,
+    string
+  >;
   let cursor = conn.sync_cursor;
   let added: PlaidTransaction[] = [];
   let modified: PlaidTransaction[] = [];
@@ -538,6 +544,10 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
         isInternalTransfer(detailed) ||
         mentionsOwnAccount(label, ownMasks) ||
         isCardPayment;
+      // Règle utilisateur : n'entre en jeu que sur ce qui irait dans la file
+      // (« ») — elle ne détourne pas un mouvement interne ou un mois révolu.
+      const ruleBucket =
+        sortRules[(t.merchant_name || t.name || "").toLowerCase().trim()];
       batch.set(refs[idx], {
         amount: t.amount,
         merchant_name: t.merchant_name || t.name || "Inconnu",
@@ -558,7 +568,7 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
           ? TRANSFER_BUCKET
           : isOld || isPayroll(detailed)
             ? ARCHIVED_BUCKET
-            : "",
+            : (ruleBucket ?? ""),
         status: "Posted",
         date: t.date ?? null,
         // Catégorisation Plaid (personal_finance_category), affinable par

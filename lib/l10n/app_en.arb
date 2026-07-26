@@ -518,5 +518,25 @@
   },
   "bankReconnect": "Reconnect",
   "bankReconnecting": "Reconnecting…",
-  "bankReconnected": "Bank reconnected"
+  "bankReconnected": "Bank reconnected",
+
+  "ruleAlwaysSort": "Always sort this merchant…",
+  "rulePickTitle": "Always sort “{merchant}”",
+  "@rulePickTitle": {
+    "placeholders": {
+      "merchant": { "type": "String" }
+    }
+  },
+  "ruleCreated": "Rule created for “{merchant}” · {count} sorted",
+  "@ruleCreated": {
+    "placeholders": {
+      "merchant": { "type": "String" },
+      "count": { "type": "String" }
+    }
+  },
+  "ruleError": "Couldn't create the rule.",
+  "sortRulesTitle": "Sorting rules",
+  "sortRulesSubtitle": "Automatically sort certain merchants",
+  "sortRulesEmpty": "No rules yet. In the sort queue, open a transaction's ⋮ menu, then “Always sort this merchant”.",
+  "ruleDeleted": "Rule deleted"
 }

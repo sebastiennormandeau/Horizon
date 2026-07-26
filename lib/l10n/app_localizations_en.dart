@@ -1413,4 +1413,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bankReconnected => 'Bank reconnected';
+
+  @override
+  String get ruleAlwaysSort => 'Always sort this merchant…';
+
+  @override
+  String rulePickTitle(String merchant) {
+    return 'Always sort “$merchant”';
+  }
+
+  @override
+  String ruleCreated(String merchant, String count) {
+    return 'Rule created for “$merchant” · $count sorted';
+  }
+
+  @override
+  String get ruleError => 'Couldn\'t create the rule.';
+
+  @override
+  String get sortRulesTitle => 'Sorting rules';
+
+  @override
+  String get sortRulesSubtitle => 'Automatically sort certain merchants';
+
+  @override
+  String get sortRulesEmpty =>
+      'No rules yet. In the sort queue, open a transaction\'s ⋮ menu, then “Always sort this merchant”.';
+
+  @override
+  String get ruleDeleted => 'Rule deleted';
 }

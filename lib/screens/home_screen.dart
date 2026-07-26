@@ -373,6 +373,65 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Propose une règle « toujours classer ce marchand » dans une cagnotte,
+  /// appliquée aussi aux transactions du même marchand déjà en file.
+  Future<void> _showRuleDialog(
+    AppTransaction transaction,
+    Household household,
+    String uid,
+  ) async {
+    final l10n = _l10n;
+    final buckets = [
+      ...household.visibleBuckets(uid),
+      'Transfer',
+      'Archived',
+    ];
+    final chosen = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(l10n.rulePickTitle(transaction.merchantName)),
+        children: buckets
+            .map(
+              (b) => SimpleDialogOption(
+                onPressed: () => Navigator.pop(context, b),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Text(household.bucketLabel(b, l10n)),
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+    if (chosen == null || !mounted) return;
+    await _createRule(transaction.merchantName, chosen);
+  }
+
+  Future<void> _createRule(String merchant, String bucket) async {
+    final l10n = _l10n;
+    try {
+      final res = await FirebaseFunctions.instance
+          .httpsCallable('setSortRule')
+          .call({'merchant': merchant, 'bucket': bucket});
+      final n = (res.data['applied'] as num?)?.toInt() ?? 0;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.ruleCreated(merchant, '$n'))),
+      );
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? l10n.ruleError)),
+      );
+    } catch (e) {
+      debugPrint('Erreur setSortRule: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.ruleError)),
+      );
+    }
+  }
+
   /// Avertit AVANT d'assigner si la dépense ferait passer la cagnotte
   /// dans le négatif. Retourne true si l'utilisateur confirme.
   Future<bool> _confirmIfGoesNegative(
@@ -950,7 +1009,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       : 'Common';
                   _assignTransaction(transaction, bucket, household);
                 },
-                child: _buildTransactionCard(transaction, lang, household),
+                child:
+                    _buildTransactionCard(transaction, lang, household, uid),
               ),
             );
           },
@@ -1079,6 +1139,7 @@ class _HomeScreenState extends State<HomeScreen> {
     AppTransaction transaction,
     String lang,
     Household household,
+    String uid,
   ) {
     final cat = categoryOf(transaction.category);
     final branding =
@@ -1169,8 +1230,13 @@ class _HomeScreenState extends State<HomeScreen> {
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, size: 18, color: context.mutedColor),
             padding: EdgeInsets.zero,
-            onSelected: (bucket) =>
-                _assignTransaction(transaction, bucket, household),
+            onSelected: (value) {
+              if (value == '__rule__') {
+                _showRuleDialog(transaction, household, uid);
+              } else {
+                _assignTransaction(transaction, value, household);
+              }
+            },
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: 'Transfer',
@@ -1179,6 +1245,11 @@ class _HomeScreenState extends State<HomeScreen> {
               PopupMenuItem(
                 value: 'Archived',
                 child: Text(_l10n.bucketArchived),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem(
+                value: '__rule__',
+                child: Text(_l10n.ruleAlwaysSort),
               ),
             ],
           ),

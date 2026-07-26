@@ -1425,4 +1425,33 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get bankReconnected => 'Banque reconnectée';
+
+  @override
+  String get ruleAlwaysSort => 'Toujours classer ce marchand…';
+
+  @override
+  String rulePickTitle(String merchant) {
+    return 'Toujours classer « $merchant »';
+  }
+
+  @override
+  String ruleCreated(String merchant, String count) {
+    return 'Règle créée pour « $merchant » · $count classée(s)';
+  }
+
+  @override
+  String get ruleError => 'Impossible de créer la règle.';
+
+  @override
+  String get sortRulesTitle => 'Règles de classement';
+
+  @override
+  String get sortRulesSubtitle => 'Classer automatiquement certains marchands';
+
+  @override
+  String get sortRulesEmpty =>
+      'Aucune règle. Dans la file de tri, ouvre le menu ⋮ d\'une transaction puis « Toujours classer ce marchand ».';
+
+  @override
+  String get ruleDeleted => 'Règle supprimée';
 }

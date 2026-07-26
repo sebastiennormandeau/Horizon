@@ -23,6 +23,7 @@ export {
   setBankConnectionJoint,
   getMyCashBalances,
 } from "./plaid";
+export { setSortRule, deleteSortRule } from "./sorting";
 export { onTransactionAssigned, settleDebt } from "./ledger";
 export { createHousehold, joinHousehold } from "./households";
 export {

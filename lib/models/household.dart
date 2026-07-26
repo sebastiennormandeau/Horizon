@@ -38,6 +38,10 @@ class Household {
   /// sont traités comme `couple` (comportement historique).
   final String householdMode;
 
+  /// Règles de classement automatique : marchand normalisé → cagnotte.
+  /// Écrites par les callables `setSortRule`/`deleteSortRule`.
+  final Map<String, String> sortRules;
+
   const Household({
     required this.id,
     required this.userAId,
@@ -56,6 +60,7 @@ class Household {
     required this.bankConnectionsCount,
     required this.institutionLogos,
     required this.householdMode,
+    this.sortRules = const {},
   });
 
   factory Household.fromSnapshot(DocumentSnapshot snapshot) {
@@ -82,7 +87,17 @@ class Household {
       bankConnectionsCount:
           (data['bank_connections_count'] as num?)?.toInt() ?? 0,
       institutionLogos: _parseLogos(data['institution_logos']),
+      sortRules: _parseSortRules(data['sort_rules']),
     );
+  }
+
+  static Map<String, String> _parseSortRules(dynamic raw) {
+    if (raw is! Map) return const {};
+    final out = <String, String>{};
+    raw.forEach((key, value) {
+      if (value is String) out[key as String] = value;
+    });
+    return out;
   }
 
   static Map<String, ({String? logo, String? color})> _parseLogos(

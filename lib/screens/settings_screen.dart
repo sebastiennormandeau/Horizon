@@ -15,6 +15,7 @@ import '../utils/validators.dart';
 import '../widgets/household_loader.dart';
 import '../widgets/legal_documents.dart';
 import 'bank_connections_screen.dart';
+import 'sort_rules_screen.dart';
 import 'notifications_screen.dart';
 import 'household_manage_screen.dart';
 import 'onboarding_screen.dart';
@@ -284,6 +285,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (_) => const BankConnectionsScreen(),
+                          ),
+                        ),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.rule,
+                            color: AppColors.primary),
+                        title: Text(l10n.sortRulesTitle),
+                        subtitle: Text(l10n.sortRulesSubtitle),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SortRulesScreen(),
                           ),
                         ),
                       ),

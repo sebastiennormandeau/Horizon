@@ -660,5 +660,25 @@
   },
   "bankReconnect": "Reconnecter",
   "bankReconnecting": "Reconnexion en cours…",
-  "bankReconnected": "Banque reconnectée"
+  "bankReconnected": "Banque reconnectée",
+
+  "ruleAlwaysSort": "Toujours classer ce marchand…",
+  "rulePickTitle": "Toujours classer « {merchant} »",
+  "@rulePickTitle": {
+    "placeholders": {
+      "merchant": { "type": "String" }
+    }
+  },
+  "ruleCreated": "Règle créée pour « {merchant} » · {count} classée(s)",
+  "@ruleCreated": {
+    "placeholders": {
+      "merchant": { "type": "String" },
+      "count": { "type": "String" }
+    }
+  },
+  "ruleError": "Impossible de créer la règle.",
+  "sortRulesTitle": "Règles de classement",
+  "sortRulesSubtitle": "Classer automatiquement certains marchands",
+  "sortRulesEmpty": "Aucune règle. Dans la file de tri, ouvre le menu ⋮ d'une transaction puis « Toujours classer ce marchand ».",
+  "ruleDeleted": "Règle supprimée"
 }

@@ -2628,6 +2628,54 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Banque reconnectée'**
   String get bankReconnected;
+
+  /// No description provided for @ruleAlwaysSort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Toujours classer ce marchand…'**
+  String get ruleAlwaysSort;
+
+  /// No description provided for @rulePickTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Toujours classer « {merchant} »'**
+  String rulePickTitle(String merchant);
+
+  /// No description provided for @ruleCreated.
+  ///
+  /// In fr, this message translates to:
+  /// **'Règle créée pour « {merchant} » · {count} classée(s)'**
+  String ruleCreated(String merchant, String count);
+
+  /// No description provided for @ruleError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible de créer la règle.'**
+  String get ruleError;
+
+  /// No description provided for @sortRulesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Règles de classement'**
+  String get sortRulesTitle;
+
+  /// No description provided for @sortRulesSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Classer automatiquement certains marchands'**
+  String get sortRulesSubtitle;
+
+  /// No description provided for @sortRulesEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune règle. Dans la file de tri, ouvre le menu ⋮ d\'une transaction puis « Toujours classer ce marchand ».'**
+  String get sortRulesEmpty;
+
+  /// No description provided for @ruleDeleted.
+  ///
+  /// In fr, this message translates to:
+  /// **'Règle supprimée'**
+  String get ruleDeleted;
 }
 
 class _AppLocalizationsDelegate
