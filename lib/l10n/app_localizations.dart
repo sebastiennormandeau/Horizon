@@ -1891,6 +1891,24 @@ abstract class AppLocalizations {
   /// **'Quand le solde d\'une carte dépasse l\'argent disponible pour la payer'**
   String get notifOverspendSub;
 
+  /// No description provided for @notifEnvelope.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enveloppe bientôt épuisée'**
+  String get notifEnvelope;
+
+  /// No description provided for @notifEnvelopeSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Quand une enveloppe de budget variable approche du seuil'**
+  String get notifEnvelopeSub;
+
+  /// No description provided for @notifEnvelopePct.
+  ///
+  /// In fr, this message translates to:
+  /// **'Seuil d\'alerte d\'enveloppe : {pct} %'**
+  String notifEnvelopePct(String pct);
+
   /// No description provided for @notifLeadDays.
   ///
   /// In fr, this message translates to:

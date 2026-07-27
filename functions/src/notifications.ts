@@ -21,7 +21,8 @@ export type NotifType =
   | "pot_alert"
   | "to_sort"
   | "partner"
-  | "overspend";
+  | "overspend"
+  | "envelope_alert";
 
 /** Un type est actif si l'utilisateur ne l'a pas explicitement désactivé. */
 function isEnabled(
@@ -141,6 +142,7 @@ export const setNotifPrefs = functions.https.onCall(async (data, context) => {
     "to_sort",
     "partner",
     "overspend",
+    "envelope_alert",
   ];
   const clean: Record<string, boolean> = {};
   for (const key of allowed) {
@@ -153,6 +155,13 @@ export const setNotifPrefs = functions.https.onCall(async (data, context) => {
     const n = Number(data.card_lead_days);
     if (Number.isFinite(n) && n >= 1 && n <= 14) {
       update.notif_card_lead_days = Math.round(n);
+    }
+  }
+  // Seuil d'alerte d'enveloppe (fraction : 0.75 à 1.0).
+  if (data?.envelope_pct !== undefined) {
+    const n = Number(data.envelope_pct);
+    if (Number.isFinite(n) && n >= 0.5 && n <= 1) {
+      update.notif_envelope_pct = n;
     }
   }
 

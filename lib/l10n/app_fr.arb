@@ -474,6 +474,14 @@
   "notifPartnerSub": "Règlements de dette et changements du foyer",
   "notifOverspend": "Dépassement des liquidités",
   "notifOverspendSub": "Quand le solde d'une carte dépasse l'argent disponible pour la payer",
+  "notifEnvelope": "Enveloppe bientôt épuisée",
+  "notifEnvelopeSub": "Quand une enveloppe de budget variable approche du seuil",
+  "notifEnvelopePct": "Seuil d'alerte d'enveloppe : {pct} %",
+  "@notifEnvelopePct": {
+    "placeholders": {
+      "pct": { "type": "String" }
+    }
+  },
   "notifLeadDays": "Rappel de carte : {days} jour(s) avant l'échéance",
   "@notifLeadDays": {
     "placeholders": {

@@ -332,6 +332,14 @@
   "notifPartnerSub": "Debt settlements and household changes",
   "notifOverspend": "Cash shortfall",
   "notifOverspendSub": "When a card balance exceeds the cash available to pay it",
+  "notifEnvelope": "Envelope nearly used up",
+  "notifEnvelopeSub": "When a variable-budget envelope nears its threshold",
+  "notifEnvelopePct": "Envelope alert threshold: {pct}%",
+  "@notifEnvelopePct": {
+    "placeholders": {
+      "pct": { "type": "String" }
+    }
+  },
   "notifLeadDays": "Card reminder: {days} day(s) before the due date",
   "@notifLeadDays": {
     "placeholders": {

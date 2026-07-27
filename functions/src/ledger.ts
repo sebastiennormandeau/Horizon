@@ -5,6 +5,25 @@ import { sendToUser, householdMemberIds } from "./notifications";
 
 const VALID_BUCKETS = ["Common", "Solo_A", "Solo_B"];
 
+// Libellés courts (fr) pour les notifications — les notifications sont en
+// français. Miroir compact de lib/utils/categories.dart ; repli sur la clé.
+const CATEGORY_LABEL_FR: Record<string, string> = {
+  FOOD_AND_DRINK: "Restauration & alcool",
+  GENERAL_MERCHANDISE: "Magasinage",
+  TRANSPORTATION: "Transport",
+  RENT_AND_UTILITIES: "Logement & services",
+  ENTERTAINMENT: "Divertissement",
+  TRAVEL: "Voyages",
+  MEDICAL: "Santé",
+  PERSONAL_CARE: "Soins personnels",
+  GENERAL_SERVICES: "Services",
+  HOME_IMPROVEMENT: "Rénovation & maison",
+  LOAN_PAYMENTS: "Remboursements de prêts",
+  BANK_FEES: "Frais bancaires",
+  GOVERNMENT_AND_NON_PROFIT: "Gouvernement & dons",
+  TRANSFER_OUT: "Virements sortants",
+};
+
 /**
  * Met à jour les cagnottes du foyer quand une transaction change de bucket.
  * Gère aussi le retrait d'un bucket (undo) : l'ancien effet est annulé
@@ -108,12 +127,14 @@ export const onTransactionAssigned = functions.firestore
       });
     });
 
-    // Notification hors transaction : un envoi ne doit jamais bloquer ni
+    // Notifications hors transaction : un envoi ne doit jamais bloquer ni
     // rejouer l'écriture du grand livre.
+    const assignedToSolo = afterBucket === "Solo_A" || afterBucket === "Solo_B";
+    if (!crossedPot && !assignedToSolo) return;
+    const hd = (await householdRef.get()).data() ?? {};
+
     if (crossedPot) {
       const pot = crossedPot as { label: string; after: number };
-      const householdSnap = await householdRef.get();
-      const hd = householdSnap.data() ?? {};
       const members = await householdMemberIds(hd);
       // Libellé lisible : le prénom pour les cagnottes personnelles.
       const label =
@@ -129,6 +150,59 @@ export const onTransactionAssigned = functions.firestore
         : `La cagnotte « ${pot.label} » est passée sous votre seuil d'alerte (${pot.after.toFixed(2)} $).`;
       for (const uid of members) {
         await sendToUser(uid, "pot_alert", "Cagnotte sous surveillance", body);
+      }
+    }
+
+    // Alerte d'enveloppe : la dépense solo de la personne dans cette catégorie
+    // vient de franchir le seuil configuré de son enveloppe de budget variable.
+    if (assignedToSolo && after.is_investment !== true && amount > 0) {
+      const seat = afterBucket === "Solo_A" ? "A" : "B";
+      const envelopes = (hd[`solo_envelopes_${seat}`] ?? {}) as Record<
+        string,
+        number
+      >;
+      const category = (after.category as string) || "OTHER";
+      const budget = envelopes[category] ?? 0;
+      const memberUid =
+        seat === "A" ? (hd.user_A_id ?? hd.created_by) : hd.user_B_id;
+      if (budget > 0 && memberUid) {
+        // Dépense solo du mois dans cette catégorie (après cette assignation).
+        const now = new Date();
+        const monthStart = `${now.getUTCFullYear()}-${String(
+          now.getUTCMonth() + 1
+        ).padStart(2, "0")}-01`;
+        const snap = await db
+          .collection("transactions")
+          .where("household_id", "==", householdId)
+          .where("assigned_to_bucket", "==", afterBucket)
+          .where("date", ">=", monthStart)
+          .get();
+        let spentAfter = 0;
+        snap.forEach((d) => {
+          const t = d.data();
+          if (((t.category as string) || "OTHER") !== category) return;
+          if (t.is_investment === true) return;
+          const a = typeof t.amount === "number" ? t.amount : 0;
+          if (a > 0) spentAfter += a;
+        });
+        const spentBefore = spentAfter - amount;
+        const user = (
+          await db.collection("users").doc(memberUid).get()
+        ).data();
+        const pct =
+          typeof user?.notif_envelope_pct === "number"
+            ? user.notif_envelope_pct
+            : 0.9;
+        const threshold = budget * pct;
+        // Franchissement vers le haut uniquement : une seule alerte.
+        if (spentBefore < threshold && spentAfter >= threshold) {
+          const catLabel = CATEGORY_LABEL_FR[category] ?? category;
+          const depleted = spentAfter >= budget;
+          const body = depleted
+            ? `Ton enveloppe « ${catLabel} » est épuisée (${spentAfter.toFixed(0)} / ${budget.toFixed(0)} $).`
+            : `Ton enveloppe « ${catLabel} » est presque épuisée (${spentAfter.toFixed(0)} / ${budget.toFixed(0)} $).`;
+          await sendToUser(memberUid, "envelope_alert", "Budget variable", body);
+        }
       }
     }
   });

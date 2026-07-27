@@ -28,8 +28,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     'to_sort': true,
     'partner': true,
     'overspend': true,
+    'envelope_alert': true,
   };
   int _leadDays = 3;
+  double _envelopePct = 0.9;
   bool _loaded = false;
 
   AppLocalizations get _l10n => AppLocalizations.of(context)!;
@@ -52,6 +54,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         if (prefs[key] is bool) _prefs[key] = prefs[key] as bool;
       }
       _leadDays = (data['notif_card_lead_days'] as num?)?.toInt() ?? 3;
+      _envelopePct = (data['notif_envelope_pct'] as num?)?.toDouble() ?? 0.9;
     }
     if (mounted) setState(() => _loaded = true);
   }
@@ -79,6 +82,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       await FirebaseFunctions.instance.httpsCallable('setNotifPrefs').call({
         'prefs': _prefs,
         'card_lead_days': _leadDays,
+        'envelope_pct': _envelopePct,
       });
       _snack(_l10n.notifSaved);
     } catch (e) {
@@ -139,6 +143,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ('card_reminder', l10n.notifCardReminder, l10n.notifCardReminderSub),
       ('overspend', l10n.notifOverspend, l10n.notifOverspendSub),
       ('pot_alert', l10n.notifPotAlert, l10n.notifPotAlertSub),
+      ('envelope_alert', l10n.notifEnvelope, l10n.notifEnvelopeSub),
       ('to_sort', l10n.notifToSort, l10n.notifToSortSub),
       ('partner', l10n.notifPartner, l10n.notifPartnerSub),
     ];
@@ -173,6 +178,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         label: '$_leadDays',
         activeColor: AppColors.primary,
         onChanged: (v) => setState(() => _leadDays = v.round()),
+        onChangeEnd: (_) => _savePrefs(),
+      ),
+      const Divider(height: 1),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+        child: Text(l10n.notifEnvelopePct('${(_envelopePct * 100).round()}'),
+            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
+      ),
+      Slider(
+        value: _envelopePct,
+        min: 0.5,
+        max: 1.0,
+        divisions: 10,
+        label: '${(_envelopePct * 100).round()} %',
+        activeColor: AppColors.primary,
+        onChanged: (v) => setState(() => _envelopePct = v),
         onChangeEnd: (_) => _savePrefs(),
       ),
     ]);

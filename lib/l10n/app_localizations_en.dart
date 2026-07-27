@@ -999,6 +999,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'When a card balance exceeds the cash available to pay it';
 
   @override
+  String get notifEnvelope => 'Envelope nearly used up';
+
+  @override
+  String get notifEnvelopeSub =>
+      'When a variable-budget envelope nears its threshold';
+
+  @override
+  String notifEnvelopePct(String pct) {
+    return 'Envelope alert threshold: $pct%';
+  }
+
+  @override
   String notifLeadDays(int days) {
     return 'Card reminder: $days day(s) before the due date';
   }

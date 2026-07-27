@@ -19,6 +19,7 @@ import '../widgets/household_loader.dart';
 import 'bank_connections_screen.dart';
 import 'bilan_screen.dart';
 import 'cash_comparison_screen.dart';
+import 'solo_envelopes_screen.dart';
 import 'onboarding_screen.dart';
 import 'budget_setup_screen.dart';
 import 'history_screen.dart';
@@ -645,6 +646,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               _buildBucketsOverview(household, uid),
               _buildCheckingLine(household, uid),
+              _buildReservedFree(household, uid),
               _buildAlertBanner(household, uid),
               // En solo : ni invitation, ni dette interne — il n'y a
               // personne à inviter ni avec qui s'équilibrer.
@@ -859,6 +861,90 @@ class _HomeScreenState extends State<HomeScreen> {
                   : null,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// Réservé / Libre : la part de la cagnotte solo engagée dans les enveloppes
+  /// de budget variable vs le discrétionnaire. L'argent reste dans la cagnotte
+  /// solo — on n'en montre que la répartition. Masqué sans enveloppe.
+  Widget _buildReservedFree(Household household, String uid) {
+    final envelopes = household.mySoloEnvelopes(uid);
+    if (envelopes.isEmpty) return const SizedBox.shrink();
+    final soloBucket = household.soloBucketFor(uid);
+    final monthStart = _startOfMonth();
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('transactions')
+          .where('household_id', isEqualTo: household.id)
+          .where('assigned_to_bucket', isEqualTo: soloBucket)
+          .where('date', isGreaterThanOrEqualTo: monthStart)
+          .snapshots(),
+      builder: (context, snap) {
+        if (!snap.hasData) return const SizedBox.shrink();
+        final spent = <String, double>{};
+        for (final d in snap.data!.docs) {
+          final m = d.data() as Map<String, dynamic>;
+          if (m['is_investment'] == true) continue;
+          final a = (m['amount'] as num?)?.toDouble() ?? 0;
+          if (a <= 0) continue;
+          final cat = (m['category'] as String?) ?? 'OTHER';
+          spent[cat] = (spent[cat] ?? 0) + a;
+        }
+        double reserved = 0;
+        envelopes.forEach((cat, budget) {
+          final rem = budget - (spent[cat] ?? 0);
+          if (rem > 0) reserved += rem;
+        });
+        final free = household.mySoloBalance(uid) - reserved;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
+          child: GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    SoloEnvelopesScreen(household: household, uid: uid),
+              ),
+            ),
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                Expanded(
+                    child: _homeReservedPill(
+                        _l10n.soloEnvelopesReserved, reserved, AppColors.solo)),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: _homeReservedPill(_l10n.soloEnvelopesFree, free,
+                        free < 0 ? context.palette.danger : context.palette.success)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _homeReservedPill(String label, double amount, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label,
+                style: TextStyle(fontSize: 11.5, color: context.mutedColor)),
+          ),
+          Text(formatCurrency(amount),
+              style: TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.w700, color: color)),
         ],
       ),
     );

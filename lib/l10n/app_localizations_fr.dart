@@ -1008,6 +1008,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'Quand le solde d\'une carte dépasse l\'argent disponible pour la payer';
 
   @override
+  String get notifEnvelope => 'Enveloppe bientôt épuisée';
+
+  @override
+  String get notifEnvelopeSub =>
+      'Quand une enveloppe de budget variable approche du seuil';
+
+  @override
+  String notifEnvelopePct(String pct) {
+    return 'Seuil d\'alerte d\'enveloppe : $pct %';
+  }
+
+  @override
   String notifLeadDays(int days) {
     return 'Rappel de carte : $days jour(s) avant l\'échéance';
   }
