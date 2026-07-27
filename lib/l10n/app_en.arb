@@ -497,6 +497,16 @@
   "realBalanceChecking": "My chequing",
   "realBalanceSavings": "My savings",
   "investedThisPeriod": "Invested this period 💪",
+  "investmentProgress": "{pct}% of your goal",
+  "@investmentProgress": {
+    "placeholders": {
+      "pct": { "type": "String" }
+    }
+  },
+  "investmentGoalReached": "Goal reached! 🎉",
+  "investmentSetGoalHint": "Tap to set a monthly goal",
+  "investmentGoalTitle": "Investment goal",
+  "investmentGoalLabel": "Target monthly amount",
 
   "spendingByCategoryHint": "Tap a category to see and fix its transactions.",
   "categoryTxEmpty": "No transactions in this category for this period.",

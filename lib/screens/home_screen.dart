@@ -138,16 +138,19 @@ class _HomeScreenState extends State<HomeScreen> {
       final wasUpdate = await PlaidService.consumePendingUpdate();
       if (!mounted) return;
       if (wasUpdate) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_l10n.bankReconnecting)),
-        );
-        try {
-          await FirebaseFunctions.instance
-              .httpsCallable('syncBankConnections')
-              .call();
-        } catch (e) {
-          debugPrint('Sync après reconnexion: $e');
-        }
+        // Le solde se rafraîchit tout de suite (getMyCashBalances est en
+        // direct). La synchro des transactions tourne EN ARRIÈRE-PLAN pour ne
+        // pas faire attendre — le webhook la rattrape de toute façon.
+        () async {
+          try {
+            await FirebaseFunctions.instance
+                .httpsCallable('syncBankConnections')
+                .call();
+            if (mounted) await _loadCash();
+          } catch (e) {
+            debugPrint('Sync après reconnexion: $e');
+          }
+        }();
         await _loadCash();
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(

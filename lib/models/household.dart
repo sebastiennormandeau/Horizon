@@ -42,6 +42,10 @@ class Household {
   /// Écrites par les callables `setSortRule`/`deleteSortRule`.
   final Map<String, String> sortRules;
 
+  /// Objectif d'investissement mensuel par personne (thermomètre du bilan).
+  final double investmentGoalA;
+  final double investmentGoalB;
+
   const Household({
     required this.id,
     required this.userAId,
@@ -61,6 +65,8 @@ class Household {
     required this.institutionLogos,
     required this.householdMode,
     this.sortRules = const {},
+    this.investmentGoalA = 0,
+    this.investmentGoalB = 0,
   });
 
   factory Household.fromSnapshot(DocumentSnapshot snapshot) {
@@ -88,6 +94,8 @@ class Household {
           (data['bank_connections_count'] as num?)?.toInt() ?? 0,
       institutionLogos: _parseLogos(data['institution_logos']),
       sortRules: _parseSortRules(data['sort_rules']),
+      investmentGoalA: numOf('investment_goal_A'),
+      investmentGoalB: numOf('investment_goal_B'),
     );
   }
 
@@ -203,6 +211,10 @@ class Household {
 
   /// Solde de la cagnotte personnelle de l'utilisateur connecté.
   double mySoloBalance(String uid) => bucketBalance(soloBucketFor(uid));
+
+  /// Objectif d'investissement mensuel de l'utilisateur connecté.
+  double myInvestmentGoal(String uid) =>
+      isUserA(uid) ? investmentGoalA : investmentGoalB;
 
   /// Cagnottes qui existent réellement pour ce foyer, dans l'ordre
   /// d'affichage. En solo il n'y en a que deux, et la personnelle est celle

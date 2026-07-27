@@ -974,19 +974,23 @@ export const exchangePublicToken = functions
         itemId
       );
 
-      const imported = await syncTransactionsForItem(itemId);
+      // Pas d'import synchrone ici : rapatrier jusqu'à 2 ans d'historique
+      // (des dizaines de pages Plaid) bloquerait l'utilisateur 20-30 s. Plaid
+      // envoie INITIAL_UPDATE puis HISTORICAL_UPDATE dès que les transactions
+      // sont prêtes → plaidWebhookHandler les importe. La connexion apparaît
+      // donc instantanément et les transactions suivent en quelques instants
+      // (bouton « Synchroniser » en secours).
       await refreshConnectionCount(householdId);
-      // Solde et échéance des cartes de la nouvelle connexion, si elle
-      // supporte liabilities. Best-effort : n'empêche pas la connexion.
-      // Import différé pour éviter la boucle plaid ↔ cards au chargement
-      // (cards importe plaidSecrets d'ici, évalué à l'initialisation).
+      // Cartes et liquidités : quelques appels, bien plus rapides que la
+      // synchro. Best-effort. Import différé pour éviter la boucle plaid ↔
+      // cards au chargement (cards importe plaidSecrets d'ici).
       try {
         const { refreshCardData } = await import("./cards");
         await refreshCardData(householdId);
       } catch (e) {
         console.error("refreshCardData après connexion:", e);
       }
-      return { success: true, imported };
+      return { success: true, syncing: true };
     } catch (error) {
       console.error("Erreur exchangePublicToken:", error);
       throw new functions.https.HttpsError(

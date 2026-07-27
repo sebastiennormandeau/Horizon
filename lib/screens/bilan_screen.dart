@@ -279,6 +279,7 @@ class _BilanScreenState extends State<BilanScreen> {
     final invByUser = Map<String, dynamic>.from(
         report['investment_by_user'] as Map<dynamic, dynamic>? ?? {});
     final invested = (invByUser[uid] as num?)?.toDouble() ?? 0;
+    final investGoal = household.myInvestmentGoal(uid);
     // Bornes de la période, pour ouvrir le détail d'une catégorie sur la même
     // sélection que le moteur de bilans. Absentes sur d'anciens bilans : les
     // barres restent alors non cliquables.
@@ -289,9 +290,9 @@ class _BilanScreenState extends State<BilanScreen> {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
       children: [
         _buildTotalCard(total, prevTotal),
-        if (invested > 0) ...[
+        if (invested > 0 || investGoal > 0) ...[
           const SizedBox(height: 12),
-          _buildInvestmentCard(invested),
+          _buildInvestmentThermometer(invested, investGoal, household, uid),
         ],
         const SizedBox(height: 16),
         if (byCategory.isNotEmpty) ...[
@@ -353,33 +354,129 @@ class _BilanScreenState extends State<BilanScreen> {
     );
   }
 
-  Widget _buildInvestmentCard(double invested) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: context.palette.success.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.palette.success),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.savings, color: context.palette.success),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(_l10n.investedThisPeriod,
-                style: TextStyle(fontSize: 13, color: context.mutedColor)),
-          ),
-          Text(
-            formatCurrency(invested),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: context.palette.success,
+  /// Thermomètre d'investissement : progression vers l'objectif mensuel.
+  /// Touchable pour définir/modifier l'objectif.
+  Widget _buildInvestmentThermometer(
+    double invested,
+    double goal,
+    Household household,
+    String uid,
+  ) {
+    final l10n = _l10n;
+    final success = context.palette.success;
+    final hasGoal = goal > 0;
+    final ratio = hasGoal ? (invested / goal).clamp(0.0, 1.0) : 0.0;
+    final reached = hasGoal && invested >= goal;
+
+    return GestureDetector(
+      onTap: () => _editInvestmentGoal(goal),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: success.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: success),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.savings, color: success),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(l10n.investedThisPeriod,
+                      style:
+                          TextStyle(fontSize: 13, color: context.mutedColor)),
+                ),
+                Text(
+                  hasGoal
+                      ? '${formatCurrency(invested)} / ${formatCurrency(goal)}'
+                      : formatCurrency(invested),
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: success),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.edit_outlined, size: 15, color: context.mutedColor),
+              ],
             ),
+            if (hasGoal) ...[
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: ratio,
+                  minHeight: 12,
+                  backgroundColor: context.borderColor,
+                  valueColor: AlwaysStoppedAnimation<Color>(success),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                reached
+                    ? l10n.investmentGoalReached
+                    : l10n.investmentProgress('${(ratio * 100).round()}'),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: reached ? success : context.mutedColor,
+                  fontWeight: reached ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 6),
+              Text(l10n.investmentSetGoalHint,
+                  style: TextStyle(fontSize: 12, color: context.mutedColor)),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _editInvestmentGoal(double current) async {
+    final l10n = _l10n;
+    final controller = TextEditingController(
+        text: current > 0 ? current.toStringAsFixed(0) : '');
+    final result = await showDialog<double>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.investmentGoalTitle),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofocus: true,
+          decoration: InputDecoration(labelText: l10n.investmentGoalLabel),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () =>
+                Navigator.pop(context, parseAmount(controller.text)),
+            child: Text(l10n.save),
           ),
         ],
       ),
     );
+    if (result == null || !mounted) return;
+    try {
+      await FirebaseFunctions.instance
+          .httpsCallable('setInvestmentGoal')
+          .call({'amount': result});
+      // Le stream du foyer rafraîchit le thermomètre.
+    } catch (e) {
+      debugPrint('setInvestmentGoal: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.addError)),
+        );
+      }
+    }
   }
 
   Widget _buildTotalCard(double total, double prevTotal) {

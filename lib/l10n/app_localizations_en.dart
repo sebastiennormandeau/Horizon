@@ -1379,6 +1379,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get investedThisPeriod => 'Invested this period 💪';
 
   @override
+  String investmentProgress(String pct) {
+    return '$pct% of your goal';
+  }
+
+  @override
+  String get investmentGoalReached => 'Goal reached! 🎉';
+
+  @override
+  String get investmentSetGoalHint => 'Tap to set a monthly goal';
+
+  @override
+  String get investmentGoalTitle => 'Investment goal';
+
+  @override
+  String get investmentGoalLabel => 'Target monthly amount';
+
+  @override
   String get spendingByCategoryHint =>
       'Tap a category to see and fix its transactions.';
 

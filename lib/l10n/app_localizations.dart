@@ -2569,6 +2569,36 @@ abstract class AppLocalizations {
   /// **'Investi cette période 💪'**
   String get investedThisPeriod;
 
+  /// No description provided for @investmentProgress.
+  ///
+  /// In fr, this message translates to:
+  /// **'{pct} % de ton objectif'**
+  String investmentProgress(String pct);
+
+  /// No description provided for @investmentGoalReached.
+  ///
+  /// In fr, this message translates to:
+  /// **'Objectif atteint ! 🎉'**
+  String get investmentGoalReached;
+
+  /// No description provided for @investmentSetGoalHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Touche pour fixer un objectif mensuel'**
+  String get investmentSetGoalHint;
+
+  /// No description provided for @investmentGoalTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Objectif d\'investissement'**
+  String get investmentGoalTitle;
+
+  /// No description provided for @investmentGoalLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Montant mensuel visé'**
+  String get investmentGoalLabel;
+
   /// No description provided for @spendingByCategoryHint.
   ///
   /// In fr, this message translates to:

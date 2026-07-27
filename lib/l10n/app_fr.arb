@@ -639,6 +639,16 @@
   "realBalanceChecking": "Mon compte chèque",
   "realBalanceSavings": "Mon épargne",
   "investedThisPeriod": "Investi cette période 💪",
+  "investmentProgress": "{pct} % de ton objectif",
+  "@investmentProgress": {
+    "placeholders": {
+      "pct": { "type": "String" }
+    }
+  },
+  "investmentGoalReached": "Objectif atteint ! 🎉",
+  "investmentSetGoalHint": "Touche pour fixer un objectif mensuel",
+  "investmentGoalTitle": "Objectif d'investissement",
+  "investmentGoalLabel": "Montant mensuel visé",
 
   "spendingByCategoryHint": "Touchez une catégorie pour voir et corriger ses transactions.",
   "categoryTxEmpty": "Aucune transaction dans cette catégorie pour cette période.",
