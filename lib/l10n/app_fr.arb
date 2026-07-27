@@ -636,6 +636,8 @@
   "acctChecking": "Chèque",
   "acctSavings": "Épargne",
   "acctDeposit": "Dépôt",
+  "realBalanceChecking": "Mon compte chèque",
+  "realBalanceSavings": "Mon épargne",
 
   "spendingByCategoryHint": "Touchez une catégorie pour voir et corriger ses transactions.",
   "categoryTxEmpty": "Aucune transaction dans cette catégorie pour cette période.",
@@ -661,6 +663,8 @@
   "bankReconnect": "Reconnecter",
   "bankReconnecting": "Reconnexion en cours…",
   "bankReconnected": "Banque reconnectée",
+  "bankReauthDialogBody": "Ta banque a coupé l'accès après un temps d'inactivité (normal). Reconnecte-la pour rafraîchir tes soldes et tes transactions.",
+  "later": "Plus tard",
 
   "ruleAlwaysSort": "Toujours classer ce marchand…",
   "rulePickTitle": "Toujours classer « {merchant} »",

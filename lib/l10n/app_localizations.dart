@@ -2551,6 +2551,18 @@ abstract class AppLocalizations {
   /// **'Dépôt'**
   String get acctDeposit;
 
+  /// No description provided for @realBalanceChecking.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mon compte chèque'**
+  String get realBalanceChecking;
+
+  /// No description provided for @realBalanceSavings.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mon épargne'**
+  String get realBalanceSavings;
+
   /// No description provided for @spendingByCategoryHint.
   ///
   /// In fr, this message translates to:
@@ -2628,6 +2640,18 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Banque reconnectée'**
   String get bankReconnected;
+
+  /// No description provided for @bankReauthDialogBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ta banque a coupé l\'accès après un temps d\'inactivité (normal). Reconnecte-la pour rafraîchir tes soldes et tes transactions.'**
+  String get bankReauthDialogBody;
+
+  /// No description provided for @later.
+  ///
+  /// In fr, this message translates to:
+  /// **'Plus tard'**
+  String get later;
 
   /// No description provided for @ruleAlwaysSort.
   ///

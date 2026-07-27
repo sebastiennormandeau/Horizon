@@ -42,7 +42,6 @@ class _HomeScreenState extends State<HomeScreen> {
   /// affiché sous les cagnottes pour comparaison. `null` = pas encore chargé ou
   /// aucun compte chèque.
   double? _checkingBalance;
-  bool _cashLoading = true;
 
   /// Connexions à ré-authentifier (ITEM_LOGIN_REQUIRED) signalées par le
   /// serveur : chaque entrée porte `item_id` et `institution_name`.
@@ -60,7 +59,8 @@ class _HomeScreenState extends State<HomeScreen> {
       double sum = 0;
       var hasChecking = false;
       for (final a in accounts) {
-        if (a['subtype'] == 'checking' && a['is_joint'] != true) {
+        // Compte CHÈQUE perso seulement : ni épargne, ni conjoint.
+        if (a['kind'] == 'checking' && a['is_joint'] != true) {
           sum += (a['balance'] as num?)?.toDouble() ?? 0;
           hasChecking = true;
         }
@@ -72,13 +72,58 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _checkingBalance = hasChecking ? sum : null;
         _cashReauth = reauth;
-        _cashLoading = false;
       });
+      _maybePromptReauth();
     } catch (e) {
       debugPrint('Erreur getMyCashBalances: $e');
-      if (!mounted) return;
-      setState(() => _cashLoading = false);
     }
+  }
+
+  /// Une fois par session, invite d'emblée à reconnecter les banques passées
+  /// en ITEM_LOGIN_REQUIRED : la banque coupe l'accès après un temps
+  /// d'inactivité, et l'utilisateur ne devrait pas avoir à y penser lui-même.
+  static bool _reauthPromptShown = false;
+  void _maybePromptReauth() {
+    if (_reauthPromptShown || _cashReauth.isEmpty || !mounted) return;
+    _reauthPromptShown = true;
+    final l10n = _l10n;
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.bankReauthNeeded),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.bankReauthDialogBody),
+            const SizedBox(height: 8),
+            ..._cashReauth.map((r) {
+              final inst = (r['institution_name'] as String?)?.trim() ?? '';
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                leading:
+                    Icon(Icons.link_off, color: context.palette.warning),
+                title: Text(inst.isEmpty ? l10n.bankReauthNeeded : inst),
+                trailing: TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _reconnect(r['item_id'] as String);
+                  },
+                  child: Text(l10n.bankReconnect),
+                ),
+              );
+            }),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.later),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -644,47 +689,20 @@ class _HomeScreenState extends State<HomeScreen> {
   /// en regard de la cagnotte solo. Signale une banque à reconnecter.
   Widget _buildCheckingLine(Household household, String uid) {
     if (!household.hasBankConnection) return const SizedBox.shrink();
+
+    // Solde chèque et bannière de reconnexion sont INDÉPENDANTS : une banque à
+    // reconnecter (souvent la carte) ne doit pas masquer le solde d'une autre
+    // banque saine.
+    final children = <Widget>[
+      if (_checkingBalance != null) _checkingBalanceLine(household, uid),
+      for (final r in _cashReauth) _reauthBanner(r),
+    ];
+    if (children.isEmpty) return const SizedBox.shrink();
+    return Column(children: children);
+  }
+
+  Widget _checkingBalanceLine(Household household, String uid) {
     final l10n = _l10n;
-
-    if (_cashReauth.isNotEmpty) {
-      final first = _cashReauth.first;
-      final inst = (first['institution_name'] as String?)?.trim() ?? '';
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: context.palette.warning.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: context.palette.warning),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.link_off, color: context.palette.warning, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  inst.isEmpty
-                      ? l10n.bankReauthNeeded
-                      : l10n.bankReauthNeededNamed(inst),
-                  style:
-                      TextStyle(color: context.palette.warning, fontSize: 12.5),
-                ),
-              ),
-              TextButton(
-                onPressed: () => _reconnect(first['item_id'] as String),
-                child: Text(l10n.bankReconnect),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_cashLoading || _checkingBalance == null) {
-      return const SizedBox.shrink();
-    }
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
       child: GestureDetector(
@@ -720,6 +738,41 @@ class _HomeScreenState extends State<HomeScreen> {
               Icon(Icons.chevron_right, size: 16, color: context.mutedColor),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _reauthBanner(Map<String, dynamic> item) {
+    final l10n = _l10n;
+    final inst = (item['institution_name'] as String?)?.trim() ?? '';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: context.palette.warning.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: context.palette.warning),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.link_off, color: context.palette.warning, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                inst.isEmpty
+                    ? l10n.bankReauthNeeded
+                    : l10n.bankReauthNeededNamed(inst),
+                style:
+                    TextStyle(color: context.palette.warning, fontSize: 12.5),
+              ),
+            ),
+            TextButton(
+              onPressed: () => _reconnect(item['item_id'] as String),
+              child: Text(l10n.bankReconnect),
+            ),
+          ],
         ),
       ),
     );

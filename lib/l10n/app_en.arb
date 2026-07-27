@@ -494,6 +494,8 @@
   "acctChecking": "Chequing",
   "acctSavings": "Savings",
   "acctDeposit": "Deposit",
+  "realBalanceChecking": "My chequing",
+  "realBalanceSavings": "My savings",
 
   "spendingByCategoryHint": "Tap a category to see and fix its transactions.",
   "categoryTxEmpty": "No transactions in this category for this period.",
@@ -519,6 +521,8 @@
   "bankReconnect": "Reconnect",
   "bankReconnecting": "Reconnecting…",
   "bankReconnected": "Bank reconnected",
+  "bankReauthDialogBody": "Your bank cut access after a period of inactivity (normal). Reconnect it to refresh your balances and transactions.",
+  "later": "Later",
 
   "ruleAlwaysSort": "Always sort this merchant…",
   "rulePickTitle": "Always sort “{merchant}”",

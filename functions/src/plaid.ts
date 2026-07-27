@@ -51,6 +51,33 @@ export function getPlaidClient(): PlaidApi {
   );
 }
 
+/**
+ * Classe un compte de dépôt en « chèque » / « épargne » / « autre ».
+ *
+ * Le sous-type Plaid prime, mais certaines institutions (dont Tangerine) ne le
+ * renseignent pas toujours : on retombe alors sur le nom du compte. Sert à
+ * n'afficher QUE le compte chèque comme « solde réel » face à la cagnotte solo.
+ */
+function depositoryKind(
+  subtype: string | null | undefined,
+  name: string | null | undefined
+): "checking" | "savings" | "other" {
+  const s = (subtype ?? "").toLowerCase();
+  const n = (name ?? "").toLowerCase();
+  if (s === "checking" || n.includes("cheq") || n.includes("chèque")) {
+    return "checking";
+  }
+  if (
+    s === "savings" ||
+    n.includes("saving") ||
+    n.includes("épargne") ||
+    n.includes("epargne")
+  ) {
+    return "savings";
+  }
+  return "other";
+}
+
 /** Code d'erreur Plaid lisible extrait d'une exception axios (sinon message). */
 function plaidErrorCode(e: unknown): string {
   const err = e as { response?: { data?: { error_code?: string } }; message?: string };
@@ -1431,6 +1458,7 @@ export const getMyCashBalances = functions
       name: string;
       mask: string | null;
       subtype: string | null;
+      kind: "checking" | "savings" | "other";
       balance: number;
       institution_name: string | null;
       is_joint: boolean;
@@ -1448,11 +1476,13 @@ export const getMyCashBalances = functions
         });
         for (const a of bal.data.accounts) {
           if (a.type !== "depository") continue;
+          const name = a.official_name || a.name || "Compte";
           accounts.push({
             account_id: a.account_id,
-            name: a.official_name || a.name || "Compte",
+            name,
             mask: a.mask ?? null,
             subtype: a.subtype ?? null,
+            kind: depositoryKind(a.subtype, name),
             balance: a.balances.available ?? a.balances.current ?? 0,
             institution_name: conn.institution_name ?? null,
             is_joint: jointIds.has(a.account_id),

@@ -31,6 +31,9 @@ class _CashAccount {
   final String name;
   final String? mask;
   final String? subtype;
+
+  /// « checking » / « savings » / « other », classé côté serveur.
+  final String kind;
   final double balance;
   final String? institutionName;
   final bool isJoint;
@@ -39,10 +42,13 @@ class _CashAccount {
     required this.name,
     required this.mask,
     required this.subtype,
+    required this.kind,
     required this.balance,
     required this.institutionName,
     required this.isJoint,
   });
+
+  bool get isChecking => kind == 'checking';
 }
 
 class _CashComparisonScreenState extends State<CashComparisonScreen> {
@@ -75,6 +81,7 @@ class _CashComparisonScreenState extends State<CashComparisonScreen> {
           name: (m['name'] as String?) ?? _l10n.acctDeposit,
           mask: m['mask'] as String?,
           subtype: m['subtype'] as String?,
+          kind: (m['kind'] as String?) ?? 'other',
           balance: (m['balance'] as num?)?.toDouble() ?? 0,
           institutionName: m['institution_name'] as String?,
           isJoint: m['is_joint'] == true,
@@ -160,9 +167,12 @@ class _CashComparisonScreenState extends State<CashComparisonScreen> {
     }
 
     final l10n = _l10n;
-    final mine = _accounts.where((a) => !a.isJoint).toList();
+    // Le « solde réel » comparé à la cagnotte solo, c'est le compte CHÈQUE
+    // seulement — l'épargne est de l'argent mis de côté, pas à dépenser.
+    final checking = _accounts.where((a) => !a.isJoint && a.isChecking).toList();
+    final savings = _accounts.where((a) => !a.isJoint && !a.isChecking).toList();
     final joint = _accounts.where((a) => a.isJoint).toList();
-    final total = mine.fold<double>(0, (s, a) => s + a.balance);
+    final checkingTotal = checking.fold<double>(0, (s, a) => s + a.balance);
     final solo = widget.household.mySoloBalance(widget.uid);
 
     return ListView(
@@ -172,7 +182,7 @@ class _CashComparisonScreenState extends State<CashComparisonScreen> {
           _reauthCard(_reauth.first),
           const SizedBox(height: 12),
         ],
-        _comparisonCard(total, solo),
+        _comparisonCard(checkingTotal, solo),
         const SizedBox(height: 12),
         Text(
           l10n.realBalanceNote,
@@ -180,17 +190,27 @@ class _CashComparisonScreenState extends State<CashComparisonScreen> {
               fontSize: 12.5, color: context.mutedColor, height: 1.45),
         ),
         const SizedBox(height: 20),
-        Text(l10n.realBalanceMyAccounts,
+        Text(l10n.realBalanceChecking,
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: context.mutedColor)),
         const SizedBox(height: 8),
-        if (mine.isEmpty)
+        if (checking.isEmpty)
           Text(l10n.realBalanceEmpty,
               style: TextStyle(color: context.mutedColor, fontSize: 13))
         else
-          ...mine.map((a) => _accountTile(a, muted: false)),
+          ...checking.map((a) => _accountTile(a, muted: false)),
+        if (savings.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          Text(l10n.realBalanceSavings,
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: context.mutedColor)),
+          const SizedBox(height: 8),
+          ...savings.map((a) => _accountTile(a, muted: true)),
+        ],
         if (joint.isNotEmpty) ...[
           const SizedBox(height: 20),
           Text(l10n.realBalanceJoint,
@@ -248,7 +268,7 @@ class _CashComparisonScreenState extends State<CashComparisonScreen> {
       ),
       child: Column(
         children: [
-          _amountRow(l10n.realBalanceAvailable, real, AppColors.primary),
+          _amountRow(l10n.checkingBalanceLabel, real, AppColors.primary),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: context.borderColor),

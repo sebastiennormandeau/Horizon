@@ -1370,6 +1370,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get acctDeposit => 'Deposit';
 
   @override
+  String get realBalanceChecking => 'My chequing';
+
+  @override
+  String get realBalanceSavings => 'My savings';
+
+  @override
   String get spendingByCategoryHint =>
       'Tap a category to see and fix its transactions.';
 
@@ -1413,6 +1419,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bankReconnected => 'Bank reconnected';
+
+  @override
+  String get bankReauthDialogBody =>
+      'Your bank cut access after a period of inactivity (normal). Reconnect it to refresh your balances and transactions.';
+
+  @override
+  String get later => 'Later';
 
   @override
   String get ruleAlwaysSort => 'Always sort this merchant…';

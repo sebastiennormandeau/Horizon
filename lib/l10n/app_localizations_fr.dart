@@ -1382,6 +1382,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get acctDeposit => 'Dépôt';
 
   @override
+  String get realBalanceChecking => 'Mon compte chèque';
+
+  @override
+  String get realBalanceSavings => 'Mon épargne';
+
+  @override
   String get spendingByCategoryHint =>
       'Touchez une catégorie pour voir et corriger ses transactions.';
 
@@ -1425,6 +1431,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get bankReconnected => 'Banque reconnectée';
+
+  @override
+  String get bankReauthDialogBody =>
+      'Ta banque a coupé l\'accès après un temps d\'inactivité (normal). Reconnecte-la pour rafraîchir tes soldes et tes transactions.';
+
+  @override
+  String get later => 'Plus tard';
 
   @override
   String get ruleAlwaysSort => 'Toujours classer ce marchand…';
