@@ -1408,6 +1408,43 @@ class AppLocalizationsFr extends AppLocalizations {
   String get investmentGoalLabel => 'Montant mensuel visé';
 
   @override
+  String get edit => 'Modifier';
+
+  @override
+  String get soloEnvelopesTitle => 'Budget variable (solo)';
+
+  @override
+  String get soloEnvelopesIntro =>
+      'Réserve une partie de ta cagnotte solo par catégorie. Les montants proposés viennent de tes moyennes des 3 derniers mois — ajuste-les.';
+
+  @override
+  String get soloEnvelopesApplyAll => 'Tout suggérer';
+
+  @override
+  String soloEnvelopesSuggestion(String amount) {
+    return 'moyenne : $amount';
+  }
+
+  @override
+  String get soloEnvelopesTotal => 'Réservé au total';
+
+  @override
+  String get soloEnvelopesSaved => 'Budget variable enregistré';
+
+  @override
+  String get soloEnvelopesConfigure => 'Configurer';
+
+  @override
+  String get soloEnvelopesConfigureHint =>
+      'Réserve une partie de ta cagnotte solo par catégorie, suggéré depuis tes moyennes.';
+
+  @override
+  String get soloEnvelopesReserved => 'Réservé';
+
+  @override
+  String get soloEnvelopesFree => 'Libre à dépenser';
+
+  @override
   String get spendingByCategoryHint =>
       'Touchez une catégorie pour voir et corriger ses transactions.';
 

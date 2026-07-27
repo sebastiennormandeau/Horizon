@@ -13,6 +13,7 @@ import '../widgets/category_donut.dart';
 import '../widgets/household_loader.dart';
 import 'category_transactions_screen.dart';
 import 'paywall_screen.dart';
+import 'solo_envelopes_screen.dart';
 
 /// Bilan hebdomadaire / mensuel : chiffres calculés par le serveur
 /// (moteur déterministe), conseils rédigés par le coach IA sur demande.
@@ -346,6 +347,7 @@ class _BilanScreenState extends State<BilanScreen> {
           const SizedBox(height: 16),
         ],
         if (_periodType == 'monthly') ...[
+          _buildSoloEnvelopes(household, report, uid),
           _buildEnvelopes(household, byCategory),
         ],
         _sectionTitle(l10n.aiCoachSection),
@@ -688,6 +690,158 @@ class _BilanScreenState extends State<BilanScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Budget variable solo : enveloppes par catégorie de l'utilisateur, avec le
+  /// réel (dépense solo) vs la cible, et le résumé réservé / libre.
+  Widget _buildSoloEnvelopes(
+      Household household, Map<String, dynamic> report, String uid) {
+    final l10n = _l10n;
+    final envelopes = household.mySoloEnvelopes(uid);
+    final soloRaw = Map<String, dynamic>.from(
+        (report['solo_by_category_by_user'] as Map?)?[uid] as Map? ?? {});
+    double spentOf(String cat) => (soloRaw[cat] as num?)?.toDouble() ?? 0;
+
+    final header = Padding(
+      padding: const EdgeInsets.only(left: 4, top: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(l10n.soloEnvelopesTitle,
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: context.mutedColor)),
+          ),
+          TextButton.icon(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    SoloEnvelopesScreen(household: household, uid: uid),
+              ),
+            ),
+            icon: Icon(envelopes.isEmpty ? Icons.add : Icons.edit_outlined,
+                size: 16),
+            label: Text(
+                envelopes.isEmpty ? l10n.soloEnvelopesConfigure : l10n.edit),
+          ),
+        ],
+      ),
+    );
+
+    if (envelopes.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          header,
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 16),
+            child: Text(l10n.soloEnvelopesConfigureHint,
+                style: TextStyle(fontSize: 12, color: context.mutedColor)),
+          ),
+        ],
+      );
+    }
+
+    final entries = envelopes.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    double reservedRemaining = 0;
+    for (final e in entries) {
+      reservedRemaining += (e.value - spentOf(e.key)).clamp(0, e.value);
+    }
+    final free = household.mySoloBalance(uid) - reservedRemaining;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        header,
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              Expanded(
+                  child: _envelopePill(
+                      l10n.soloEnvelopesReserved, reservedRemaining, AppColors.solo)),
+              const SizedBox(width: 10),
+              Expanded(
+                  child: _envelopePill(l10n.soloEnvelopesFree, free,
+                      free < 0 ? context.palette.danger : context.palette.success)),
+            ],
+          ),
+        ),
+        _card(
+          entries.map((e) {
+            final cat = categoryOf(e.key);
+            final budget = e.value;
+            final spent = spentOf(e.key);
+            final ratio = budget > 0 ? spent / budget : 0.0;
+            final over = ratio > 1.0;
+            final barColor = over
+                ? context.palette.danger
+                : (ratio > 0.8 ? context.palette.warning : cat.color);
+            return Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(cat.icon, size: 16, color: cat.color),
+                      const SizedBox(width: 6),
+                      Expanded(
+                          child: Text(cat.labelFor(_lang),
+                              style: const TextStyle(fontSize: 13))),
+                      Text(
+                        l10n.spentOfBudget(
+                            formatCurrency(spent), formatCurrency(budget)),
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: over ? context.palette.danger : null),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: ratio.clamp(0.0, 1.0),
+                      minHeight: 6,
+                      backgroundColor: context.borderColor,
+                      valueColor: AlwaysStoppedAnimation<Color>(barColor),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _envelopePill(String label, double amount, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(fontSize: 11, color: context.mutedColor)),
+          const SizedBox(height: 2),
+          Text(formatCurrency(amount),
+              style: TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w700, color: color)),
+        ],
       ),
     );
   }

@@ -132,6 +132,9 @@ function aggregate(rows: TxRow[]) {
   const merchants: Record<string, { amount: number; count: number }> = {};
   // Placements par personne : comptés à part, hors du total des dépenses.
   const investmentByUser: Record<string, number> = {};
+  // Dépense solo par personne et par catégorie : réel des enveloppes de budget
+  // variable solo (households/{id}.solo_envelopes_A/B).
+  const soloByUser: Record<string, Record<string, number>> = {};
 
   for (const t of rows) {
     if (t.amount <= 0) continue; // remboursements / entrées
@@ -148,6 +151,10 @@ function aggregate(rows: TxRow[]) {
     byCategory[t.category] = (byCategory[t.category] ?? 0) + t.amount;
     const bucketKey = t.bucket === "" ? "Unassigned" : t.bucket;
     byBucket[bucketKey] = (byBucket[bucketKey] ?? 0) + t.amount;
+    if ((t.bucket === "Solo_A" || t.bucket === "Solo_B") && t.payerId) {
+      const cats = (soloByUser[t.payerId] ??= {});
+      cats[t.category] = (cats[t.category] ?? 0) + t.amount;
+    }
     const m = merchants[t.merchant] ?? { amount: 0, count: 0 };
     m.amount += t.amount;
     m.count += 1;
@@ -165,6 +172,7 @@ function aggregate(rows: TxRow[]) {
     byBucket,
     topMerchants,
     investmentByUser,
+    soloByUser,
     count: rows.length,
   };
 }
@@ -332,6 +340,7 @@ export async function generateStoredReport(
     by_bucket: current.byBucket,
     top_merchants: current.topMerchants,
     investment_by_user: current.investmentByUser,
+    solo_by_category_by_user: current.soloByUser,
     prev_period_id: bounds.prevId,
     prev_total_spent: previous.total,
     prev_by_category: previous.byCategory,

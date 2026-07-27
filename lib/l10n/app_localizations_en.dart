@@ -1396,6 +1396,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get investmentGoalLabel => 'Target monthly amount';
 
   @override
+  String get edit => 'Edit';
+
+  @override
+  String get soloEnvelopesTitle => 'Variable budget (solo)';
+
+  @override
+  String get soloEnvelopesIntro =>
+      'Reserve part of your solo pot per category. Suggested amounts come from your 3-month averages — adjust them.';
+
+  @override
+  String get soloEnvelopesApplyAll => 'Suggest all';
+
+  @override
+  String soloEnvelopesSuggestion(String amount) {
+    return 'average: $amount';
+  }
+
+  @override
+  String get soloEnvelopesTotal => 'Total reserved';
+
+  @override
+  String get soloEnvelopesSaved => 'Variable budget saved';
+
+  @override
+  String get soloEnvelopesConfigure => 'Set up';
+
+  @override
+  String get soloEnvelopesConfigureHint =>
+      'Reserve part of your solo pot per category, suggested from your averages.';
+
+  @override
+  String get soloEnvelopesReserved => 'Reserved';
+
+  @override
+  String get soloEnvelopesFree => 'Free to spend';
+
+  @override
   String get spendingByCategoryHint =>
       'Tap a category to see and fix its transactions.';
 

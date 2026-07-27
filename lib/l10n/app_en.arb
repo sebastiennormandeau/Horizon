@@ -507,6 +507,22 @@
   "investmentSetGoalHint": "Tap to set a monthly goal",
   "investmentGoalTitle": "Investment goal",
   "investmentGoalLabel": "Target monthly amount",
+  "edit": "Edit",
+  "soloEnvelopesTitle": "Variable budget (solo)",
+  "soloEnvelopesIntro": "Reserve part of your solo pot per category. Suggested amounts come from your 3-month averages — adjust them.",
+  "soloEnvelopesApplyAll": "Suggest all",
+  "soloEnvelopesSuggestion": "average: {amount}",
+  "@soloEnvelopesSuggestion": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "soloEnvelopesTotal": "Total reserved",
+  "soloEnvelopesSaved": "Variable budget saved",
+  "soloEnvelopesConfigure": "Set up",
+  "soloEnvelopesConfigureHint": "Reserve part of your solo pot per category, suggested from your averages.",
+  "soloEnvelopesReserved": "Reserved",
+  "soloEnvelopesFree": "Free to spend",
 
   "spendingByCategoryHint": "Tap a category to see and fix its transactions.",
   "categoryTxEmpty": "No transactions in this category for this period.",

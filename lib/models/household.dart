@@ -46,6 +46,11 @@ class Household {
   final double investmentGoalA;
   final double investmentGoalB;
 
+  /// Enveloppes de budget variable solo par personne : catégorie → montant
+  /// mensuel réservé. Écrites par `setSoloEnvelopes`.
+  final Map<String, double> soloEnvelopesA;
+  final Map<String, double> soloEnvelopesB;
+
   const Household({
     required this.id,
     required this.userAId,
@@ -67,6 +72,8 @@ class Household {
     this.sortRules = const {},
     this.investmentGoalA = 0,
     this.investmentGoalB = 0,
+    this.soloEnvelopesA = const {},
+    this.soloEnvelopesB = const {},
   });
 
   factory Household.fromSnapshot(DocumentSnapshot snapshot) {
@@ -96,7 +103,19 @@ class Household {
       sortRules: _parseSortRules(data['sort_rules']),
       investmentGoalA: numOf('investment_goal_A'),
       investmentGoalB: numOf('investment_goal_B'),
+      soloEnvelopesA: _parseEnvelopes(data['solo_envelopes_A']),
+      soloEnvelopesB: _parseEnvelopes(data['solo_envelopes_B']),
     );
+  }
+
+  static Map<String, double> _parseEnvelopes(dynamic raw) {
+    if (raw is! Map) return const {};
+    final out = <String, double>{};
+    raw.forEach((key, value) {
+      final n = (value as num?)?.toDouble();
+      if (n != null && n > 0) out[key as String] = n;
+    });
+    return out;
   }
 
   static Map<String, String> _parseSortRules(dynamic raw) {
@@ -215,6 +234,10 @@ class Household {
   /// Objectif d'investissement mensuel de l'utilisateur connecté.
   double myInvestmentGoal(String uid) =>
       isUserA(uid) ? investmentGoalA : investmentGoalB;
+
+  /// Enveloppes de budget variable solo de l'utilisateur connecté.
+  Map<String, double> mySoloEnvelopes(String uid) =>
+      isUserA(uid) ? soloEnvelopesA : soloEnvelopesB;
 
   /// Cagnottes qui existent réellement pour ce foyer, dans l'ordre
   /// d'affichage. En solo il n'y en a que deux, et la personnelle est celle

@@ -24,7 +24,11 @@ export {
   getMyCashBalances,
 } from "./plaid";
 export { setSortRule, deleteSortRule } from "./sorting";
-export { setInvestmentGoal } from "./budget";
+export {
+  setInvestmentGoal,
+  suggestSoloEnvelopes,
+  setSoloEnvelopes,
+} from "./budget";
 export { onTransactionAssigned, settleDebt } from "./ledger";
 export { createHousehold, joinHousehold } from "./households";
 export {

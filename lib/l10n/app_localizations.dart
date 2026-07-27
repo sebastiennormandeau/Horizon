@@ -2599,6 +2599,72 @@ abstract class AppLocalizations {
   /// **'Montant mensuel visé'**
   String get investmentGoalLabel;
 
+  /// No description provided for @edit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier'**
+  String get edit;
+
+  /// No description provided for @soloEnvelopesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Budget variable (solo)'**
+  String get soloEnvelopesTitle;
+
+  /// No description provided for @soloEnvelopesIntro.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réserve une partie de ta cagnotte solo par catégorie. Les montants proposés viennent de tes moyennes des 3 derniers mois — ajuste-les.'**
+  String get soloEnvelopesIntro;
+
+  /// No description provided for @soloEnvelopesApplyAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout suggérer'**
+  String get soloEnvelopesApplyAll;
+
+  /// No description provided for @soloEnvelopesSuggestion.
+  ///
+  /// In fr, this message translates to:
+  /// **'moyenne : {amount}'**
+  String soloEnvelopesSuggestion(String amount);
+
+  /// No description provided for @soloEnvelopesTotal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réservé au total'**
+  String get soloEnvelopesTotal;
+
+  /// No description provided for @soloEnvelopesSaved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Budget variable enregistré'**
+  String get soloEnvelopesSaved;
+
+  /// No description provided for @soloEnvelopesConfigure.
+  ///
+  /// In fr, this message translates to:
+  /// **'Configurer'**
+  String get soloEnvelopesConfigure;
+
+  /// No description provided for @soloEnvelopesConfigureHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réserve une partie de ta cagnotte solo par catégorie, suggéré depuis tes moyennes.'**
+  String get soloEnvelopesConfigureHint;
+
+  /// No description provided for @soloEnvelopesReserved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réservé'**
+  String get soloEnvelopesReserved;
+
+  /// No description provided for @soloEnvelopesFree.
+  ///
+  /// In fr, this message translates to:
+  /// **'Libre à dépenser'**
+  String get soloEnvelopesFree;
+
   /// No description provided for @spendingByCategoryHint.
   ///
   /// In fr, this message translates to:

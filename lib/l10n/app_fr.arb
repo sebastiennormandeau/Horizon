@@ -649,6 +649,22 @@
   "investmentSetGoalHint": "Touche pour fixer un objectif mensuel",
   "investmentGoalTitle": "Objectif d'investissement",
   "investmentGoalLabel": "Montant mensuel visé",
+  "edit": "Modifier",
+  "soloEnvelopesTitle": "Budget variable (solo)",
+  "soloEnvelopesIntro": "Réserve une partie de ta cagnotte solo par catégorie. Les montants proposés viennent de tes moyennes des 3 derniers mois — ajuste-les.",
+  "soloEnvelopesApplyAll": "Tout suggérer",
+  "soloEnvelopesSuggestion": "moyenne : {amount}",
+  "@soloEnvelopesSuggestion": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "soloEnvelopesTotal": "Réservé au total",
+  "soloEnvelopesSaved": "Budget variable enregistré",
+  "soloEnvelopesConfigure": "Configurer",
+  "soloEnvelopesConfigureHint": "Réserve une partie de ta cagnotte solo par catégorie, suggéré depuis tes moyennes.",
+  "soloEnvelopesReserved": "Réservé",
+  "soloEnvelopesFree": "Libre à dépenser",
 
   "spendingByCategoryHint": "Touchez une catégorie pour voir et corriger ses transactions.",
   "categoryTxEmpty": "Aucune transaction dans cette catégorie pour cette période.",
