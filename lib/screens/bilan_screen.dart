@@ -180,7 +180,7 @@ class _BilanScreenState extends State<BilanScreen> {
           return Column(
             children: [
               _buildPeriodChips(),
-              Expanded(child: _buildBody(household)),
+              Expanded(child: _buildBody(household, uid)),
             ],
           );
         },
@@ -218,7 +218,7 @@ class _BilanScreenState extends State<BilanScreen> {
     );
   }
 
-  Widget _buildBody(Household household) {
+  Widget _buildBody(Household household, String uid) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -251,12 +251,13 @@ class _BilanScreenState extends State<BilanScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         final report = snapshot.data!.data() as Map<String, dynamic>;
-        return _buildReport(household, report);
+        return _buildReport(household, report, uid);
       },
     );
   }
 
-  Widget _buildReport(Household household, Map<String, dynamic> report) {
+  Widget _buildReport(
+      Household household, Map<String, dynamic> report, String uid) {
     final l10n = _l10n;
     final total = (report['total_spent'] as num?)?.toDouble() ?? 0;
     final prevTotal = (report['prev_total_spent'] as num?)?.toDouble() ?? 0;
@@ -274,6 +275,10 @@ class _BilanScreenState extends State<BilanScreen> {
                 ?.map((e) => Map<String, dynamic>.from(e as Map)) ??
             []);
     final aiAdvice = report['ai_advice'] as String?;
+    // Placements du membre connecté sur la période (compteur d'investissement).
+    final invByUser = Map<String, dynamic>.from(
+        report['investment_by_user'] as Map<dynamic, dynamic>? ?? {});
+    final invested = (invByUser[uid] as num?)?.toDouble() ?? 0;
     // Bornes de la période, pour ouvrir le détail d'une catégorie sur la même
     // sélection que le moteur de bilans. Absentes sur d'anciens bilans : les
     // barres restent alors non cliquables.
@@ -284,6 +289,10 @@ class _BilanScreenState extends State<BilanScreen> {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
       children: [
         _buildTotalCard(total, prevTotal),
+        if (invested > 0) ...[
+          const SizedBox(height: 12),
+          _buildInvestmentCard(invested),
+        ],
         const SizedBox(height: 16),
         if (byCategory.isNotEmpty) ...[
           _sectionTitle(l10n.spendingByCategory),
@@ -341,6 +350,35 @@ class _BilanScreenState extends State<BilanScreen> {
         _sectionTitle(l10n.aiCoachSection),
         _buildAiSection(aiAdvice),
       ],
+    );
+  }
+
+  Widget _buildInvestmentCard(double invested) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: context.palette.success.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.palette.success),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.savings, color: context.palette.success),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(_l10n.investedThisPeriod,
+                style: TextStyle(fontSize: 13, color: context.mutedColor)),
+          ),
+          Text(
+            formatCurrency(invested),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: context.palette.success,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

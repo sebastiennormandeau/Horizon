@@ -221,6 +221,19 @@ export function isPayroll(detailed?: string | null): boolean {
 }
 
 /**
+ * Virement vers un compte de placement (courtage, REER…).
+ *
+ * Traité comme une allocation SOLO : cet argent vient de ce qu'il reste à la
+ * personne après les dépenses fixes, il n'est donc pas partagé 60/40. On le
+ * classe dans la cagnotte solo du payeur (il la vide, l'argent est engagé) et
+ * on le marque `is_investment` : le bilan l'exclut des dépenses (ce n'est pas
+ * de la consommation) et un compteur « Investi ce mois » l'additionne.
+ */
+export function isInvestmentTransfer(detailed?: string | null): boolean {
+  return detailed === "TRANSFER_OUT_INVESTMENT_AND_RETIREMENT_FUNDS";
+}
+
+/**
  * Masques (4 derniers chiffres) de tous les comptes reliés du foyer.
  *
  * Sert à repérer les virements entre comptes du foyer : leur libellé cite le
@@ -522,6 +535,11 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
     string,
     string
   >;
+  // Siège du payeur, pour classer ses virements d'investissement dans SA
+  // cagnotte solo (l'argent investi vient de son solde perso, pas du commun).
+  const userAId =
+    householdSnap.data()?.user_A_id ?? householdSnap.data()?.created_by;
+  const payerSoloBucket = conn.user_id === userAId ? "Solo_A" : "Solo_B";
   let cursor = conn.sync_cursor;
   let added: PlaidTransaction[] = [];
   let modified: PlaidTransaction[] = [];
@@ -571,6 +589,7 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
         isInternalTransfer(detailed) ||
         mentionsOwnAccount(label, ownMasks) ||
         isCardPayment;
+      const isInvestment = isInvestmentTransfer(detailed);
       // Règle utilisateur : n'entre en jeu que sur ce qui irait dans la file
       // (« ») — elle ne détourne pas un mouvement interne ou un mois révolu.
       const ruleBucket =
@@ -593,9 +612,15 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
         // des mois révolus sont écartées du tri mais restent dans les bilans.
         assigned_to_bucket: isInternal
           ? TRANSFER_BUCKET
-          : isOld || isPayroll(detailed)
+          : isOld
             ? ARCHIVED_BUCKET
-            : (ruleBucket ?? ""),
+            : isInvestment
+              ? payerSoloBucket
+              : isPayroll(detailed)
+                ? ARCHIVED_BUCKET
+                : (ruleBucket ?? ""),
+        // Placement : vide la cagnotte solo mais exclu des dépenses au bilan.
+        is_investment: isInvestment,
         status: "Posted",
         date: t.date ?? null,
         // Catégorisation Plaid (personal_finance_category), affinable par

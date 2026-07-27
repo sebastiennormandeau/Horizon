@@ -1388,6 +1388,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get realBalanceSavings => 'Mon épargne';
 
   @override
+  String get investedThisPeriod => 'Investi cette période 💪';
+
+  @override
   String get spendingByCategoryHint =>
       'Touchez une catégorie pour voir et corriger ses transactions.';
 

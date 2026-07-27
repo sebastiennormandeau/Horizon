@@ -638,6 +638,7 @@
   "acctDeposit": "Dépôt",
   "realBalanceChecking": "Mon compte chèque",
   "realBalanceSavings": "Mon épargne",
+  "investedThisPeriod": "Investi cette période 💪",
 
   "spendingByCategoryHint": "Touchez une catégorie pour voir et corriger ses transactions.",
   "categoryTxEmpty": "Aucune transaction dans cette catégorie pour cette période.",

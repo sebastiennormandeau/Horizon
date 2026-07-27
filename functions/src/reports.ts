@@ -77,6 +77,8 @@ interface TxRow {
   category: string;
   bucket: string;
   createdAt: Date;
+  isInvestment: boolean;
+  payerId: string;
 }
 
 /** Date au format `AAAA-MM-JJ`, tel que Plaid l'inscrit dans `date`. */
@@ -117,6 +119,8 @@ async function fetchTransactions(
       createdAt:
         (data.created_at as Timestamp | undefined)?.toDate() ??
         new Date(0),
+      isInvestment: data.is_investment === true,
+      payerId: (data.paid_by_user_id as string) || "",
     };
   });
 }
@@ -126,9 +130,18 @@ function aggregate(rows: TxRow[]) {
   const byCategory: Record<string, number> = {};
   const byBucket: Record<string, number> = {};
   const merchants: Record<string, { amount: number; count: number }> = {};
+  // Placements par personne : comptés à part, hors du total des dépenses.
+  const investmentByUser: Record<string, number> = {};
 
   for (const t of rows) {
     if (t.amount <= 0) continue; // remboursements / entrées
+    if (t.isInvestment) {
+      if (t.payerId) {
+        investmentByUser[t.payerId] =
+          (investmentByUser[t.payerId] ?? 0) + t.amount;
+      }
+      continue; // un placement n'est pas une dépense
+    }
     if (t.bucket === TRANSFER_BUCKET) continue;
     if (NON_SPENDING_CATEGORIES.includes(t.category)) continue;
     total += t.amount;
@@ -146,7 +159,14 @@ function aggregate(rows: TxRow[]) {
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 5);
 
-  return { total, byCategory, byBucket, topMerchants, count: rows.length };
+  return {
+    total,
+    byCategory,
+    byBucket,
+    topMerchants,
+    investmentByUser,
+    count: rows.length,
+  };
 }
 
 function median(values: number[]): number {
@@ -311,6 +331,7 @@ export async function generateStoredReport(
     by_category: current.byCategory,
     by_bucket: current.byBucket,
     top_merchants: current.topMerchants,
+    investment_by_user: current.investmentByUser,
     prev_period_id: bounds.prevId,
     prev_total_spent: previous.total,
     prev_by_category: previous.byCategory,

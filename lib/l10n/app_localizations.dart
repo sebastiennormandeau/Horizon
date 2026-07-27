@@ -2563,6 +2563,12 @@ abstract class AppLocalizations {
   /// **'Mon épargne'**
   String get realBalanceSavings;
 
+  /// No description provided for @investedThisPeriod.
+  ///
+  /// In fr, this message translates to:
+  /// **'Investi cette période 💪'**
+  String get investedThisPeriod;
+
   /// No description provided for @spendingByCategoryHint.
   ///
   /// In fr, this message translates to:

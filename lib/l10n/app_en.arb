@@ -496,6 +496,7 @@
   "acctDeposit": "Deposit",
   "realBalanceChecking": "My chequing",
   "realBalanceSavings": "My savings",
+  "investedThisPeriod": "Invested this period 💪",
 
   "spendingByCategoryHint": "Tap a category to see and fix its transactions.",
   "categoryTxEmpty": "No transactions in this category for this period.",
