@@ -4,10 +4,11 @@
  * des mouvements entre comptes du foyer.
  *
  * Pourquoi ce script existe : la détection automatique (voir
- * `isInternalTransfer` dans src/plaid.ts) ne s'applique qu'à l'import. Les
- * transactions rapatriées AVANT sa mise en place sont restées classables, et
- * un paiement de carte de crédit trié dans une cagnotte compte une seconde
- * fois une dépense déjà comptée à l'achat.
+ * `isInternalTransfer` / `isInterestEarned` dans src/plaid.ts) ne s'applique
+ * qu'à l'import. Les transactions rapatriées AVANT sa mise en place sont
+ * restées classables, et un paiement de carte de crédit (ou un intérêt versé
+ * en épargne) trié dans une cagnotte compte une seconde fois — ou gonfle une
+ * cagnotte d'un montant qui n'existe pas vraiment au chèque.
  *
  * Effet sur le grand livre : `Transfer` n'appartient pas à `VALID_BUCKETS`,
  * donc passer de `""` à `Transfer` est neutre. Passer d'une vraie cagnotte à
@@ -32,6 +33,12 @@ const INTERNAL_TRANSFER_DETAILED = new Set([
   "TRANSFER_IN_ACCOUNT_TRANSFER",
 ]);
 
+// Intérêts versés directement dans le compte épargne, jamais transférés au
+// chèque (voir isInterestEarned dans src/plaid.ts). Traités comme un
+// mouvement interne : même cible (`Transfer`), même effet neutre au grand
+// livre.
+const INTEREST_DETAILED = new Set(["INCOME_INTEREST_EARNED"]);
+
 // Paye régulière : déjà comptée dans le budget, la glisser vers une cagnotte
 // la financerait une seconde fois. Restreint au salaire — les autres entrées
 // (pige, remboursement, cadeau) ne sont pas budgétées et restent à classer.
@@ -52,7 +59,9 @@ const db = getFirestore();
   const todo = [];
   for (const doc of snap.docs) {
     const t = doc.data();
-    const isTransfer = INTERNAL_TRANSFER_DETAILED.has(t.category_detailed);
+    const isTransfer =
+      INTERNAL_TRANSFER_DETAILED.has(t.category_detailed) ||
+      INTEREST_DETAILED.has(t.category_detailed);
     const isPayroll = PAYROLL_DETAILED.has(t.category_detailed);
     if (!isTransfer && !isPayroll) continue;
     const target = isTransfer ? TRANSFER_BUCKET : ARCHIVED_BUCKET;

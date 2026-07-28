@@ -234,6 +234,22 @@ export function isInvestmentTransfer(detailed?: string | null): boolean {
 }
 
 /**
+ * Intérêts (ou dividendes) versés directement dans un compte par la banque
+ * (« bonus interest »…).
+ *
+ * Cet argent apparaît DANS le compte épargne — jamais transféré au chèque —
+ * donc le compter dans Solo ou Commun gonflerait la cagnotte d'un montant que
+ * le solde réel comparé (`getMyCashBalances`) ne reflète pas côté chèque : la
+ * cagnotte se désynchronise du compte qu'elle est censée représenter. Traité
+ * comme un mouvement interne (`Transfer`) : aucun effet sur le grand livre, et
+ * s'il est un jour viré au chèque, ce virement sera lui-même reconnu comme
+ * interne par `mentionsOwnAccount`.
+ */
+export function isInterestEarned(detailed?: string | null): boolean {
+  return detailed === "INCOME_INTEREST_EARNED";
+}
+
+/**
  * Masques (4 derniers chiffres) de tous les comptes reliés du foyer.
  *
  * Sert à repérer les virements entre comptes du foyer : leur libellé cite le
@@ -578,7 +594,8 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
       // Interne si la catégorie le dit, OU si le libellé cite un compte du
       // foyer (virement chèque↔épargne, « prêt auto » vers son épargne…), OU
       // si c'est un paiement reçu sur une carte de crédit (Plaid l'étiquette
-      // souvent « income » à tort).
+      // souvent « income » à tort), OU si c'est un intérêt versé directement
+      // dans le compte épargne (jamais transféré au chèque).
       const label = t.name || t.merchant_name;
       const isCardPayment =
         typeof t.amount === "number" &&
@@ -588,7 +605,8 @@ export async function syncTransactionsForItem(itemId: string): Promise<number> {
       const isInternal =
         isInternalTransfer(detailed) ||
         mentionsOwnAccount(label, ownMasks) ||
-        isCardPayment;
+        isCardPayment ||
+        isInterestEarned(detailed);
       const isInvestment = isInvestmentTransfer(detailed);
       // Règle utilisateur : n'entre en jeu que sur ce qui irait dans la file
       // (« ») — elle ne détourne pas un mouvement interne ou un mois révolu.
