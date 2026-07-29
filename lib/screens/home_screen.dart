@@ -406,9 +406,18 @@ class _HomeScreenState extends State<HomeScreen> {
       debugPrint("Erreur d'assignation: $e");
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    // Une SnackBar par transaction triée s'EMPILE : ScaffoldMessenger les
+    // affiche l'une après l'autre (4 s chacune par défaut), si bien qu'un tri
+    // rapide de dix transactions masque le bas de l'écran pendant 40 s. On
+    // remplace donc la précédente et on raccourcit l'affichage — le temps de
+    // lire la cagnotte et d'annuler au besoin, pas plus.
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
       SnackBar(
         content: Text(_l10n.assignedTo(household.bucketLabel(bucket, _l10n))),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
         action: SnackBarAction(
           label: _l10n.undoAction,
           onPressed: () {

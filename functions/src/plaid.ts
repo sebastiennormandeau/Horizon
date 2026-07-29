@@ -186,17 +186,24 @@ function startOfCurrentMonth(): string {
 }
 
 /**
- * Catégories détaillées de Plaid qui dénotent un mouvement interne.
+ * Catégories détaillées de Plaid qui dénotent à elles seules un mouvement
+ * interne.
  *
  * On se fonde sur la catégorie **détaillée** et non primaire : `LOAN_PAYMENTS`
  * couvre aussi l'hypothèque et le prêt auto, qui sont de vraies dépenses et
  * doivent continuer d'entamer les cagnottes.
+ *
+ * `TRANSFER_*_ACCOUNT_TRANSFER` en a délibérément été RETIRÉ : Plaid range
+ * sous cette étiquette tous les prélèvements préautorisés vers un tiers
+ * (« EFT Withdrawal to CIE BELAIR » = assurance, « EFT Withdrawal to FN » =
+ * hypothèque) et les virements Interac à une personne. Les considérer comme
+ * internes escamotait de vraies dépenses fixes : elles n'entamaient jamais la
+ * cagnotte Commune, qui restait anormalement haute en fin de mois. Ces
+ * catégories passent désormais par `mentionsOwnAccount`, qui reconnaît le
+ * numéro de compte cité dans le libellé — signal présent sur 100 % des vrais
+ * mouvements internes observés, et absent des prélèvements vers un tiers.
  */
-const INTERNAL_TRANSFER_DETAILED = new Set([
-  "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT",
-  "TRANSFER_OUT_ACCOUNT_TRANSFER",
-  "TRANSFER_IN_ACCOUNT_TRANSFER",
-]);
+const INTERNAL_TRANSFER_DETAILED = new Set(["LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"]);
 
 export function isInternalTransfer(detailed?: string | null): boolean {
   return !!detailed && INTERNAL_TRANSFER_DETAILED.has(detailed);
