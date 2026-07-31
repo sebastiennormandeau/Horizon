@@ -1492,6 +1492,13 @@ export const archivePastTransactions = functions.https.onCall(
  * comparer à sa cagnotte solo. Ne renvoie que **ses** connexions, et marque
  * chaque compte conjoint ou non, afin d'isoler le personnel du partagé.
  *
+ * S'y ajoutent les comptes **conjoints** du foyer reliés par l'AUTRE membre
+ * (`joint_accounts`), pour afficher le solde du compte chèque commun sous la
+ * cagnotte commune. La frontière de vie privée tient à ceci : un compte
+ * conjoint est partagé par définition, alors qu'un compte personnel ne sort
+ * jamais de `accounts`, qui n'est bâti que sur les connexions de l'appelant.
+ * A ne peut donc jamais voir le compte chèque perso de B, ni l'inverse.
+ *
  * Lecture directe chez Plaid : `bank_connections` est interdit de lecture
  * cliente, donc un solde ne peut transiter que par un callable.
  */
@@ -1556,7 +1563,51 @@ export const getMyCashBalances = functions
       }
     }
 
-    return { accounts, reauth };
+    // Comptes conjoints reliés par l'AUTRE membre : seuls les comptes
+    // explicitement marqués conjoints sortent d'ici — jamais un compte perso.
+    const jointAccounts: typeof accounts = [];
+    const userSnap = await db.collection("users").doc(uid).get();
+    const householdId = userSnap.data()?.household_id as string | undefined;
+    if (householdId) {
+      const others = await db
+        .collection("bank_connections")
+        .where("household_id", "==", householdId)
+        .get();
+      for (const doc of others.docs) {
+        const conn = doc.data() as BankConnection;
+        if (conn.user_id === uid) continue; // déjà couvert par `accounts`
+        const jointIds = new Set(conn.joint_account_ids ?? []);
+        if (jointIds.size === 0 || !conn.access_token) continue;
+        try {
+          const bal = await client.accountsBalanceGet({
+            access_token: conn.access_token,
+          });
+          for (const a of bal.data.accounts) {
+            if (a.type !== "depository") continue;
+            if (!jointIds.has(a.account_id)) continue; // perso du partenaire
+            const name = a.official_name || a.name || "Compte";
+            jointAccounts.push({
+              account_id: a.account_id,
+              name,
+              mask: a.mask ?? null,
+              subtype: a.subtype ?? null,
+              kind: depositoryKind(a.subtype, name),
+              balance: a.balances.available ?? a.balances.current ?? 0,
+              institution_name: conn.institution_name ?? null,
+              is_joint: true,
+            });
+          }
+        } catch (e) {
+          // Silencieux : une connexion du partenaire à ré-authentifier n'est
+          // pas actionnable par l'appelant, inutile de l'alarmer.
+          console.warn(
+            `Solde conjoint indisponible pour ${doc.id}: ${plaidErrorCode(e)}`
+          );
+        }
+      }
+    }
+
+    return { accounts, reauth, joint_accounts: jointAccounts };
   });
 
 export const plaidWebhookHandler = functions

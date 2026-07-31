@@ -2683,6 +2683,36 @@ abstract class AppLocalizations {
   /// **'Libre à dépenser'**
   String get soloEnvelopesFree;
 
+  /// No description provided for @soloEnvelopesReservedShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rés.'**
+  String get soloEnvelopesReservedShort;
+
+  /// No description provided for @soloEnvelopesFreeShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Libre'**
+  String get soloEnvelopesFreeShort;
+
+  /// No description provided for @commonEnvelopesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Budget variable (commun)'**
+  String get commonEnvelopesTitle;
+
+  /// No description provided for @commonEnvelopesIntro.
+  ///
+  /// In fr, this message translates to:
+  /// **'Répartis la cagnotte commune par catégorie. « Réservé » est ce qui doit encore sortir ce mois-ci ; « Libre » est ce qui reste vraiment disponible pour le variable partagé. Les montants proposés viennent de vos moyennes des 3 derniers mois.'**
+  String get commonEnvelopesIntro;
+
+  /// No description provided for @commonEnvelopesConfigureHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Répartis la cagnotte commune par catégorie pour voir ce qui reste vraiment libre.'**
+  String get commonEnvelopesConfigureHint;
+
   /// No description provided for @spendingByCategoryHint.
   ///
   /// In fr, this message translates to:
@@ -2730,6 +2760,30 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Compte chèque réel'**
   String get checkingBalanceLabel;
+
+  /// No description provided for @checkingBalanceShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compte'**
+  String get checkingBalanceShort;
+
+  /// No description provided for @checkingBalanceJointShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Conjoint'**
+  String get checkingBalanceJointShort;
+
+  /// No description provided for @checkingBalancePrivate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Privé'**
+  String get checkingBalancePrivate;
+
+  /// No description provided for @checkingBalancePrivateHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le solde du compte personnel de ton/ta partenaire reste privé, comme le tien l\'est pour l\'autre.'**
+  String get checkingBalancePrivateHint;
 
   /// No description provided for @bankReauthNeeded.
   ///

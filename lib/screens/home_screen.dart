@@ -44,12 +44,21 @@ class _HomeScreenState extends State<HomeScreen> {
   /// aucun compte chèque.
   double? _checkingBalance;
 
+  /// Solde réel du compte chèque CONJOINT du foyer, affiché sous la cagnotte
+  /// commune. `null` = aucun compte conjoint marqué comme tel.
+  double? _jointCheckingBalance;
+
   /// Connexions à ré-authentifier (ITEM_LOGIN_REQUIRED) signalées par le
   /// serveur : chaque entrée porte `item_id` et `institution_name`.
   List<Map<String, dynamic>> _cashReauth = const [];
 
-  /// Charge le solde réel du compte chèque via Plaid (callable). Détecte aussi
-  /// les connexions à reconnecter.
+  /// Charge les soldes réels via Plaid (callable). Détecte aussi les
+  /// connexions à reconnecter.
+  ///
+  /// Deux soldes distincts, et la séparation est délibérée : le compte chèque
+  /// PERSO ne vient que des connexions de l'appelant (le serveur ne renvoie
+  /// jamais celles du partenaire), le compte CONJOINT peut venir de l'un ou
+  /// l'autre puisqu'il est partagé par définition.
   Future<void> _loadCash() async {
     try {
       final res = await FirebaseFunctions.instance
@@ -59,12 +68,26 @@ class _HomeScreenState extends State<HomeScreen> {
           .map((e) => Map<String, dynamic>.from(e as Map));
       double sum = 0;
       var hasChecking = false;
+      double joint = 0;
+      var hasJoint = false;
       for (final a in accounts) {
-        // Compte CHÈQUE perso seulement : ni épargne, ni conjoint.
-        if (a['kind'] == 'checking' && a['is_joint'] != true) {
+        if (a['kind'] != 'checking') continue; // ni épargne, ni placement
+        if (a['is_joint'] == true) {
+          joint += (a['balance'] as num?)?.toDouble() ?? 0;
+          hasJoint = true;
+        } else {
           sum += (a['balance'] as num?)?.toDouble() ?? 0;
           hasChecking = true;
         }
+      }
+      // Comptes conjoints reliés par le partenaire : ils complètent le solde
+      // commun sans jamais exposer un compte perso.
+      final jointAccounts = ((res.data['joint_accounts'] as List?) ?? const [])
+          .map((e) => Map<String, dynamic>.from(e as Map));
+      for (final a in jointAccounts) {
+        if (a['kind'] != 'checking') continue;
+        joint += (a['balance'] as num?)?.toDouble() ?? 0;
+        hasJoint = true;
       }
       final reauth = ((res.data['reauth'] as List?) ?? const [])
           .map((e) => Map<String, dynamic>.from(e as Map))
@@ -72,6 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
       setState(() {
         _checkingBalance = hasChecking ? sum : null;
+        _jointCheckingBalance = hasJoint ? joint : null;
         _cashReauth = reauth;
       });
       _maybePromptReauth();
@@ -654,8 +678,7 @@ class _HomeScreenState extends State<HomeScreen> {
           return Column(
             children: [
               _buildBucketsOverview(household, uid),
-              _buildCheckingLine(household, uid),
-              _buildReservedFree(household, uid),
+              _buildReauthBanners(household),
               _buildAlertBanner(household, uid),
               // En solo : ni invitation, ni dette interne — il n'y a
               // personne à inviter ni avec qui s'équilibrer.
@@ -699,62 +722,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Ligne sous les cagnottes : solde réel du compte chèque perso, à surveiller
-  /// en regard de la cagnotte solo. Signale une banque à reconnecter.
-  Widget _buildCheckingLine(Household household, String uid) {
-    if (!household.hasBankConnection) return const SizedBox.shrink();
-
-    // Solde chèque et bannière de reconnexion sont INDÉPENDANTS : une banque à
-    // reconnecter (souvent la carte) ne doit pas masquer le solde d'une autre
-    // banque saine.
-    final children = <Widget>[
-      if (_checkingBalance != null) _checkingBalanceLine(household, uid),
-      for (final r in _cashReauth) _reauthBanner(r),
-    ];
-    if (children.isEmpty) return const SizedBox.shrink();
-    return Column(children: children);
-  }
-
-  Widget _checkingBalanceLine(Household household, String uid) {
-    final l10n = _l10n;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
-      child: GestureDetector(
-        onTap: () => _openCashComparison(household, uid),
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: BoxDecoration(
-            color: context.cardColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: context.borderColor),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.account_balance_wallet_outlined,
-                  size: 16, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  l10n.checkingBalanceLabel,
-                  style: TextStyle(fontSize: 13, color: context.mutedColor),
-                ),
-              ),
-              Text(
-                formatCurrency(_checkingBalance!),
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              const SizedBox(width: 2),
-              Icon(Icons.chevron_right, size: 16, color: context.mutedColor),
-            ],
-          ),
-        ),
-      ),
-    );
+  /// Bannières « banque à reconnecter ».
+  ///
+  /// Indépendantes des soldes affichés sous les cagnottes : une banque à
+  /// reconnecter (souvent la carte) ne doit pas masquer le solde d'une autre
+  /// banque saine.
+  Widget _buildReauthBanners(Household household) {
+    if (!household.hasBankConnection || _cashReauth.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Column(children: [for (final r in _cashReauth) _reauthBanner(r)]);
   }
 
   Widget _reauthBanner(Map<String, dynamic> item) {
@@ -792,7 +769,48 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Les cagnottes, chacune surmontant son propre pied de colonne : solde réel
+  /// du compte associé, puis Réservé / Libre.
+  ///
+  /// Une seule requête alimente les trois colonnes (les transactions du mois
+  /// du foyer, réparties ensuite par cagnotte) plutôt qu'un flux par cagnotte.
   Widget _buildBucketsOverview(Household household, String uid) {
+    final monthStart = _startOfMonth();
+    return StreamBuilder<QuerySnapshot>(
+      // `orderBy` explicite : sans lui, Firestore trierait par `date`
+      // ASCENDANT et réclamerait un index qui n'existe pas. Descendant, la
+      // requête s'appuie sur l'index (household_id, date DESC) déjà déployé.
+      stream: FirebaseFirestore.instance
+          .collection('transactions')
+          .where('household_id', isEqualTo: household.id)
+          .where('date', isGreaterThanOrEqualTo: monthStart)
+          .orderBy('date', descending: true)
+          .snapshots(),
+      builder: (context, snap) {
+        final spent = <String, Map<String, double>>{};
+        for (final d in snap.data?.docs ?? const <QueryDocumentSnapshot>[]) {
+          final m = d.data() as Map<String, dynamic>;
+          // Un placement n'est pas une dépense : il vide la cagnotte solo mais
+          // ne consomme aucune enveloppe.
+          if (m['is_investment'] == true) continue;
+          final a = (m['amount'] as num?)?.toDouble() ?? 0;
+          if (a <= 0) continue; // remboursements et entrées d'argent
+          final bucket = (m['assigned_to_bucket'] as String?) ?? '';
+          if (bucket.isEmpty) continue;
+          final cat = (m['category'] as String?) ?? 'OTHER';
+          (spent[bucket] ??= <String, double>{})
+              .update(cat, (v) => v + a, ifAbsent: () => a);
+        }
+        return _bucketsRow(household, uid, spent);
+      },
+    );
+  }
+
+  Widget _bucketsRow(
+    Household household,
+    String uid,
+    Map<String, Map<String, double>> spent,
+  ) {
     final l10n = _l10n;
     final isA = household.isUserA(uid);
 
@@ -801,30 +819,44 @@ class _HomeScreenState extends State<HomeScreen> {
     // siège réellement occupé — après une séparation, ce n'est pas
     // forcément le siège A.
     if (household.isSolo) {
+      final soloBucket = household.soloBucketFor(uid);
       final mine = household.mySoloBalance(uid);
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: BalanceCard(
-                title: l10n.bucketPersonal,
-                amount: mine,
-                accent: AppColors.solo,
-                alert: household.alertLevel(mine),
-                onTap: household.hasBankConnection
-                    ? () => _openCashComparison(household, uid)
-                    : null,
+              child: _potColumn(
+                household,
+                uid,
+                bucket: soloBucket,
+                spent: spent,
+                card: BalanceCard(
+                  title: l10n.bucketPersonal,
+                  amount: mine,
+                  accent: AppColors.solo,
+                  alert: household.alertLevel(mine),
+                  onTap: household.hasBankConnection
+                      ? () => _openCashComparison(household, uid)
+                      : null,
+                ),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: BalanceCard(
-                title: l10n.bucketEssential,
-                amount: household.safeToSpendCommon,
-                accent: AppColors.primary,
-                featured: true,
-                alert: household.alertLevel(household.safeToSpendCommon),
+              child: _potColumn(
+                household,
+                uid,
+                bucket: 'Common',
+                spent: spent,
+                card: BalanceCard(
+                  title: l10n.bucketEssential,
+                  amount: household.safeToSpendCommon,
+                  accent: AppColors.primary,
+                  featured: true,
+                  alert: household.alertLevel(household.safeToSpendCommon),
+                ),
               ),
             ),
           ],
@@ -835,39 +867,58 @@ class _HomeScreenState extends State<HomeScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: BalanceCard(
-              title: isA ? l10n.bucketMe(household.nameA) : household.nameA,
-              amount: household.safeToSpendSoloA,
-              accent: isA ? AppColors.solo : AppColors.partner,
-              alert: household.alertLevel(household.safeToSpendSoloA),
-              // Le solde réel n'a de sens que pour ses propres comptes.
-              onTap: isA && household.hasBankConnection
-                  ? () => _openCashComparison(household, uid)
-                  : null,
+            child: _potColumn(
+              household,
+              uid,
+              bucket: 'Solo_A',
+              spent: spent,
+              card: BalanceCard(
+                title: isA ? l10n.bucketMe(household.nameA) : household.nameA,
+                amount: household.safeToSpendSoloA,
+                accent: isA ? AppColors.solo : AppColors.partner,
+                alert: household.alertLevel(household.safeToSpendSoloA),
+                // Le solde réel n'a de sens que pour ses propres comptes.
+                onTap: isA && household.hasBankConnection
+                    ? () => _openCashComparison(household, uid)
+                    : null,
+              ),
             ),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: BalanceCard(
-              title: l10n.bucketCommon,
-              amount: household.safeToSpendCommon,
-              accent: AppColors.primary,
-              featured: true,
-              alert: household.alertLevel(household.safeToSpendCommon),
+            child: _potColumn(
+              household,
+              uid,
+              bucket: 'Common',
+              spent: spent,
+              card: BalanceCard(
+                title: l10n.bucketCommon,
+                amount: household.safeToSpendCommon,
+                accent: AppColors.primary,
+                featured: true,
+                alert: household.alertLevel(household.safeToSpendCommon),
+              ),
             ),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: BalanceCard(
-              title: !isA ? l10n.bucketMe(household.nameB) : household.nameB,
-              amount: household.safeToSpendSoloB,
-              accent: !isA ? AppColors.solo : AppColors.partner,
-              alert: household.alertLevel(household.safeToSpendSoloB),
-              onTap: !isA && household.hasBankConnection
-                  ? () => _openCashComparison(household, uid)
-                  : null,
+            child: _potColumn(
+              household,
+              uid,
+              bucket: 'Solo_B',
+              spent: spent,
+              card: BalanceCard(
+                title: !isA ? l10n.bucketMe(household.nameB) : household.nameB,
+                amount: household.safeToSpendSoloB,
+                accent: !isA ? AppColors.solo : AppColors.partner,
+                alert: household.alertLevel(household.safeToSpendSoloB),
+                onTap: !isA && household.hasBankConnection
+                    ? () => _openCashComparison(household, uid)
+                    : null,
+              ),
             ),
           ),
         ],
@@ -875,85 +926,256 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Réservé / Libre : la part de la cagnotte solo engagée dans les enveloppes
-  /// de budget variable vs le discrétionnaire. L'argent reste dans la cagnotte
-  /// solo — on n'en montre que la répartition. Masqué sans enveloppe.
-  Widget _buildReservedFree(Household household, String uid) {
-    final envelopes = household.mySoloEnvelopes(uid);
-    if (envelopes.isEmpty) return const SizedBox.shrink();
-    final soloBucket = household.soloBucketFor(uid);
-    final monthStart = _startOfMonth();
+  /// Une cagnotte : sa carte, le solde réel du compte associé, puis
+  /// Réservé / Libre.
+  Widget _potColumn(
+    Household household,
+    String uid, {
+    required String bucket,
+    required Map<String, Map<String, double>> spent,
+    required Widget card,
+  }) {
+    final children = <Widget>[card];
 
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('transactions')
-          .where('household_id', isEqualTo: household.id)
-          .where('assigned_to_bucket', isEqualTo: soloBucket)
-          .where('date', isGreaterThanOrEqualTo: monthStart)
-          .snapshots(),
-      builder: (context, snap) {
-        if (!snap.hasData) return const SizedBox.shrink();
-        final spent = <String, double>{};
-        for (final d in snap.data!.docs) {
-          final m = d.data() as Map<String, dynamic>;
-          if (m['is_investment'] == true) continue;
-          final a = (m['amount'] as num?)?.toDouble() ?? 0;
-          if (a <= 0) continue;
-          final cat = (m['category'] as String?) ?? 'OTHER';
-          spent[cat] = (spent[cat] ?? 0) + a;
-        }
-        double reserved = 0;
-        envelopes.forEach((cat, budget) {
-          final rem = budget - (spent[cat] ?? 0);
-          if (rem > 0) reserved += rem;
-        });
-        final free = household.mySoloBalance(uid) - reserved;
+    final balance = _potBalanceLine(household, uid, bucket);
+    if (balance != null) children.add(balance);
 
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
-          child: GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) =>
-                    SoloEnvelopesScreen(household: household, uid: uid),
+    final envelopes = household.envelopesOf(bucket);
+    final isMine = bucket == household.soloBucketFor(uid) || bucket == 'Common';
+    if (envelopes.isNotEmpty) {
+      // Réservé : ce qui reste engagé dans les enveloppes du mois. L'argent
+      // ne bouge pas — on ne montre que la répartition de la cagnotte.
+      final s = spent[bucket] ?? const <String, double>{};
+      double reserved = 0;
+      envelopes.forEach((cat, budget) {
+        final rem = budget - (s[cat] ?? 0);
+        if (rem > 0) reserved += rem;
+      });
+      final free = household.bucketBalance(bucket) - reserved;
+      children.add(_reservedFreeMini(
+        household,
+        uid,
+        bucket,
+        reserved,
+        free,
+        tappable: isMine,
+      ));
+    } else if (isMine) {
+      // Sans enveloppe, rien à répartir : on offre plutôt l'entrée pour en
+      // définir, sans quoi la fonction resterait invisible.
+      children.add(_envelopesConfigureLink(household, uid, bucket));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: children,
+    );
+  }
+
+  /// Solde réel du compte associé à une cagnotte.
+  ///
+  /// Cloisonnement : le compte chèque perso n'est montré qu'à son propriétaire
+  /// (le serveur ne renvoie jamais celui du partenaire), le compte conjoint
+  /// est visible des deux, et la cagnotte solo de l'autre affiche « Privé ».
+  Widget? _potBalanceLine(Household household, String uid, String bucket) {
+    if (!household.hasBankConnection) return null;
+
+    if (bucket == household.soloBucketFor(uid)) {
+      if (_checkingBalance == null) return null;
+      return _miniBalance(
+        Icons.account_balance_wallet_outlined,
+        _l10n.checkingBalanceShort,
+        _checkingBalance!,
+        onTap: () => _openCashComparison(household, uid),
+      );
+    }
+    if (bucket == 'Common') {
+      if (_jointCheckingBalance == null) return null;
+      return _miniBalance(
+        Icons.account_balance_outlined,
+        _l10n.checkingBalanceJointShort,
+        _jointCheckingBalance!,
+      );
+    }
+    return _miniPrivate();
+  }
+
+  Widget _miniBalance(IconData icon, String label, double amount,
+      {VoidCallback? onTap}) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            color: context.cardColor,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: context.borderColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 12, color: AppColors.primary),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          TextStyle(fontSize: 10.5, color: context.mutedColor),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  formatCurrency(amount),
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Cagnotte solo du partenaire : le solde de son compte perso reste privé.
+  Widget _miniPrivate() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Tooltip(
+        message: _l10n.checkingBalancePrivateHint,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            color: context.cardColor,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: context.borderColor),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.lock_outline, size: 12, color: context.mutedColor),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  _l10n.checkingBalancePrivate,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 10.5, color: context.mutedColor),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _reservedFreeMini(
+    Household household,
+    String uid,
+    String bucket,
+    double reserved,
+    double free, {
+    required bool tappable,
+  }) {
+    final accent = bucket == 'Common' ? AppColors.primary : AppColors.solo;
+    final freeColor =
+        free < 0 ? context.palette.danger : context.palette.success;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: GestureDetector(
+        onTap: tappable ? () => _openEnvelopes(household, uid, bucket) : null,
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          children: [
+            _homeReservedPill(
+                _l10n.soloEnvelopesReservedShort, reserved, accent),
+            const SizedBox(height: 4),
+            _homeReservedPill(
+                _l10n.soloEnvelopesFreeShort, free, freeColor),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _envelopesConfigureLink(
+      Household household, String uid, String bucket) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: GestureDetector(
+        onTap: () => _openEnvelopes(household, uid, bucket),
+        behavior: HitTestBehavior.opaque,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_circle_outline,
+                size: 12, color: context.mutedColor),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                _l10n.soloEnvelopesConfigure,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 10.5, color: context.mutedColor),
               ),
             ),
-            behavior: HitTestBehavior.opaque,
-            child: Row(
-              children: [
-                Expanded(
-                    child: _homeReservedPill(
-                        _l10n.soloEnvelopesReserved, reserved, AppColors.solo)),
-                const SizedBox(width: 10),
-                Expanded(
-                    child: _homeReservedPill(_l10n.soloEnvelopesFree, free,
-                        free < 0 ? context.palette.danger : context.palette.success)),
-              ],
-            ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openEnvelopes(Household household, String uid, String bucket) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SoloEnvelopesScreen(
+          household: household,
+          uid: uid,
+          bucket: bucket,
+        ),
+      ),
     );
   }
 
   Widget _homeReservedPill(String label, double amount, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color),
       ),
       child: Row(
         children: [
+          Text(label,
+              style: TextStyle(fontSize: 10.5, color: context.mutedColor)),
+          const SizedBox(width: 4),
           Expanded(
-            child: Text(label,
-                style: TextStyle(fontSize: 11.5, color: context.mutedColor)),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(formatCurrency(amount),
+                  style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: color)),
+            ),
           ),
-          Text(formatCurrency(amount),
-              style: TextStyle(
-                  fontSize: 14, fontWeight: FontWeight.w700, color: color)),
         ],
       ),
     );

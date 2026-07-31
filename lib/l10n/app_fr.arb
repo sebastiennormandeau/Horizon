@@ -673,6 +673,11 @@
   "soloEnvelopesConfigureHint": "Réserve une partie de ta cagnotte solo par catégorie, suggéré depuis tes moyennes.",
   "soloEnvelopesReserved": "Réservé",
   "soloEnvelopesFree": "Libre à dépenser",
+  "soloEnvelopesReservedShort": "Rés.",
+  "soloEnvelopesFreeShort": "Libre",
+  "commonEnvelopesTitle": "Budget variable (commun)",
+  "commonEnvelopesIntro": "Répartis la cagnotte commune par catégorie. « Réservé » est ce qui doit encore sortir ce mois-ci ; « Libre » est ce qui reste vraiment disponible pour le variable partagé. Les montants proposés viennent de vos moyennes des 3 derniers mois.",
+  "commonEnvelopesConfigureHint": "Répartis la cagnotte commune par catégorie pour voir ce qui reste vraiment libre.",
 
   "spendingByCategoryHint": "Touchez une catégorie pour voir et corriger ses transactions.",
   "categoryTxEmpty": "Aucune transaction dans cette catégorie pour cette période.",
@@ -688,6 +693,10 @@
   "categoryTxError": "La mise à jour a échoué.",
 
   "checkingBalanceLabel": "Compte chèque réel",
+  "checkingBalanceShort": "Compte",
+  "checkingBalanceJointShort": "Conjoint",
+  "checkingBalancePrivate": "Privé",
+  "checkingBalancePrivateHint": "Le solde du compte personnel de ton/ta partenaire reste privé, comme le tien l'est pour l'autre.",
   "bankReauthNeeded": "Une banque doit être reconnectée",
   "bankReauthNeededNamed": "{institution} : reconnexion requise",
   "@bankReauthNeededNamed": {

@@ -51,6 +51,10 @@ class Household {
   final Map<String, double> soloEnvelopesA;
   final Map<String, double> soloEnvelopesB;
 
+  /// Enveloppes de la cagnotte commune : catégorie → montant mensuel attendu.
+  /// Partagées par les deux membres, écrites par `setCommonEnvelopes`.
+  final Map<String, double> commonEnvelopes;
+
   const Household({
     required this.id,
     required this.userAId,
@@ -74,6 +78,7 @@ class Household {
     this.investmentGoalB = 0,
     this.soloEnvelopesA = const {},
     this.soloEnvelopesB = const {},
+    this.commonEnvelopes = const {},
   });
 
   factory Household.fromSnapshot(DocumentSnapshot snapshot) {
@@ -105,6 +110,7 @@ class Household {
       investmentGoalB: numOf('investment_goal_B'),
       soloEnvelopesA: _parseEnvelopes(data['solo_envelopes_A']),
       soloEnvelopesB: _parseEnvelopes(data['solo_envelopes_B']),
+      commonEnvelopes: _parseEnvelopes(data['common_envelopes']),
     );
   }
 
@@ -238,6 +244,21 @@ class Household {
   /// Enveloppes de budget variable solo de l'utilisateur connecté.
   Map<String, double> mySoloEnvelopes(String uid) =>
       isUserA(uid) ? soloEnvelopesA : soloEnvelopesB;
+
+  /// Enveloppes d'une cagnotte quelconque — permet à l'accueil de traiter les
+  /// trois cagnottes par le même chemin plutôt qu'avec trois cas particuliers.
+  Map<String, double> envelopesOf(String bucket) {
+    switch (bucket) {
+      case 'Solo_A':
+        return soloEnvelopesA;
+      case 'Solo_B':
+        return soloEnvelopesB;
+      case 'Common':
+        return commonEnvelopes;
+      default:
+        return const {};
+    }
+  }
 
   /// Cagnottes qui existent réellement pour ce foyer, dans l'ordre
   /// d'affichage. En solo il n'y en a que deux, et la personnelle est celle

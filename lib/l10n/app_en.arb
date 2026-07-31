@@ -531,6 +531,11 @@
   "soloEnvelopesConfigureHint": "Reserve part of your solo pot per category, suggested from your averages.",
   "soloEnvelopesReserved": "Reserved",
   "soloEnvelopesFree": "Free to spend",
+  "soloEnvelopesReservedShort": "Res.",
+  "soloEnvelopesFreeShort": "Free",
+  "commonEnvelopesTitle": "Variable budget (shared)",
+  "commonEnvelopesIntro": "Break the shared pot down by category. \"Reserved\" is what still has to go out this month; \"Free\" is what is genuinely left for shared variable spending. Suggested amounts come from your 3-month averages.",
+  "commonEnvelopesConfigureHint": "Break the shared pot down by category to see what is genuinely free.",
 
   "spendingByCategoryHint": "Tap a category to see and fix its transactions.",
   "categoryTxEmpty": "No transactions in this category for this period.",
@@ -546,6 +551,10 @@
   "categoryTxError": "Update failed.",
 
   "checkingBalanceLabel": "Real chequing balance",
+  "checkingBalanceShort": "Account",
+  "checkingBalanceJointShort": "Joint",
+  "checkingBalancePrivate": "Private",
+  "checkingBalancePrivateHint": "Your partner's personal account balance stays private, just as yours does from them.",
   "bankReauthNeeded": "A bank needs to be reconnected",
   "bankReauthNeededNamed": "{institution}: reconnection required",
   "@bankReauthNeededNamed": {

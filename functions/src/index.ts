@@ -28,6 +28,8 @@ export {
   setInvestmentGoal,
   suggestSoloEnvelopes,
   setSoloEnvelopes,
+  suggestCommonEnvelopes,
+  setCommonEnvelopes,
 } from "./budget";
 export { onTransactionAssigned, settleDebt } from "./ledger";
 export { createHousehold, joinHousehold } from "./households";

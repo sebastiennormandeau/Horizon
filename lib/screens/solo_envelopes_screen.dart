@@ -7,17 +7,25 @@ import '../theme/app_colors.dart';
 import '../utils/categories.dart';
 import '../utils/formatters.dart';
 
-/// Budget variable SOLO par personne : une enveloppe (montant mensuel) par
-/// catégorie, qui réserve une part de la cagnotte solo. Les montants sont
-/// suggérés à partir des moyennes des 3 derniers mois ; l'utilisateur ajuste.
+/// Budget variable d'UNE cagnotte : une enveloppe (montant mensuel) par
+/// catégorie, qui en réserve une part. Les montants sont suggérés à partir des
+/// moyennes des 3 derniers mois ; l'utilisateur ajuste.
+///
+/// Sert les trois cagnottes : `Solo_A`/`Solo_B` (personnelles, propres à
+/// l'appelant) et `Common` (partagée). Seul le couple de callables change —
+/// l'écran, lui, est identique, ce qui garde le même geste partout.
 class SoloEnvelopesScreen extends StatefulWidget {
   final Household household;
   final String uid;
+
+  /// Cagnotte visée. `null` = la cagnotte solo de l'utilisateur connecté.
+  final String? bucket;
 
   const SoloEnvelopesScreen({
     super.key,
     required this.household,
     required this.uid,
+    this.bucket,
   });
 
   @override
@@ -33,10 +41,20 @@ class _SoloEnvelopesScreenState extends State<SoloEnvelopesScreen> {
   AppLocalizations get _l10n => AppLocalizations.of(context)!;
   String get _lang => Localizations.localeOf(context).languageCode;
 
+  /// Cagnotte visée, repli sur la cagnotte solo de l'appelant.
+  String get _bucket =>
+      widget.bucket ?? widget.household.soloBucketFor(widget.uid);
+  bool get _isCommon => _bucket == 'Common';
+  String get _suggestCallable =>
+      _isCommon ? 'suggestCommonEnvelopes' : 'suggestSoloEnvelopes';
+  String get _saveCallable =>
+      _isCommon ? 'setCommonEnvelopes' : 'setSoloEnvelopes';
+  Color get _accent => _isCommon ? AppColors.primary : AppColors.solo;
+
   @override
   void initState() {
     super.initState();
-    final existing = widget.household.mySoloEnvelopes(widget.uid);
+    final existing = widget.household.envelopesOf(_bucket);
     for (final c in kSelectableCategories) {
       final amt = existing[c.key];
       _controllers[c.key] = TextEditingController(
@@ -56,7 +74,7 @@ class _SoloEnvelopesScreenState extends State<SoloEnvelopesScreen> {
   Future<void> _loadSuggestions() async {
     try {
       final res = await FirebaseFunctions.instance
-          .httpsCallable('suggestSoloEnvelopes')
+          .httpsCallable(_suggestCallable)
           .call();
       final list = (res.data['suggestions'] as List?) ?? const [];
       final map = <String, int>{};
@@ -71,7 +89,7 @@ class _SoloEnvelopesScreenState extends State<SoloEnvelopesScreen> {
         _loadingSuggestions = false;
       });
     } catch (e) {
-      debugPrint('suggestSoloEnvelopes: $e');
+      debugPrint('$_suggestCallable: $e');
       if (!mounted) return;
       setState(() => _loadingSuggestions = false);
     }
@@ -103,12 +121,12 @@ class _SoloEnvelopesScreenState extends State<SoloEnvelopesScreen> {
     final navigator = Navigator.of(context);
     try {
       await FirebaseFunctions.instance
-          .httpsCallable('setSoloEnvelopes')
+          .httpsCallable(_saveCallable)
           .call({'envelopes': envelopes});
       messenger.showSnackBar(SnackBar(content: Text(_l10n.soloEnvelopesSaved)));
       navigator.pop();
     } catch (e) {
-      debugPrint('setSoloEnvelopes: $e');
+      debugPrint('$_saveCallable: $e');
       messenger.showSnackBar(SnackBar(content: Text(_l10n.addError)));
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -120,7 +138,9 @@ class _SoloEnvelopesScreenState extends State<SoloEnvelopesScreen> {
     final l10n = _l10n;
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.soloEnvelopesTitle),
+        title: Text(_isCommon
+            ? l10n.commonEnvelopesTitle
+            : l10n.soloEnvelopesTitle),
         actions: [
           _saving
               ? const Padding(
@@ -139,7 +159,8 @@ class _SoloEnvelopesScreenState extends State<SoloEnvelopesScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          Text(l10n.soloEnvelopesIntro,
+          Text(
+              _isCommon ? l10n.commonEnvelopesIntro : l10n.soloEnvelopesIntro,
               style: TextStyle(
                   fontSize: 13, color: context.mutedColor, height: 1.45)),
           const SizedBox(height: 12),
@@ -163,9 +184,9 @@ class _SoloEnvelopesScreenState extends State<SoloEnvelopesScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.solo.withValues(alpha: 0.12),
+              color: _accent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.solo),
+              border: Border.all(color: _accent),
             ),
             child: Row(
               children: [

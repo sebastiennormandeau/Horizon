@@ -1445,6 +1445,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get soloEnvelopesFree => 'Free to spend';
 
   @override
+  String get soloEnvelopesReservedShort => 'Res.';
+
+  @override
+  String get soloEnvelopesFreeShort => 'Free';
+
+  @override
+  String get commonEnvelopesTitle => 'Variable budget (shared)';
+
+  @override
+  String get commonEnvelopesIntro =>
+      'Break the shared pot down by category. \"Reserved\" is what still has to go out this month; \"Free\" is what is genuinely left for shared variable spending. Suggested amounts come from your 3-month averages.';
+
+  @override
+  String get commonEnvelopesConfigureHint =>
+      'Break the shared pot down by category to see what is genuinely free.';
+
+  @override
   String get spendingByCategoryHint =>
       'Tap a category to see and fix its transactions.';
 
@@ -1471,6 +1488,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get checkingBalanceLabel => 'Real chequing balance';
+
+  @override
+  String get checkingBalanceShort => 'Account';
+
+  @override
+  String get checkingBalanceJointShort => 'Joint';
+
+  @override
+  String get checkingBalancePrivate => 'Private';
+
+  @override
+  String get checkingBalancePrivateHint =>
+      'Your partner\'s personal account balance stays private, just as yours does from them.';
 
   @override
   String get bankReauthNeeded => 'A bank needs to be reconnected';

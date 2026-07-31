@@ -1457,6 +1457,23 @@ class AppLocalizationsFr extends AppLocalizations {
   String get soloEnvelopesFree => 'Libre à dépenser';
 
   @override
+  String get soloEnvelopesReservedShort => 'Rés.';
+
+  @override
+  String get soloEnvelopesFreeShort => 'Libre';
+
+  @override
+  String get commonEnvelopesTitle => 'Budget variable (commun)';
+
+  @override
+  String get commonEnvelopesIntro =>
+      'Répartis la cagnotte commune par catégorie. « Réservé » est ce qui doit encore sortir ce mois-ci ; « Libre » est ce qui reste vraiment disponible pour le variable partagé. Les montants proposés viennent de vos moyennes des 3 derniers mois.';
+
+  @override
+  String get commonEnvelopesConfigureHint =>
+      'Répartis la cagnotte commune par catégorie pour voir ce qui reste vraiment libre.';
+
+  @override
   String get spendingByCategoryHint =>
       'Touchez une catégorie pour voir et corriger ses transactions.';
 
@@ -1483,6 +1500,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get checkingBalanceLabel => 'Compte chèque réel';
+
+  @override
+  String get checkingBalanceShort => 'Compte';
+
+  @override
+  String get checkingBalanceJointShort => 'Conjoint';
+
+  @override
+  String get checkingBalancePrivate => 'Privé';
+
+  @override
+  String get checkingBalancePrivateHint =>
+      'Le solde du compte personnel de ton/ta partenaire reste privé, comme le tien l\'est pour l\'autre.';
 
   @override
   String get bankReauthNeeded => 'Une banque doit être reconnectée';
