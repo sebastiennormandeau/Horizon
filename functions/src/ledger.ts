@@ -130,7 +130,8 @@ export const onTransactionAssigned = functions.firestore
     // Notifications hors transaction : un envoi ne doit jamais bloquer ni
     // rejouer l'écriture du grand livre.
     const assignedToSolo = afterBucket === "Solo_A" || afterBucket === "Solo_B";
-    if (!crossedPot && !assignedToSolo) return;
+    const assignedToCommon = afterBucket === "Common";
+    if (!crossedPot && !assignedToSolo && !assignedToCommon) return;
     const hd = (await householdRef.get()).data() ?? {};
 
     if (crossedPot) {
@@ -153,20 +154,32 @@ export const onTransactionAssigned = functions.firestore
       }
     }
 
-    // Alerte d'enveloppe : la dépense solo de la personne dans cette catégorie
-    // vient de franchir le seuil configuré de son enveloppe de budget variable.
-    if (assignedToSolo && after.is_investment !== true && amount > 0) {
+    // Alerte d'enveloppe : la dépense dans cette catégorie vient de franchir
+    // le seuil configuré de l'enveloppe de budget variable.
+    //
+    // Vaut pour les enveloppes solo (la personne du siège est seule
+    // prévenue) comme pour les enveloppes communes (les deux membres le
+    // sont — la cagnotte est partagée, la nouvelle concerne les deux).
+    if ((assignedToSolo || assignedToCommon) &&
+        after.is_investment !== true &&
+        amount > 0) {
       const seat = afterBucket === "Solo_A" ? "A" : "B";
-      const envelopes = (hd[`solo_envelopes_${seat}`] ?? {}) as Record<
-        string,
-        number
-      >;
+      const envelopes = (assignedToCommon
+        ? (hd.common_envelopes ?? {})
+        : (hd[`solo_envelopes_${seat}`] ?? {})) as Record<string, number>;
       const category = (after.category as string) || "OTHER";
       const budget = envelopes[category] ?? 0;
-      const memberUid =
+      const soloUid =
         seat === "A" ? (hd.user_A_id ?? hd.created_by) : hd.user_B_id;
-      if (budget > 0 && memberUid) {
-        // Dépense solo du mois dans cette catégorie (après cette assignation).
+      // Chacun garde SON seuil : on évalue le franchissement par personne.
+      const recipients: string[] = assignedToCommon
+        ? await householdMemberIds(hd)
+        : soloUid
+          ? [soloUid]
+          : [];
+
+      if (budget > 0 && recipients.length > 0) {
+        // Dépense du mois dans cette catégorie (après cette assignation).
         const now = new Date();
         const monthStart = `${now.getUTCFullYear()}-${String(
           now.getUTCMonth() + 1
@@ -176,6 +189,10 @@ export const onTransactionAssigned = functions.firestore
           .where("household_id", "==", householdId)
           .where("assigned_to_bucket", "==", afterBucket)
           .where("date", ">=", monthStart)
+          // orderBy explicite : sans lui Firestore trierait par `date`
+          // ASCENDANT et réclamerait un index absent, au lieu de
+          // (household_id, assigned_to_bucket, date DESC) déjà déployé.
+          .orderBy("date", "desc")
           .get();
         let spentAfter = 0;
         snap.forEach((d) => {
@@ -186,22 +203,28 @@ export const onTransactionAssigned = functions.firestore
           if (a > 0) spentAfter += a;
         });
         const spentBefore = spentAfter - amount;
-        const user = (
-          await db.collection("users").doc(memberUid).get()
-        ).data();
-        const pct =
-          typeof user?.notif_envelope_pct === "number"
-            ? user.notif_envelope_pct
-            : 0.9;
-        const threshold = budget * pct;
-        // Franchissement vers le haut uniquement : une seule alerte.
-        if (spentBefore < threshold && spentAfter >= threshold) {
-          const catLabel = CATEGORY_LABEL_FR[category] ?? category;
-          const depleted = spentAfter >= budget;
-          const body = depleted
-            ? `Ton enveloppe « ${catLabel} » est épuisée (${spentAfter.toFixed(0)} / ${budget.toFixed(0)} $).`
-            : `Ton enveloppe « ${catLabel} » est presque épuisée (${spentAfter.toFixed(0)} / ${budget.toFixed(0)} $).`;
-          await sendToUser(memberUid, "envelope_alert", "Budget variable", body);
+        const catLabel = CATEGORY_LABEL_FR[category] ?? category;
+        const depleted = spentAfter >= budget;
+        const amounts = `${spentAfter.toFixed(0)} / ${budget.toFixed(0)} $`;
+        const body = assignedToCommon
+          ? depleted
+            ? `Votre enveloppe commune « ${catLabel} » est épuisée (${amounts}).`
+            : `Votre enveloppe commune « ${catLabel} » est presque épuisée (${amounts}).`
+          : depleted
+            ? `Ton enveloppe « ${catLabel} » est épuisée (${amounts}).`
+            : `Ton enveloppe « ${catLabel} » est presque épuisée (${amounts}).`;
+
+        for (const uid of recipients) {
+          const user = (await db.collection("users").doc(uid).get()).data();
+          const pct =
+            typeof user?.notif_envelope_pct === "number"
+              ? user.notif_envelope_pct
+              : 0.9;
+          const threshold = budget * pct;
+          // Franchissement vers le haut uniquement : une seule alerte.
+          if (spentBefore < threshold && spentAfter >= threshold) {
+            await sendToUser(uid, "envelope_alert", "Budget variable", body);
+          }
         }
       }
     }
