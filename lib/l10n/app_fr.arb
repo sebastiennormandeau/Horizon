@@ -693,6 +693,15 @@
   "categoryTxError": "La mise à jour a échoué.",
 
   "checkingBalanceLabel": "Compte chèque réel",
+  "pastMonthBadge": "Mois clos · n'entame aucune cagnotte",
+  "periodPrevious": "Période précédente",
+  "periodNext": "Période suivante",
+  "weeksAgo": "Il y a {count} semaine(s)",
+  "@weeksAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "checkingBalanceShort": "Compte",
   "checkingBalanceJointShort": "Conjoint",
   "checkingBalancePrivate": "Privé",

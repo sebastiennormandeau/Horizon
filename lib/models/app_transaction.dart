@@ -36,6 +36,20 @@ class AppTransaction {
     return '${parts[2]}/${parts[1]}';
   }
 
+  /// La transaction appartient-elle à un mois déjà clos ?
+  ///
+  /// Les cagnottes sont re-provisionnées le 1er de chaque mois : trier une
+  /// dépense d'un mois révolu ne les touche donc plus (garde-fou côté
+  /// `onTransactionAssigned`). Elle compte toujours dans le bilan de SON mois.
+  bool get isPastMonth {
+    final d = date;
+    if (d == null || d.length < 7) return false;
+    final now = DateTime.now();
+    final monthStart =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-01';
+    return d.compareTo(monthStart) < 0;
+  }
+
   factory AppTransaction.fromSnapshot(DocumentSnapshot snapshot) {
     final data = snapshot.data() as Map<String, dynamic>? ?? {};
     return AppTransaction(

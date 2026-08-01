@@ -26,6 +26,9 @@ class BilanScreen extends StatefulWidget {
 
 class _BilanScreenState extends State<BilanScreen> {
   String _periodType = 'monthly';
+
+  /// Périodes en arrière : 0 = période courante, 1 = la précédente…
+  int _offset = 0;
   String? _reportId;
   bool _loading = true;
   bool _generatingAdvice = false;
@@ -63,7 +66,8 @@ class _BilanScreenState extends State<BilanScreen> {
     try {
       final callable =
           FirebaseFunctions.instance.httpsCallable('generateReport');
-      final result = await callable.call({'period_type': _periodType});
+      final result = await callable
+          .call({'period_type': _periodType, 'offset': _offset});
       if (!mounted) return;
       setState(() {
         _reportId = result.data['report_id'] as String?;
@@ -193,30 +197,111 @@ class _BilanScreenState extends State<BilanScreen> {
     final l10n = _l10n;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
+      child: Column(
         children: [
-          ChoiceChip(
-            label: Text(l10n.thisMonth),
-            selected: _periodType == 'monthly',
-            selectedColor: AppColors.primary.withValues(alpha: 0.3),
-            onSelected: (_) {
-              setState(() => _periodType = 'monthly');
-              _refreshReport();
-            },
+          Row(
+            children: [
+              ChoiceChip(
+                label: Text(l10n.thisMonth),
+                selected: _periodType == 'monthly',
+                selectedColor: AppColors.primary.withValues(alpha: 0.3),
+                onSelected: (_) {
+                  // Changer de granularité repart de la période courante :
+                  // « il y a 3 semaines » n'a pas d'équivalent en mois.
+                  setState(() {
+                    _periodType = 'monthly';
+                    _offset = 0;
+                  });
+                  _refreshReport();
+                },
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: Text(l10n.thisWeek),
+                selected: _periodType == 'weekly',
+                selectedColor: AppColors.primary.withValues(alpha: 0.3),
+                onSelected: (_) {
+                  setState(() {
+                    _periodType = 'weekly';
+                    _offset = 0;
+                  });
+                  _refreshReport();
+                },
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          ChoiceChip(
-            label: Text(l10n.thisWeek),
-            selected: _periodType == 'weekly',
-            selectedColor: AppColors.primary.withValues(alpha: 0.3),
-            onSelected: (_) {
-              setState(() => _periodType = 'weekly');
-              _refreshReport();
-            },
-          ),
+          const SizedBox(height: 4),
+          _buildPeriodNavigator(),
         ],
       ),
     );
+  }
+
+  /// Navigation entre périodes : ◀ recule, ▶ avance, sans jamais dépasser la
+  /// période courante (un bilan futur n'a pas de sens).
+  Widget _buildPeriodNavigator() {
+    final maxOffset = _periodType == 'weekly' ? 52 : 24;
+    final canGoBack = _offset < maxOffset;
+    final canGoForward = _offset > 0;
+
+    return Row(
+      children: [
+        IconButton(
+          icon: const Icon(Icons.chevron_left),
+          tooltip: _l10n.periodPrevious,
+          onPressed: _loading || !canGoBack
+              ? null
+              : () {
+                  setState(() => _offset += 1);
+                  _refreshReport();
+                },
+        ),
+        Expanded(
+          child: Text(
+            _periodLabel(),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.chevron_right),
+          tooltip: _l10n.periodNext,
+          onPressed: _loading || !canGoForward
+              ? null
+              : () {
+                  setState(() => _offset -= 1);
+                  _refreshReport();
+                },
+        ),
+      ],
+    );
+  }
+
+  /// Libellé de la période affichée. Les noms de mois sont localisés à la main
+  /// — l'app évite intl pour la même raison qu'elle formate ses montants
+  /// elle-même.
+  String _periodLabel() {
+    final l10n = _l10n;
+    if (_offset == 0) {
+      return _periodType == 'monthly' ? l10n.thisMonth : l10n.thisWeek;
+    }
+    if (_periodType == 'weekly') {
+      return l10n.weeksAgo(_offset);
+    }
+    final now = DateTime.now();
+    final d = DateTime(now.year, now.month - _offset, 1);
+    final names = _lang == 'en'
+        ? const [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+          ]
+        : const [
+            'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+            'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+          ];
+    final name = names[d.month - 1];
+    // On n'affiche l'année que si elle diffère de l'année courante.
+    return d.year == now.year ? name : '$name ${d.year}';
   }
 
   Widget _buildBody(Household household, String uid) {

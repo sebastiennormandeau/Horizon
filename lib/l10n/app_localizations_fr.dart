@@ -1502,6 +1502,20 @@ class AppLocalizationsFr extends AppLocalizations {
   String get checkingBalanceLabel => 'Compte chèque réel';
 
   @override
+  String get pastMonthBadge => 'Mois clos · n\'entame aucune cagnotte';
+
+  @override
+  String get periodPrevious => 'Période précédente';
+
+  @override
+  String get periodNext => 'Période suivante';
+
+  @override
+  String weeksAgo(int count) {
+    return 'Il y a $count semaine(s)';
+  }
+
+  @override
   String get checkingBalanceShort => 'Compte';
 
   @override

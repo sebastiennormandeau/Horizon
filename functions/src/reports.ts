@@ -376,16 +376,39 @@ async function householdIdOf(uid: string): Promise<string> {
   return householdId;
 }
 
-/** Génère (ou rafraîchit) le bilan de la période courante et retourne son ID. */
+/**
+ * Génère (ou rafraîchit) un bilan et retourne son ID.
+ *
+ * `offset` = nombre de périodes en arrière (0 = période courante, 1 = la
+ * précédente…). Permet de revenir sur les mois passés : le bilan est recalculé
+ * à partir des transactions de CETTE période, donc trier après coup une
+ * dépense d'un mois révolu la fait bien apparaître dans le bilan de son mois,
+ * même si elle n'entame plus aucune cagnotte.
+ */
 export const generateReport = functions.https.onCall(async (data, context) => {
   const uid = requireAuth(context);
-  await enforceRateLimit("generateReport", uid, 20, 3600);
+  await enforceRateLimit("generateReport", uid, 40, 3600);
 
   const periodType = data?.period_type === "weekly" ? "weekly" : "monthly";
+  const rawOffset = Number(data?.offset ?? 0);
+  const maxOffset = periodType === "weekly" ? 52 : 24;
+  if (!Number.isFinite(rawOffset) || rawOffset < 0 || rawOffset > maxOffset) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Période demandée hors limites."
+    );
+  }
+  const offset = Math.floor(rawOffset);
   const householdId = await householdIdOf(uid);
 
-  const reportId = await generateStoredReport(householdId, periodType, new Date());
-  return { success: true, report_id: reportId };
+  const now = new Date();
+  const ref =
+    periodType === "monthly"
+      ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - offset, 1))
+      : new Date(now.getTime() - offset * 7 * 86400000);
+
+  const reportId = await generateStoredReport(householdId, periodType, ref);
+  return { success: true, report_id: reportId, offset };
 });
 
 /**

@@ -431,17 +431,22 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     // Une SnackBar par transaction triée s'EMPILE : ScaffoldMessenger les
-    // affiche l'une après l'autre (4 s chacune par défaut), si bien qu'un tri
-    // rapide de dix transactions masque le bas de l'écran pendant 40 s. On
-    // remplace donc la précédente et on raccourcit l'affichage — le temps de
-    // lire la cagnotte et d'annuler au besoin, pas plus.
+    // affiche l'une après l'autre, si bien qu'un tri rapide masque le bas de
+    // l'écran longtemps après le dernier geste. Trois précautions :
+    //
+    //  - `removeCurrentSnackBar` (et non `hide`) : le remplacement est
+    //    IMMÉDIAT, sans attendre l'animation de sortie de la précédente, donc
+    //    la file ne s'accumule jamais ;
+    //  - `fixed` (et non `floating`) : ancrée tout en bas, elle ne se pose pas
+    //    par-dessus la carte à trier ;
+    //  - 1,5 s : le temps de lire la cagnotte et d'annuler, pas plus.
     final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
+    messenger.removeCurrentSnackBar();
     messenger.showSnackBar(
       SnackBar(
         content: Text(_l10n.assignedTo(household.bucketLabel(bucket, _l10n))),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
+        duration: const Duration(milliseconds: 1500),
+        behavior: SnackBarBehavior.fixed,
         action: SnackBarAction(
           label: _l10n.undoAction,
           onPressed: () {
@@ -1579,6 +1584,35 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
+                // Mois clos : le tri n'entamera aucune cagnotte. Sans ce
+                // repère, la dépense semblerait ponctionner le mois courant.
+                if (transaction.isPastMonth) ...[
+                  const SizedBox(height: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: context.palette.warning.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.history,
+                            size: 11, color: context.palette.warning),
+                        const SizedBox(width: 4),
+                        Text(
+                          _l10n.pastMonthBadge,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                            color: context.palette.warning,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

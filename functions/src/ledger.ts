@@ -5,6 +5,13 @@ import { sendToUser, householdMemberIds } from "./notifications";
 
 const VALID_BUCKETS = ["Common", "Solo_A", "Solo_B"];
 
+/** Premier jour du mois courant, au format `AAAA-MM-JJ` (même repère que
+ *  `monthlyRollover`, qui re-provisionne les cagnottes ce jour-là). */
+function startOfCurrentMonth(): string {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-01`;
+}
+
 // Libellés courts (fr) pour les notifications — les notifications sont en
 // français. Miroir compact de lib/utils/categories.dart ; repli sur la clé.
 const CATEGORY_LABEL_FR: Record<string, string> = {
@@ -43,6 +50,19 @@ export const onTransactionAssigned = functions.firestore
     const payerId: string | undefined = after.paid_by_user_id;
     const householdId: string | undefined = after.household_id;
     if (!payerId || !householdId || amount === 0) return;
+
+    // Le mois est clos : une transaction d'un mois révolu ne touche plus aux
+    // cagnottes.
+    //
+    // `monthlyRollover` re-provisionne les cagnottes le 1er de chaque mois.
+    // Sans ce garde-fou, trier en août une dépense de juillet ponctionnait la
+    // provision d'AOÛT pour une facture déjà payée en juillet — la cagnotte
+    // commune se vidait sans raison visible. Ces transactions restent
+    // enregistrées et comptées dans les bilans du mois auquel elles
+    // appartiennent ; seul l'effet sur les soldes courants est neutralisé,
+    // exactement comme pour `Archived`.
+    const txDate = typeof after.date === "string" ? after.date : "";
+    if (txDate && txDate < startOfCurrentMonth()) return;
 
     const householdRef = db.collection("households").doc(householdId);
 

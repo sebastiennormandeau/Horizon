@@ -551,6 +551,15 @@
   "categoryTxError": "Update failed.",
 
   "checkingBalanceLabel": "Real chequing balance",
+  "pastMonthBadge": "Closed month · does not touch any pot",
+  "periodPrevious": "Previous period",
+  "periodNext": "Next period",
+  "weeksAgo": "{count} week(s) ago",
+  "@weeksAgo": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "checkingBalanceShort": "Account",
   "checkingBalanceJointShort": "Joint",
   "checkingBalancePrivate": "Private",

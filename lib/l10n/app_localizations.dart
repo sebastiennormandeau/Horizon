@@ -2761,6 +2761,30 @@ abstract class AppLocalizations {
   /// **'Compte chèque réel'**
   String get checkingBalanceLabel;
 
+  /// No description provided for @pastMonthBadge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mois clos · n\'entame aucune cagnotte'**
+  String get pastMonthBadge;
+
+  /// No description provided for @periodPrevious.
+  ///
+  /// In fr, this message translates to:
+  /// **'Période précédente'**
+  String get periodPrevious;
+
+  /// No description provided for @periodNext.
+  ///
+  /// In fr, this message translates to:
+  /// **'Période suivante'**
+  String get periodNext;
+
+  /// No description provided for @weeksAgo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Il y a {count} semaine(s)'**
+  String weeksAgo(int count);
+
   /// No description provided for @checkingBalanceShort.
   ///
   /// In fr, this message translates to:

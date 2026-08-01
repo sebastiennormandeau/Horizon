@@ -1490,6 +1490,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkingBalanceLabel => 'Real chequing balance';
 
   @override
+  String get pastMonthBadge => 'Closed month · does not touch any pot';
+
+  @override
+  String get periodPrevious => 'Previous period';
+
+  @override
+  String get periodNext => 'Next period';
+
+  @override
+  String weeksAgo(int count) {
+    return '$count week(s) ago';
+  }
+
+  @override
   String get checkingBalanceShort => 'Account';
 
   @override
