@@ -417,10 +417,10 @@ packages:
     dependency: "direct main"
     description:
       name: plaid_flutter
-      sha256: "779e281d5c1b37641d5d0032964c50da781861d0451e19594493160a57d15a66"
+      sha256: af1a61a4e20e7f180ce9a70faea737f8e59962cf80ba5320c2dca58f7a93c804
       url: "https://pub.dev"
     source: hosted
-    version: "5.1.1"
+    version: "5.2.1"
   platform:
     dependency: transitive
     description:
